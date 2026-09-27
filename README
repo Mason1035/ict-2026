@@ -1,158 +1,547 @@
-# “智卫防灾”——基于昇腾与边缘计算的地质灾害多模态早期预警系统
+# 智哨防灾
+## 基于昇腾与边缘计算的地质灾害多模态早期预警系统
 
-> 赛题：基于华为云产品打造 AI 创新应用  
-> 文档定位：竞赛评审技术报告 / 开发与部署指南  
-> 核心关键词：低成本、断网可用、分级唤醒、昇腾 NPU、云边端协同
+> **项目定位：** 华为 ICT 创新赛参赛项目 / 地质灾害多模态早期预警原型  
+> **核心架构：** 端—空—边—云  
+> **核心技术：** ESP32-S3、FreeRTOS、MQTT、LoRa、Atlas 200I DK A2、OpenCV、昇腾 NPU、Huawei Cloud  
+> **最高事实源：** `00_TEAM_SHARED_CONTRACT`  
+> **说明：** 本 README 仅用于项目总览、仓库导航和竞赛展示，不替代共享契约、接口规范、实验记录和测试证据。
 
-## 1. 项目简介（Project Overview）
+---
 
-“智卫防灾”面向偏远山区泥石流、塌方和边坡失稳场景，采用 ESP32 低功耗传感器、昇腾边缘计算与华为云 IoTDA/RDS/Redis 构成端-边-云闭环。系统不依赖持续公网连接：端侧持续采集倾角、微震动与土壤水分，边侧对异常趋势进行毫秒级判断并在本地触发声光报警；网络恢复后再将事件与视频证据同步到云端。
+## 1. 项目简介
 
-项目体现华为云产品价值：IoTDA 负责设备安全接入和 MQTT 消息管理，Redis 承担高频实时状态缓存，RDS 沉淀告警、灾情与模型依据，云端大屏实现趋势和多站点联动；CodeArts 码道代码智能体贯穿需求理解、代码生成、测试和缺陷修复，形成“想法到应用”的工程化路径。
+“智哨防灾”面向滑坡、泥石流、塌陷、落石、异常倾斜、异常振动，以及降雨导致的土壤状态变化与坡面视觉变化。
 
-## 2. 痛点分析与解题思路（Problem Statement & Approach）
+系统采用“**端—空—边—云**”协同架构：
 
-### 2.1 痛点
+- **端侧 Sentinel**：持续采集倾角、振动、土壤状态，并运行本地 Feature / Risk / Alarm；
+- **空侧 UAV**：用于视觉巡检，以及极端断网情况下的离线数据摆渡；
+- **边侧 Atlas 200I DK A2**：负责设备接入、持久化、风险融合、OpenCV 与昇腾推理；
+- **云侧 Huawei Cloud**：负责 IoTDA 接入、历史数据存储、状态缓存、后端 API 与可视化。
 
-- 真实灾害样本稀缺，纯监督训练难覆盖多雨强、坡度和失稳阶段。
-- 偏远山区网络和电力不稳定，云端单点决策存在告警延迟与失联风险。
-- 传统摄像头持续上传成本高、隐私和功耗压力大；只用阈值又容易误报。
+项目强调：
 
-### 2.2 解题思路
+1. **断网可用**：网络或云端不可用时，NODE 仍继续采样、风险计算和本地报警；
+2. **真实数据优先**：Mock、Synthetic、沙盘实验、真实硬件实验和未来真实山区验证严格区分；
+3. **多模态但不削弱安全边界**：视觉属于辅助证据，不能取消有效的高危传感器报警；
+4. **可追溯、可复现**：协议、配置、模型、校准、实验与测试均进行版本化记录。
 
-1. **物理沙盘数据仿真**：自建可调坡度沙盘，控制降雨强度、含水率和加载过程，采集真实 MPU6050/水分传感器时序，并同步摄像头画面，形成可回放、可标注的数据集。
-2. **多模态分级唤醒**：ESP32 负责低功耗常态监测和“提前吹哨”；只有倾角、微震动或含水率组合超限时，才唤醒昇腾板进行视觉复核。
-3. **面向变化而非目标检测**：采用双时态变化检测孪生网络；资源受限时使用光流+实例分割，重点识别坡面纹理位移、裂缝扩展、落石和泥流动态，减少“检测到物体但未发生灾害”的误报。
-4. **云边端协同**：边缘端提供断网可用和声光闭环，云端负责历史趋势、跨站点关联和评审大屏。
+---
 
-## 3. 系统架构设计（System Architecture）
+## 2. 第一阶段目标
+
+第一阶段优先完成：
+
+- 获得第一批**可信真实实验数据**；
+- 跑通**最小端到边闭环**。
+
+当前不把沙盘验证描述为真实山区验证，不把示例分数描述为已经证实的预警能力，也不把未经过真实硬件或端到端测试的模块标记为“已完成”。
+
+---
+
+## 3. 系统架构
 
 ```mermaid
 flowchart LR
-  subgraph T[端侧：感知层]
-    E[ESP32]
-    I[MPU6050 倾角/微震动]
-    W[土壤水分]
-    I --> E
-    W --> E
-  end
-  subgraph G[边侧：决策层]
-    A[Atlas 200I DK A2]
-    V[高清摄像头]
-    N[ATC .om + NPU]
-    L[本地声光报警]
-    A --> N
-    V --> A
-    N --> L
-  end
-  subgraph C[云侧：应用层]
-    IOT[IoTDA MQTT]
-    R[(Redis 高频缓存)]
-    D[(RDS 灾情日志)]
-    B[Web 可视化大屏]
-    IOT --> R
-    IOT --> D
-    D --> B
-  end
-  E -- MQTT/低功耗 --> A
-  A -- HTTPS/MQTT --> IOT
+    subgraph END["端：固定分布式 Sentinel"]
+        NODE["ESP32-S3 NODE"]
+        SENSOR["ICM-42688-P ×2\nSEN0193 ×3\nADS1115\nMicroSD"]
+        LOCAL["Feature Engine\nRisk Engine\nLocal Alarm"]
+        SENSOR --> NODE --> LOCAL
+    end
+
+    subgraph AIR["空：UAV"]
+        UAV["视觉巡检\n极端断网 Data Mule"]
+    end
+
+    subgraph EDGE["边：Huawei Atlas 200I DK A2"]
+        INTAKE["Mosquitto\nSensor Gateway\nGW / UAV Intake"]
+        STORE["Schema Validation\nDedup\nDurable Storage\nOffline Spool"]
+        AI["OpenCV\nAscend NPU\nRisk Fusion"]
+        INTAKE --> STORE --> AI
+    end
+
+    subgraph CLOUD["云：Huawei Cloud"]
+        IOTDA["IoTDA"]
+        REDIS["Redis / DCS"]
+        RDS["RDS"]
+        API["FastAPI"]
+        WEB["Vue 3 / TypeScript / Vite"]
+        IOTDA --> RDS --> API --> WEB
+        IOTDA --> REDIS
+    end
+
+    NODE -- "Wi-Fi + MQTT" --> INTAKE
+    NODE -- "E220 LoRa → GW-01 → MQTT" --> INTAKE
+    UAV -- "图像 / 视频 / Bundle" --> INTAKE
+    AI -- "MQTT-TLS" --> IOTDA
 ```
 
-### 3.1 三层职责
+### 3.1 通信边界
 
-| 层级 | 组件 | 职责与故障边界 |
+- Wi-Fi 是接入方式，MQTT 是消息协议；
+- LoRa 只替代 `NODE → GW` 无线段；
+- **LoRa 不直接传 JSON，也不运行 MQTT over LoRa**；
+- 所有正式上行最终先到 Atlas，再进入 Huawei Cloud；
+- UAV 不是正常主通信路径，而是视觉巡检与极端断网数据摆渡路径。
+
+---
+
+## 4. 当前实验平台
+
+### 4.1 NODE-01
+
+当前实验节点：
+
+- ESP32-S3-DevKitC-1 v1.1
+- ESP32-S3-WROOM-1 N8R8
+- 8 MB Flash + 8 MB PSRAM
+- ICM-42688-P ×2
+- SEN0193 ×3
+- ADS1115 ×1
+- MicroSD
+- Wi-Fi / MQTT
+- E220 LoRa
+- 本地 Feature / Risk / Alarm
+
+当前实验平台采用 **2×IMU + 3×Soil**，用于双 IMU 一致性、空间土壤差异和受控实验。
+
+最终单 Sentinel 目标为更简化的独立节点形态，但当前实验平台不能因此提前删减。
+
+### 4.2 GW-01
+
+- ESP32-WROOM-32 DevKit
+- LoRa 接收
+- CRC / Decode / Dedup / Normalize
+- MQTT Bridge
+
+GW-01 不负责 Risk、AI、NPU 或视觉推理。
+
+### 4.3 SANDBOX-01
+
+用于研发阶段的可控降雨 / 水路实验：
+
+- PWM → MOSFET → 12V Pump
+- 流量脉冲反馈
+- 急停
+
+SANDBOX-01 只属于实验设施，不属于最终山地 Sentinel。
+
+### 4.4 CAM-01
+
+现有 GOOUUU ESP32-S3-CAM V1.5 / OV2640 用于：
+
+- 实验影像；
+- 灾前 / 灾后照片；
+- 数据集辅助采集。
+
+它**不是 Atlas 比赛主视觉摄像头**。
+
+### 4.5 Atlas 主视觉
+
+比赛主视觉基线为：
+
+- Arducam B0448
+- Sony IMX291
+- USB UVC → Atlas
+
+实际 Linux 枚举、格式、帧率与长期稳定性仍需实测。
+
+---
+
+## 5. NODE-01 总线与 GPIO
+
+当前冻结的主要总线：
+
+- **I2C：GPIO 8 / 9**
+  - `imu_top = 0x68`
+  - `imu_toe = 0x69`
+  - `ADS1115 = 0x48`
+- **MicroSD SPI：GPIO 10 / 11 / 12 / 13**
+- **E220 UART1：GPIO 17 / 18**
+
+其他 IMU INT、LoRa M0/M1/AUX、报警输出、用户按钮等按共享契约统一分配。
+
+这里的“FROZEN”既包含芯片 / 板级限制，也包含团队为了接口一致性而做的工程冻结。  
+若需修改 FROZEN GPIO，必须先完成团队评审并更新共享契约，再同步修改接线、固件和测试。
+
+---
+
+## 6. 数据、Telemetry 与实验接口
+
+### 6.1 正式 Telemetry
+
+全链统一使用：
+
+```text
+zhifang.telemetry.v2
+```
+
+原始消息唯一身份：
+
+```text
+device_id + boot_id + seq
+```
+
+重试、转发和历史补传不得擅自改变原始消息身份。
+
+### 6.2 实验 CSV
+
+第一阶段实验最小 CSV 字段：
+
+```text
+run_id,timestamp_ms,
+top_ax,top_ay,top_az,top_gx,top_gy,top_gz,
+toe_ax,toe_ay,toe_az,toe_gx,toe_gy,toe_gz,
+soil_top_raw,soil_middle_raw,soil_toe_raw,
+flow_lpm,rain_level,label
+```
+
+每个 run 同时关联：
+
+- Calibration Metadata
+- Validity
+- Experiment Notes
+- Firmware / Calibration Version
+- 安装坐标与朝向
+- 时间来源
+- 文件 Hash
+- `parent_run`
+- `is_synthetic`
+
+---
+
+## 7. 端侧 Feature / Risk
+
+NODE 端侧负责持续运行：
+
+```text
+Sensor
+  ↓
+Sampling
+  ↓
+Feature Engine
+  ↓
+Risk Engine
+  ↓
+NORMAL / WATCH / WARNING / EMERGENCY
+  ↓
+Local Alarm + Communication
+```
+
+基础特征包括：
+
+- `tilt_deg`
+- `tilt_rate_dps`
+- `vibration_rms`
+- `moisture`
+- `moisture_growth`
+- validity
+
+实验增强包括：
+
+- 双 IMU 一致性
+- 三位置土壤空间差异
+
+物理危险阈值、窗口、滤波参数、贡献曲线、缺测策略与报警滞回等必须由真实实验标定，不能凭经验填入“合理危险值”。
+
+---
+
+## 8. AI、Physics-inspired Simulation 与视觉
+
+### 8.1 Physics-inspired Simulation
+
+模拟器运行在开发工作站，用于研究：
+
+```text
+降雨入渗
+  ↓
+含水变化
+  ↓
+蠕变
+  ↓
+潜在滑移
+  ↓
+传感器可观测响应
+```
+
+Synthetic Data 只用于辅助模型研发，不得改名为真实数据。
+
+模拟器中的材料强度、含水响应和失稳判据等参数，在没有真实校准证据前保持 `TODO_CALIBRATION`。
+
+### 8.2 OpenCV Baseline
+
+视觉 Stage 1 优先实现可解释基线：
+
+- Frame Difference
+- SSIM
+- Farneback Optical Flow
+- Changed Area Ratio
+- Motion Statistics
+
+相机抖动、光照、雨滴、遮挡等需要单独处理，视觉变化不能直接等同于灾害。
+
+### 8.3 Ascend AI Stage 2
+
+模型部署路线：
+
+```text
+Training
+  ↓
+ONNX
+  ↓
+ATC
+  ↓
+OM
+  ↓
+Atlas ACL
+  ↓
+vision_score
+```
+
+需要记录：
+
+- Model Version
+- Training Data Version
+- ONNX / OM Hash
+- Input Shape
+- Preprocessing
+- ATC Parameters
+- CANN / Driver / Firmware / SoC
+- 指标与适用域
+
+模型转换成功不等于模型效果达标，必须分别验证训练框架、ONNX 与 OM 输出一致性。
+
+---
+
+## 9. Huawei Cloud
+
+规划中的云业务链路：
+
+```text
+Atlas
+  ↓
+MQTT-TLS
+  ↓
+IoTDA
+  ↓
+可靠消费 / 持久化
+  ├── RDS：历史记录
+  └── Redis / DCS：最新状态与低延迟查询
+  ↓
+FastAPI
+  ↓
+Vue 3 / TypeScript / Vite
+```
+
+核心原则：
+
+- Redis / DCS 不作为历史数据唯一可靠存储；
+- 云端不可用不能影响现场端侧 Risk 与 Alarm；
+- 历史补传不能覆盖当前最新状态；
+- 只有可靠持久化确认后，离线原文才能按策略清理。
+
+---
+
+## 10. CodeArts / 智能体适配说明
+
+本项目参加华为 ICT 创新赛，因此在竞赛材料和工程方案中**保留 CodeArts / 代码智能体的适配与使用说明**，用于体现团队对华为研发工具链、AI 辅助开发和工程提效能力的理解。
+
+但该能力属于**研发辅助层**，不是“智哨防灾”安全核心链路的一部分，也不会为了展示智能体而强行改变已经冻结的端—空—边—云架构。
+
+### 10.1 可选使用方向
+
+如果团队在后续开发中实际采用 CodeArts 或相关代码智能体，可用于：
+
+- **需求理解**：辅助把共享契约、接口要求和验收标准拆分为工程任务；
+- **样板代码生成**：辅助生成非核心样板代码、接口骨架、测试代码和部署脚本；
+- **缺陷分析**：辅助定位构建错误、协议校验错误、MQTT 接入问题或模型部署问题；
+- **测试与质量**：辅助生成测试用例、回归检查和静态分析建议；
+- **文档维护**：辅助整理接口、变更记录和部署说明。
+
+### 10.2 使用边界
+
+无论是否实际采用智能体，以下内容始终由团队负责：
+
+- 硬件选型与电气安全；
+- GPIO / 总线与协议冻结；
+- 真实实验设计与标签；
+- Calibration；
+- Risk 数学规则；
+- 关键阈值与安全策略；
+- 模型效果验证；
+- HIL 与端到端测试；
+- 最终代码评审与比赛交付。
+
+智能体生成内容**不能因为“由 AI 生成”就视为正确或完成**，必须经过人工理解、编译、测试和版本化验证。
+
+### 10.3 竞赛表述原则
+
+在项目材料中：
+
+- 可以说明系统**兼容并可利用 CodeArts / 智能体辅助研发**；
+- 可以展示团队设计的“需求 → 生成 → 验证 → 修复 → 回归”工程闭环；
+- **只有实际使用并留下可验证记录的能力，才描述为“已实践”**；
+- 尚未实际使用的能力，应写为“可选”“计划”“适配”或“后续可接入”，不描述为已经完成。
+
+因此，CodeArts 是项目的**竞赛与研发增强能力**，而不是为了加分而强行嵌入实时预警决策链。
+
+---
+
+## 11. 团队职责
+
+### A：硬件、嵌入式与系统
+
+负责：
+
+- 硬件资产与 BOM
+- ESP32 / Sensor / GPIO / Power
+- FreeRTOS
+- Feature Runtime
+- Risk Runtime
+- Local Alarm
+- MQTT Client
+- LoRa
+- MicroSD / offline_queue
+- HIL 与系统集成
+
+### B：算法与数据
+
+负责：
+
+- 实验设计
+- run_id / 标签
+- 数据质量与清洗
+- 特征数学
+- Filter / Window
+- Risk Rule
+- reason_mask
+- risk_config
+- Dataset Split / Metrics
+
+### C：AI、视觉、Atlas 与云
+
+负责：
+
+- Physics-inspired Simulation
+- Synthetic Data
+- AI Training / Evaluation
+- ONNX / ATC / OM / ACL
+- OpenCV / Vision
+- Atlas 服务
+- Fusion
+- Huawei Cloud
+- Database / API / Dashboard
+
+---
+
+## 12. 当前里程碑
+
+| Milestone | 内容 | 当前状态 |
 |---|---|---|
-| 端 | ESP32、MPU6050、水分传感器 | 采样、时间戳、滑动统计、低功耗；无公网时独立运行 |
-| 边 | Atlas 200I DK A2、摄像头 | 接收唤醒、NPU 推理、视频复核、声光报警、断网缓存 |
-| 云 | IoTDA、Redis、RDS、大屏 | 设备接入、实时态势、审计留痕、趋势研判与演示 |
+| M0 | 接口与设备就绪 | 🟡 进行中 |
+| M1 | 首批可信真实数据 | ⚪ 待实验硬件与真实采集 |
+| M2 | 最小端到边闭环 | ⚪ 待 M1 与真实 Atlas 联调 |
+| M3 | 备用链路与多模态 | ⚪ 待后续条件 |
+| M4 | 云端闭环 | ⚪ 待后续部署与验证 |
 
-## 4. 核心功能实现（Core Implementation）
+当前阶段重点：
 
-### 4.1 数据管线与沙盘采集
+1. ESP-IDF 5.5.x 环境；
+2. 正式工程框架；
+3. Mock CSV / Telemetry 三人接口预联调；
+4. NODE-01 GPIO / 接线与 Smoke Test；
+5. 第一批真实硬件到货验证；
+6. 五类真实实验 run。
 
-```mermaid
-flowchart LR
-  S[物理沙盘：坡度/雨强/含水率] --> Q[真实传感器采集]
-  Q --> T[时间同步与质量检查]
-  T --> L[事件标注：正常/裂缝/滑移/泥流]
-  L --> P[训练集与回放集]
-  P --> M[时序模型 + 视觉变化模型]
+---
+
+## 13. 第一批实验
+
+第一阶段计划：
+
+```text
+run_001_normal
+run_002_rain_light
+run_003_rain_medium
+run_004_vibration
+run_005_small_slip
 ```
 
-沙盘采集协议统一使用 `sample_id、timestamp、sensor_id、tilt_deg、vibration_rms、soil_moisture、rain_level、label`。每次实验记录降雨阶段、坡体材料、载荷和摄像头视角；以事件窗口切分训练/验证集，避免同一次实验泄漏到不同集合。沙盘数据不只是演示素材，而是可重复生成的领域数据资产。
+五个 run 是第一批可信实验数据的起点，不代表已经完成统计泛化或真实山区有效性验证。
 
-### 4.2 双模态 AI 算法方案
+---
 
-```mermaid
-flowchart LR
-  X[时序特征：倾角/微震/水分] --> F[早期风险评分]
-  F -- 超限唤醒 --> Y[边缘视频]
-  Y --> Z[孪生变化检测或光流+实例分割]
-  F --> J[联合决策]
-  Z --> J
-  J --> O[正常/关注/预警/紧急]
+## 14. 仓库结构
+
+建议仓库：
+
+```text
+.
+├── 00_TEAM_SHARED_CONTRACT.*
+├── README.md
+│
+├── firmware/
+├── algorithm/
+├── edge_cloud/
+├── tools/
+│
+└── docs/
+    ├── README.md
+    ├── decisions/
+    ├── devlog/
+    │   ├── A/
+    │   ├── B/
+    │   └── C/
+    ├── experiments/
+    ├── protocols/
+    ├── reference/
+    ├── test_records/
+    └── wiring/
 ```
 
-- 时序侧：提取倾角变化率、震动 RMS、含水率增长率及多传感器相互印证关系；采用阈值+轻量时序分类器，优先保证召回率。
-- 视觉侧：双时态孪生网络输入灾前/当前帧，计算特征差异图并定位微小位移；没有足够算力时采用光流估计运动场，再用实例分割区分泥流、落石与植被摆动。
-- 联合规则：`时序高风险 AND 视觉变化显著` 触发紧急；仅时序高风险进入关注并继续采样；视觉不支持时保持本地告警并上送“待复核”。工程上以“低误报+可解释”为目标，不宣称绝对零误报。
+### docs 规则
 
-### 4.3 昇腾 ATC 模型部署
+- `00_TEAM_SHARED_CONTRACT` 是最高事实源；
+- `devlog` 记录开发过程；
+- `decisions` 记录“为什么这样设计”；
+- `protocols` 保存当前正式协议；
+- `wiring` 保存 GPIO / 接线与电气说明；
+- `experiments` 按 run_id 保存实验；
+- `test_records` 保存可复现测试证据；
+- `reference` 保存开发文档、采购表和外部参考资料。
 
-1. 在训练环境导出 ONNX，固定输入尺寸、颜色空间和归一化参数。
-2. 使用 ATC 将 ONNX 转换为昇腾 `.om`，配置 `soc_version`、动态批量策略和输出节点。
-3. 在 Atlas 上通过 ACL/昇腾推理接口加载 `.om`，预处理、NPU 推理和后处理均采用异步队列。
-4. 以沙盘回放集进行精度、延迟和温升测试；将模型版本、阈值和校准参数写入 RDS。
+---
 
-## 5. 华为云服务集成方案（Huawei Cloud Integration）
+## 15. 工程原则
 
-### 5.1 IoTDA
+本项目坚持：
 
-- 为每个 ESP32 建立设备身份、产品模型和 MQTT 主题；设备上报属性包含 `tilt、vibration、soil_moisture、battery、edge_status`。
-- 采用 TLS、设备密钥和 Topic ACL；云规则将设备消息路由到 Redis 与 RDS。
-- 断网恢复时，边缘按时间顺序补传事件摘要；IoTDA 负责设备在线状态和消息接入治理。
+> **没有实测，不写“已验证”；  
+> 没有 Calibration，不编造危险阈值；  
+> Mock / Synthetic 不冒充 Real；  
+> 沙盘不冒充真实山区；  
+> AI 输出不替代工程测试；  
+> 任何安全核心代码均必须可解释、可测试、可回滚。**
 
-### 5.2 Redis
+---
 
-- 保存秒级或更高频率的最新传感器窗口：`sensor:{site_id}:{device_id}:latest`。
-- 保存边缘在线、最后心跳、风险分数及去重键；设置 TTL，避免缓存膨胀。
-- 为大屏提供低延迟查询，避免频繁扫描 RDS。
+## 16. 当前说明
 
-### 5.3 RDS
+项目仍处于研发早期阶段。
 
-- 建议表：`device`、`sensor_event`、`alarm_event`、`model_evidence`、`deployment_audit`。
-- 持久化告警等级、传感器快照、图片/视频对象地址、模型版本、处置人和关闭原因，支持按站点、时间和等级检索。
-- 仅存摘要和审计证据，原始视频按策略存储；生产环境启用备份、最小权限账号和审计日志。
+README 中描述的部分能力属于目标架构或后续里程碑，是否完成以：
 
-### 5.4 可视化大屏
+- `00_TEAM_SHARED_CONTRACT`
+- `docs/test_records`
+- `docs/experiments`
+- 对应版本代码与 Commit
 
-大屏展示地图/站点状态、坡体风险颜色、实时曲线、告警时间线和模型证据；Redis 驱动实时卡片，RDS 驱动历史回放。演示模式提供沙盘实验回放，清晰呈现“传感器超限 -> 边缘唤醒 -> NPU 复核 -> 云端留档”的完整链路。
+为准。
 
-## 6. CodeArts 应用实践（CodeArts Practice）
+---
 
-CodeArts 码道代码智能体是本项目的必选研发辅助工具，按“需求理解-生成-验证-修复”闭环使用：
+## License
 
-- **需求理解**：将赛题表格、传感器字段和接口约束转换为模块清单、Topic 规范、数据字典和验收用例。
-- **代码生成**：生成 ESP32 的 MPU6050/水分采集脚本、MQTT 上报与断线重连；生成云端 IoTDA 消息解析、Redis 缓存、RDS DAO 和大屏接口。
-- **问题修复**：针对串口时序、MQTT 重连、JSON 字段漂移、ATC 输出维度不匹配等问题，提供根因分析、最小补丁和回归测试建议。
-- **质量门禁**：将智能体输出纳入 CodeArts 仓库、流水线、静态扫描和人工评审，禁止未经测试的代码直接进入演示环境。
-
-提效价值体现在：减少样板代码编写，统一设备协议和异常处理，加快从沙盘验证到云端 Demo 的迭代；关键算法、阈值和安全策略仍由团队验证并负责。
-
-## 7. 快速部署与开源指南（Deployment Guide）
-
-### 7.1 五步部署
-
-1. **端侧**：烧录 ESP32 固件，配置设备证书、采样周期、站点 ID 和边缘网关地址。
-2. **边侧**：安装 Atlas 驱动与 CANN/ACL 运行时，放置 `.om` 模型、摄像头和声光报警参数。
-3. **云侧**：创建 IoTDA 产品/设备、Redis、RDS 实例，导入表结构和最小权限账号。
-4. **应用**：部署数据接入服务与 Web 大屏，配置 IoTDA 规则路由、告警阈值和站点地图。
-5. **验证**：用沙盘回放执行正常、裂缝、滑移、泥流、断网五类用例，检查本地报警、补传和云端审计。
-
-### 7.2 开源交付建议
-
-仓库建议包含 `firmware/`、`edge-atlas/`、`cloud-service/`、`dashboard/`、`models/`、`deploy/`、`docs/`；提供依赖锁定文件、环境变量模板、RDS 初始化 SQL、IoTDA 产品模型、模型转换命令、部署手册、开源许可证和演示视频/截图。严禁提交设备密钥、云账号、真实地理坐标和未经授权的灾情影像。
-
-### 7.3 社会价值与成本优势
-
-ESP32 与通用传感器构成低成本采集节点，昇腾板仅在风险窗口被唤醒，减少持续视频传输与云推理费用；断网声光报警提升山区生存性。系统可先在校园、矿区、乡村道路和水库边坡小规模布设，再通过 IoTDA 多设备接入和 RDS 审计扩展为区域化监测网络。
+待团队根据比赛要求与后续开源范围确定。
