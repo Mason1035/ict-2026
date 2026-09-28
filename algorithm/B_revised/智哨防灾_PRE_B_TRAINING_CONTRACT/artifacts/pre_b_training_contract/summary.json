@@ -1,0 +1,75 @@
+{
+  "contract_id": "PRE_B_TRAINING_CONTRACT",
+  "contract_version": "1.0",
+  "generated_at_utc": "2026-09-25T08:01:53.556874+00:00",
+  "source_rule_version": "demo-rules-1.0.0",
+  "source_rule_sha256": "6eeb04832b47fd8d1b650808e8257f89f935bd3b128c34bbbe7b46d5220f0d38",
+  "labels_are_synthetic_proxy_labels_not_ground_truth": true,
+  "generator_seed": 20260925,
+  "groups_per_expected_risk_level": 60,
+  "expected_synthetic_rows": 180,
+  "supervised_rows": 180,
+  "excluded_unknown_rows": 18,
+  "features_in_order": [
+    "soil_moisture_delta_pp",
+    "soil_moisture_slope_pp_per_min",
+    "tilt_median_deviation_deg",
+    "tilt_min_abs_deviation_deg"
+  ],
+  "forbidden_features": [
+    "label",
+    "teacher_risk_level",
+    "risk_level",
+    "reasons",
+    "group_id",
+    "sample_id",
+    "node_id",
+    "sequence",
+    "timestamp",
+    "source",
+    "battery_pct",
+    "split",
+    "generator_scenario",
+    "random_seed"
+  ],
+  "split_by_independent_groups": true,
+  "split_overlap_detected": false,
+  "splits": {
+    "train": {
+      "rows": 126,
+      "groups": 126,
+      "label_0": 42,
+      "label_1": 84,
+      "risk_level_counts": {
+        "normal": 42,
+        "attention": 43,
+        "warning": 41
+      }
+    },
+    "validation": {
+      "rows": 27,
+      "groups": 27,
+      "label_0": 9,
+      "label_1": 18,
+      "risk_level_counts": {
+        "normal": 9,
+        "attention": 10,
+        "warning": 8
+      }
+    },
+    "test": {
+      "rows": 27,
+      "groups": 27,
+      "label_0": 9,
+      "label_1": 18,
+      "risk_level_counts": {
+        "normal": 9,
+        "attention": 7,
+        "warning": 11
+      }
+    }
+  },
+  "fitted_model": null,
+  "model_metrics": null,
+  "model_metrics_note": "模型尚未拟合；禁止将规则教师与自身生成标签的恒等复现分数报告为模型泛化性能。"
+}

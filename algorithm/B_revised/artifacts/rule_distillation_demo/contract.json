@@ -1,0 +1,97 @@
+{
+  "contract_id": "B_RULE_DISTILLATION_CONTRACT",
+  "contract_version": "1.0-test-only",
+  "status": "TEST_ONLY",
+  "owner": "B",
+  "consumer": "C",
+  "training_scope": "RULE_DISTILLATION_TEST_ONLY",
+  "training_ready": false,
+  "formal_training_ready": false,
+  "real_data_ready": false,
+  "formal_feature_contract_ready": false,
+  "formal_label_contract_ready": false,
+  "formal_split_ready": false,
+  "declarations": ["TEST_ONLY", "NOT_PROJECT_TRAINING_DATA", "NOT_APPROVED_FORMAL_CONTRACT"],
+  "synthetic_source": "b_rule_distillation_fixture",
+  "physics_inspired": false,
+  "generator_version": "1.0.0-test-only",
+  "source_rule": {
+    "module": "risk_algorithm.RiskEvaluator.evaluate(history)",
+    "expected_algorithm_version": "demo-rules-1.0.0",
+    "labels_are_synthetic_proxy_labels": true,
+    "not_disaster_ground_truth": true
+  },
+  "model_features": [
+    "soil_moisture_delta_pp",
+    "soil_moisture_slope_pp_per_min",
+    "tilt_median_deviation_deg",
+    "tilt_min_abs_deviation_deg"
+  ],
+  "feature_units": {
+    "soil_moisture_delta_pp": "percentage point; TEST_ONLY",
+    "soil_moisture_slope_pp_per_min": "percentage point/minute; TEST_ONLY",
+    "tilt_median_deviation_deg": "degree; TEST_ONLY",
+    "tilt_min_abs_deviation_deg": "degree; TEST_ONLY"
+  },
+  "feature_dtype": "finite decimal scalar; CSV text",
+  "label_name": "label",
+  "label_mapping": {"normal": 0, "attention": 1, "warning": 1, "unknown": null},
+  "unknown_policy": "excluded_unknown.csv only; never supervised negative class",
+  "window": {
+    "records_per_window": 6,
+    "baseline_sequences": [1, 2, 3],
+    "current_sequences": [4, 5, 6],
+    "sample_interval_seconds": 10,
+    "one_window_per_generated_group": true,
+    "scope": "TEST_ONLY_RULE_DISTILLATION"
+  },
+  "split": {
+    "scope": "TEST_ONLY_GROUP_SPLIT",
+    "unit": "one independent generated node/window group",
+    "method": "deterministic stratified group split",
+    "default_seed": 20260925,
+    "ratios": {"train": 0.7, "validation": 0.15, "test": 0.15},
+    "formal_split_manifest": null
+  },
+  "provenance_fields": [
+    "synthetic_source", "scenario", "group_id", "sample_id", "node_id", "split",
+    "teacher_risk_level", "label_text", "source_rule_version", "source_rule_sha256",
+    "generator_seed", "generator_version", "run_id", "parent_run", "parameter_hash"
+  ],
+  "provenance_locations": {
+    "dataset_all.csv": ["group_id", "sample_id", "node_id", "split", "label_text", "teacher_risk_level"],
+    "train.csv/validation.csv/test.csv": ["group_id", "sample_id", "split"],
+    "synthetic_histories.jsonl": ["group_id", "split", "history", "teacher_output"],
+    "summary.json": ["source_rule_version", "source_rule_sha256", "generator_seed"],
+    "manifest.json": ["synthetic_source", "generator_version", "source_rule_version", "source_rule_sha256", "generator_seed"]
+  },
+  "nullable_or_not_exported_provenance": {
+    "scenario": "generator branch is not exported as a CSV feature; teacher risk level is audit-only",
+    "run_id": null,
+    "parent_run": null,
+    "parameter_hash": null
+  },
+  "forbidden_model_features": [
+    "synthetic_source", "scenario", "group_id", "sample_id", "node_id", "split",
+    "teacher_risk_level", "label_text", "label", "label_source", "risk_level", "reasons",
+    "source_rule_version", "source_rule_sha256",
+    "run_id", "parent_run", "seed", "generator_seed", "parameter_hash", "generator_version",
+    "timestamp", "sequence", "source", "battery_pct", "future_state", "failure_time",
+    "future_moisture", "future_label", "future_derived"
+  ],
+  "csv_schema": {
+    "encoding": "UTF-8 with BOM",
+    "dataset_all.csv": ["group_id", "sample_id", "node_id", "split", "label", "label_text", "teacher_risk_level", "soil_moisture_delta_pp", "soil_moisture_slope_pp_per_min", "tilt_median_deviation_deg", "tilt_min_abs_deviation_deg"],
+    "train.csv/validation.csv/test.csv": ["group_id", "sample_id", "split", "label", "soil_moisture_delta_pp", "soil_moisture_slope_pp_per_min", "tilt_median_deviation_deg", "tilt_min_abs_deviation_deg"],
+    "excluded_unknown.csv": ["group_id", "sample_id", "node_id", "split", "label", "teacher_risk_level", "missing_fields", "reasons"]
+  },
+  "metrics": {
+    "positive_class": 1,
+    "binary_threshold": 0.5,
+    "required": ["confusion_matrix", "precision", "recall", "specificity", "f1", "balanced_accuracy", "average_precision_pr_auc", "roc_auc", "coverage", "unknown_rate"],
+    "undefined_denominators": "report null with reason; never fabricate a score",
+    "scope": "TEST_ONLY_RULE_IMITATION"
+  },
+  "training_included": false,
+  "model_metrics": null
+}

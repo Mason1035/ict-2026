@@ -1,0 +1,8 @@
+# 代码与文档在 Windows/macOS/Linux 上保持 LF，避免哈希/测试受 core.autocrlf 影响。
+* text=auto eol=lf
+
+# 已归档的演示产物与旧算法有字节级回归/manifest 校验；严格保留源文件字节。
+artifacts/** -text
+智哨防灾_PRE_B_TRAINING_CONTRACT/artifacts/** -text
+队员B_算法开发交付/risk_algorithm.py -text
+队员B_算法开发交付/demo_rules.json -text
