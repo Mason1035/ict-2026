@@ -17,6 +17,8 @@
 
 - B 下一阶段的真实实验 CSV 初检见 [`data_intake/README.md`](data_intake/README.md)：严格校验 v2 的 20 列并生成质量报告；此步骤不意味着正式训练就绪。
 - 候选特征原语与未决参数见 [`candidate_features/README.md`](candidate_features/README.md)，数据泄漏、评价及下一次交接边界见 [`docs/B_NEXT_STAGE_BOUNDARIES.md`](docs/B_NEXT_STAGE_BOUNDARIES.md)。
+- 拟议 run 划分的防泄漏结构预检见 [`evaluation/README.md`](evaluation/README.md)；它不会批准正式训练。
+- 当前已交付内容、A/C 所需输入和收到数据后的顺序见 [`docs/B_DELIVERY_STATUS_AND_DEPENDENCIES.md`](docs/B_DELIVERY_STATUS_AND_DEPENDENCIES.md)，真实实验质量记录模板见 [`docs/B_QUALITY_REPORT_TEMPLATE.md`](docs/B_QUALITY_REPORT_TEMPLATE.md)。
 - 发给 A 的首轮实验与交接方案见 [`docs/B_EXPERIMENT_PLAN.md`](docs/B_EXPERIMENT_PLAN.md)。
 - 先阅读 [`docs/HANDOFF_TO_C.md`](docs/HANDOFF_TO_C.md)。
 - 程序读取 [`contracts/B_RULE_DISTILLATION_CONTRACT.json`](contracts/B_RULE_DISTILLATION_CONTRACT.json)

@@ -2,6 +2,12 @@
 
 只记录本次实际改动，不重写 B_original 或早期验证历史。
 
+## 2026-09-28：划分预检与交接状态
+
+- 新增 `evaluation/split_preflight.py`、TEST_ONLY 计划样例和测试：检查 run/parent_run 跨分区、合成数据只能属于 Train 且必须有真实 Train 母 run、重复 run 和空计划；结果始终不宣称正式训练就绪。
+- 新增 `docs/B_DELIVERY_STATUS_AND_DEPENDENCIES.md` 与 `docs/B_QUALITY_REPORT_TEMPLATE.md`，记录本分支实际交付和 A/C 待提供的来源证据。仅检查了远端分支可见文件，不推断队友本地进度。
+- 正式 Training Contract 状态不变：`NOT_READY_FOR_FORMAL_TRAINING`；未生成或训练正式模型。
+
 ## [B-adaptation-0.1] - 2026-09-25
 
 ### Added
