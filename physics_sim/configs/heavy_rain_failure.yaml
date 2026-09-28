@@ -1,0 +1,51 @@
+# All numeric physics/sensor choices: SIMULATION_ONLY, TODO_CALIBRATION.
+# NOT REAL-WORLD HAZARD THRESHOLDS. Units and equations: ../README.md.
+simulator_version: "0.1.1"
+seed: 42
+simulation:
+  duration_s: 600
+  dt_s: 1 # simulator numerical/output step, not IMU/Soil hardware sampling rate
+slope:
+  theta_deg: 45
+soil:
+  initial_moisture: 0.2
+  infiltration_rate: 0.0001  # (mm/h)^-1 s^-1
+  drainage_rate: 0.0001     # s^-1
+rain:
+  type: constant
+  start_s: 30
+  end_s: 600
+  intensity: 60    # mm/h; synthetic forcing, not a hazard threshold
+state_model:
+  saturation_threshold: 0.25 # dimensionless I = M*sin(theta)
+  creep_threshold: 0.40
+  slip_threshold: 0.52
+  failure_threshold: 0.62
+  creep_rate: 0.00001       # synthetic m/s
+  slip_rate: 0.0002         # synthetic m/s
+  failure_rate: 0.002       # synthetic m/s
+sensor:
+  imu_noise_std: 0.005      # deg, additive independent Gaussian tilt noise
+  soil_noise_std: 0.002     # normalized units, Gaussian before clipping
+  vibration_noise_std: 0.001 # m/s^2, Gaussian before clipping
+  soil_sites:
+    top:
+      response_coefficient: 1.0 # dimensionless change-from-M0 gain
+      delay_s: 0
+    middle:
+      response_coefficient: 0.85
+      delay_s: 20
+    toe:
+      response_coefficient: 0.70
+      delay_s: 45
+  imu_sites:
+    top:
+      base_tilt_deg: 0
+      tilt_gain_deg_per_m: 10
+      vibration_base_mps2: 0.002
+      vibration_gain_per_s: 20
+    toe:
+      base_tilt_deg: 0
+      tilt_gain_deg_per_m: 15
+      vibration_base_mps2: 0.003
+      vibration_gain_per_s: 30

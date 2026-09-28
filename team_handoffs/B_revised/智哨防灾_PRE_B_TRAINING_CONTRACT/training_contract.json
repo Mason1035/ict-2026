@@ -1,0 +1,68 @@
+{
+  "contract_id": "PRE_B_TRAINING_CONTRACT",
+  "contract_version": "1.0",
+  "created_date": "2026-09-25",
+  "status": "LEGACY_TEST_ONLY",
+  "scope": "TEST_ONLY rule-distillation source contract; use ../contracts/B_RULE_DISTILLATION_CONTRACT.json for C interface",
+  "training_scope": "RULE_DISTILLATION_TEST_ONLY",
+  "formal_training_ready": false,
+  "real_data_ready": false,
+  "source_rule": {
+    "module": "risk_algorithm.RiskEvaluator.evaluate(history)",
+    "expected_algorithm_version": "demo-rules-1.0.0",
+    "labels_are_synthetic_proxy_labels": true,
+    "not_ground_truth": true
+  },
+  "raw_input_fields": ["node_id", "timestamp", "soil_moisture_pct", "tilt_deg", "battery_pct", "sequence", "source"],
+  "window": {
+    "records_per_window": 6,
+    "baseline_sequences": [1, 2, 3],
+    "current_sequences": [4, 5, 6],
+    "sample_interval_seconds": 10,
+    "window_overlap": false,
+    "split_unit": "independent generated node/group"
+  },
+  "features": [
+    "soil_moisture_delta_pp",
+    "soil_moisture_slope_pp_per_min",
+    "tilt_median_deviation_deg",
+    "tilt_min_abs_deviation_deg"
+  ],
+  "label": {
+    "name": "label",
+    "type": "binary_integer",
+    "mapping": {"normal": 0, "attention": 1, "warning": 1, "unknown": null},
+    "unknown_policy": "exclude from supervised sets and retain in excluded_unknown.csv"
+  },
+  "synthetic_class_distribution": {
+    "groups_per_teacher_risk": {"normal": 60, "attention": 60, "warning": 60},
+    "binary_rows_expected": {"label_0": 60, "label_1": 120},
+    "balanced_binary_classes": false
+  },
+  "split": {
+    "method": "deterministic stratified group split",
+    "unit": "one independent generated node/window group",
+    "seed": 20260925,
+    "ratios": {"train": 0.7, "validation": 0.15, "test": 0.15},
+    "overlapping_windows_across_sets": false
+  },
+  "leakage_exclusions": ["label", "teacher_risk_level", "risk_level", "reasons", "group_id", "sample_id", "node_id", "sequence", "timestamp", "source", "split", "battery_pct", "generator_scenario", "random_seed", "future_values", "window_outside_features"],
+  "metrics": {
+    "positive_class": 1,
+    "binary_threshold": 0.5,
+    "required": ["confusion_matrix", "precision", "recall", "specificity", "f1", "balanced_accuracy", "average_precision_pr_auc", "roc_auc", "coverage", "unknown_rate"],
+    "undefined_denominators": "report null with reason; do not substitute perfect scores"
+  },
+  "synthetic_constraints": {
+    "source": "simulated only",
+    "real_data_mixed": false,
+    "fixed_seed_default": 20260925,
+    "default_groups_per_class": 60,
+    "battery_used_as_feature_or_target": false,
+    "missing_measurements_imputed": false,
+    "unknown_target_imputed": false,
+    "real_disaster_truth_claim": false
+  },
+  "training_included": false,
+  "model_metrics": null
+}

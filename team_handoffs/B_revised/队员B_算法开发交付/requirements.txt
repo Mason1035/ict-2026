@@ -1,0 +1,2 @@
+# No third-party runtime dependencies; Python standard library only.
+# Verified Python version and test results are recorded in VALIDATION.md.

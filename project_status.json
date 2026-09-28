@@ -1,0 +1,147 @@
+{
+  "status_schema_version": "zhifang.repository-status.v1",
+  "as_of": "2026-09-25",
+  "scope": "Current repository evidence only; not an assertion about undelivered work elsewhere",
+  "ssot": "docs/00_TEAM_SHARED_CONTRACT.pdf",
+  "report": "PROJECT_STATUS_AND_READINESS.md",
+  "project_status": "BLOCKED",
+  "formal_training_ready": false,
+  "real_world_validated": false,
+  "source_code_revision": null,
+  "source_revision_note": "No Git repository; source content hashes retained in verification evidence",
+  "versions": {
+    "shared_contract_version": "1.0",
+    "generator_version": "0.1.1",
+    "observation_schema_version": "physics_sim.observation.v0.1.1",
+    "b_delivery_version": "B-adaptation-0.1",
+    "b_rule_contract_version": "1.0-test-only",
+    "b_fixture_generator_version": "1.0.0-test-only",
+    "b_formal_contract_version": "0.1-draft",
+    "training_framework_version": "0.1.1",
+    "model_version": null,
+    "formal_dataset_version": null,
+    "formal_feature_version": null,
+    "calibration_version": null
+  },
+  "hardware": {
+    "owner": "A",
+    "status": "PARTIAL",
+    "evidence": "docs/04_硬件资产采购与兼容性管理.xlsx",
+    "experimental_topology": {"imu": 2, "soil": 3},
+    "existing_boards_documented": ["NODE-01", "GW-01", "CAM-01"],
+    "sensor_acceptance_evidence": null,
+    "hil_evidence": null,
+    "waiting_for": ["WAITING_FOR_A"]
+  },
+  "real_data": {"owner": "A", "status": "WAITING_FOR_A", "delivered_dataset": null},
+  "physics_sim": {
+    "owner": "C",
+    "version": "0.1.1",
+    "status": "DONE",
+    "status_scope": "First-stage synthetic simulation software only",
+    "contract_status": "PRE_B_TRAINING_CONTRACT",
+    "formal_validation": false,
+    "calibration_status": "TODO_CALIBRATION",
+    "artifact_kind": "simulator_observation_csv",
+    "formal_training_dataset": false,
+    "tests_passed": 54
+  },
+  "synthetic_data": {
+    "owner": "C",
+    "status": "PARTIAL",
+    "physics_observation_artifacts_available": true,
+    "formal_feature_dataset_available": false,
+    "calibrated_against_real_train": false
+  },
+  "b_risk_algorithm": {
+    "owner": "B",
+    "status": "DEMO_ONLY",
+    "production_v2_compatible": false,
+    "formal_sensor_risk_implementation_delivered": false,
+    "tests_passed": 24,
+    "subtests_passed": 12
+  },
+  "b_rule_fixture": {
+    "owner": "B",
+    "status": "TEST_ONLY",
+    "dataset_role": "TEST_ONLY_RULE_DISTILLATION_FIXTURE",
+    "formal_training_dataset": false,
+    "physics_inspired": false,
+    "contract_version": "1.0-test-only",
+    "row_counts": {"dataset_all": 180, "train": 126, "validation": 27, "test": 27, "excluded_unknown": 18},
+    "run_id": null,
+    "parent_run": null,
+    "parameter_hash": null
+  },
+  "b_formal_training_contract": {
+    "owner": "B",
+    "status": "DRAFT",
+    "version": "0.1-draft",
+    "training_ready": false,
+    "validator_status": "NOT_READY_FOR_FORMAL_TRAINING",
+    "unresolved_field_count": 20,
+    "blocking_statuses": ["WAITING_FOR_A", "WAITING_FOR_B", "TODO_CALIBRATION"]
+  },
+  "ai_training_framework": {
+    "owner": "C",
+    "version": "0.1.1",
+    "status": "SKELETON",
+    "contract_status": "PRE_B_TRAINING_CONTRACT",
+    "formal_training_ready": false,
+    "test_only_trainer_resume_verified": true,
+    "b_fixture_reader_status": "READY_FOR_TEST_ONLY_INTEGRATION",
+    "b_fixture_model_fitting": "NOT_RUN",
+    "tests_passed": 114,
+    "integration_tests_included": 31
+  },
+  "dataset_adapters": {
+    "owner": "C",
+    "status": "PARTIAL",
+    "b_rule_reader": "TEST_ONLY",
+    "physics_lineage_inspector": "DONE",
+    "formal_physics_feature_adapter": "WAITING_FOR_B",
+    "real_adapter": "WAITING_FOR_A",
+    "real_adapter_also_requires_B_contract": true
+  },
+  "formal_model_training": {"owner": "C", "status": "NOT_STARTED", "model_version": null},
+  "evaluation": {
+    "owner": "C",
+    "status": "SKELETON",
+    "toy_validation_verified": true,
+    "independent_real_test": "NOT_RUN",
+    "real_only_experiment": "NOT_RUN",
+    "real_plus_synthetic_experiment": "NOT_RUN",
+    "real_world_metrics": null
+  },
+  "onnx": {"owner": "C", "status": "NOT_STARTED", "interface_status": "SKELETON", "export_status": "NOT_RUN", "parity_status": "NOT_RUN", "onnx_hash": null},
+  "ascend": {"owner": "C", "status": "NOT_STARTED", "atc": "NOT_RUN", "om_hash": null, "acl": "NOT_RUN"},
+  "atlas": {"owner": "C/A", "status": "NOT_STARTED", "real_device_validation": "NOT_RUN", "environment_lock": null},
+  "vision": {"owner": "C", "status": "NOT_STARTED"},
+  "cloud": {"owner": "C", "status": "NOT_STARTED"},
+  "web": {"owner": "C", "status": "NOT_STARTED"},
+  "end_to_end": {"owner": "A/B/C", "status": "BLOCKED", "real_hil": "NOT_RUN"},
+  "blockers": [
+    {"owner": "A", "status": "WAITING_FOR_A", "missing": ["Real Experiment CSV", "Calibration Metadata", "per-channel Validity", "run/time/device metadata", "noise/bias/drift/missingness evidence", "sensor response", "pump/rain mapping"], "blocks": ["real adapter", "scientific calibration", "formal training"]},
+    {"owner": "B", "status": "WAITING_FOR_B", "missing": ["Formal Ordered Features", "Label", "Window", "Split Manifest", "Leakage Rules", "Normalization Contract", "Metrics", "Synthetic Constraints", "Independent Real Test protocol", "formal risk reference package"], "blocks": ["formal contract interpreter", "canonical project dataset", "formal training/evaluation", "NODE algorithm parity"]},
+    {"owner": "A/B/C", "status": "TODO_CALIBRATION", "missing": ["physical and sensor calibration", "train-domain parameter evidence"], "blocks": ["calibrated synthetic data", "real-world claims"]},
+    {"owner": "C", "status": "NOT_STARTED", "missing": ["v2 validator/intake", "durable storage/dedup/receipt", "spool/cloud acknowledgement", "vision/fusion", "API/Web"], "blocks": ["end-to-edge", "end-to-end"]}
+  ],
+  "verification": {
+    "before": {"passed": 179, "failed": 0, "skipped": 0, "subtests_passed": 20},
+    "after": {"passed": 210, "failed": 0, "skipped": 0, "subtests_passed": 20},
+    "compile_files": 65,
+    "imported_ai_training_modules": 28,
+    "fixture_hash_validation": "DONE",
+    "deterministic_toy_repeat_and_resume": "DONE",
+    "physics_scenarios_and_plots": "DONE",
+    "formal_training_rejection": "DONE",
+    "protected_existing_files": 164,
+    "protected_changed": 0,
+    "evidence": "ai_training/outputs/PROJECT_AUDIT_7rasdry4/verification.json"
+  },
+  "next_recommended_step": {
+    "owner": "C",
+    "task": "Implement an offline zhifang.telemetry.v2 validator with positive/negative golden fixtures from SSOT; keep unresolved business schemas explicit",
+    "automatically_started": false
+  }
+}
