@@ -8,7 +8,7 @@ from hardware_handoff.run_vectors import check_vectors
 class HardwareHandoffTests(unittest.TestCase):
     def test_all_test_only_vectors_match_reference(self):
         count, errors = check_vectors()
-        self.assertEqual(count, 18)
+        self.assertEqual(count, 26)
         self.assertEqual(errors, [])
 
     def test_draft_config_is_unloadable_and_unresolved(self):

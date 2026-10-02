@@ -21,6 +21,7 @@
 - 当前已交付内容、A/C 所需输入和收到数据后的顺序见 [`docs/B_DELIVERY_STATUS_AND_DEPENDENCIES.md`](docs/B_DELIVERY_STATUS_AND_DEPENDENCIES.md)，真实实验质量记录模板见 [`docs/B_QUALITY_REPORT_TEMPLATE.md`](docs/B_QUALITY_REPORT_TEMPLATE.md)。
 - 发给 A 的首轮实验与交接方案见 [`docs/B_EXPERIMENT_PLAN.md`](docs/B_EXPERIMENT_PLAN.md)。
 - 给 A 设计固件 Feature/Risk 接口的预交接包见 [`hardware_handoff/README_给队员A.md`](hardware_handoff/README_给队员A.md)，包含待会签的模块边界、不可加载的配置草案、TEST_ONLY 黄金向量与 A→B 原始数据清单。
+- 既有代码是否真正进入正式链路、A 目前能设计到哪一步及阻塞材料见 [`docs/B_CODE_USAGE_AUDIT_2026-10-02.md`](docs/B_CODE_USAGE_AUDIT_2026-10-02.md)。
 - 先阅读 [`docs/HANDOFF_TO_C.md`](docs/HANDOFF_TO_C.md)。
 - 程序读取 [`contracts/B_RULE_DISTILLATION_CONTRACT.json`](contracts/B_RULE_DISTILLATION_CONTRACT.json)
   进行 TEST_ONLY 接口联调；读取

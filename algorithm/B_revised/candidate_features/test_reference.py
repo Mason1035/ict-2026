@@ -45,6 +45,14 @@ class CandidateMathTests(unittest.TestCase):
                          ["NORMAL", "NORMAL", "WATCH", "WARNING", "EMERGENCY", "EMERGENCY"])
         self.assertIsNone(risk_level(None))
 
+    def test_malformed_numeric_types_fail_closed(self):
+        base = {"tilt": 0, "vibration": 0, "moisture": 0, "growth": 0}
+        self.assertIsNone(sensor_score({**base, "tilt": "0"}, 0))
+        self.assertIsNone(sensor_score(base, "5"))
+        self.assertIsNone(sensor_score({**base, "tilt": True}, 0))
+        self.assertIsNone(risk_level("30"))
+        self.assertIsNone(relative_wetness_index("150", 100, 200))
+
 
 if __name__ == "__main__":
     unittest.main()

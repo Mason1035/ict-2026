@@ -7,6 +7,7 @@
 - NODE 采样侧向 Feature Engine 提供每路观测的 `boot_id`、单调 `uptime_ms`、可选可信 UTC、实际采样时刻、单位、传感器身份、validity/错误码、ODR/滤波/量程/校准版本。此处是**模块设计建议**，不是核心 Telemetry 新字段；原始记录及 CSV/侧表格式按 00 第 6、11 节。
 - IMU 加速度以 m/s²（含重力）、角速度以 °/s；土壤输入保留 ADS1115 原始码。探针未逐支标定时 `_pct` 为 `null`，不得叫体积含水率。`flow_lpm` 只在实验 CSV / rain 状态中，不加入核心 Telemetry。
 - Feature/Risk 以 20Hz 固定调度；窗口按真实毫秒时长，不按固定点数。只能读当前及过去观测；不跨 `boot_id`、重装、校准版本、ODR/坐标变更或未处理的缺口拼接。UTC 未同步时 `timestamp_ms=null`、`time_synced=false`，仍用单调时间做同一 boot 内运算；不伪造跨 boot 时序。
+- `candidate_features/causal_window.py` 是上述分段、时间倒退、过期和缺口的**参数化参考**。它只接收真实新增观测；调用者须显式传入窗口/最大缺口/最大年龄，不能直接把测试数字装进固件。
 - Soil/flow 低频采样只在新观测到达时写原始行。因果保持的最大允许年龄、异步双 IMU 对齐误差、窗口长度、滤波重置/预热、最少有效样本均 `TODO_CALIBRATION`。过期值必须失效，不能无限保持或当新采样。
 
 ## 2. 候选特征（数学实现见 `candidate_features/reference.py`）
@@ -16,7 +17,7 @@
 | 相对倾角变化（°） | `gravity_tilt_change_deg(current, reference)` | 同一安装坐标、静止重力基线和运动期有效性待 A/B 验证；不是山体位移 |
 | 倾角变化率（°/s） | `causal_slope_per_second` | 只用严格递增的历史毫秒时刻；窗口和缺口规则待标定 |
 | 动态振动 RMS（m/s²） | `dynamic_accel_rms_mps2` | 输入必须先有经验证的去重力动态加速度；高通/滤波参数尚未定 |
-| 逐探针相对湿润度指数 | `relative_wetness_index(raw,dry,wet)` | 干湿参考须逐支、逐校准版本；函数输出无量纲，原值越界不静默截断；用于 Telemetry `_pct` 的 0–100 映射/有效范围还须批准 |
+| 逐探针相对湿润度指数 | `relative_wetness_index(raw,dry,wet)` | 干湿参考须逐支、逐校准版本；函数返回 0–1 基准的**无量纲未裁剪比值**，乘 100 才是未裁剪相对指数百分点。原值越界不静默截断，必须同时保留原始码和超范围诊断；Telemetry `_pct` 的显示/有效范围须经校准批准，不是 VWC |
 | 有效探针均值/空间差 | `valid_probe_mean`、`spatial_probe_spread` | 仅在同尺度、同有效窗口下计算；可用路数显式返回 |
 | 双 IMU 相对差 | `dual_imu_tilt_difference_deg` | 对齐/一致性阈值待标定；不足双 IMU 不加共识奖励 |
 

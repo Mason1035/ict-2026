@@ -15,7 +15,7 @@ TimedValue = tuple[int, float]
 
 
 def _finite(*values: float) -> bool:
-    return all(math.isfinite(float(value)) for value in values)
+    return all(type(value) in (int, float) and math.isfinite(value) for value in values)
 
 
 def gravity_tilt_change_deg(current: Vector3 | None, reference: Vector3 | None) -> float | None:

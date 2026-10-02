@@ -14,7 +14,7 @@ HERE = Path(__file__).resolve().parent
 B_ROOT = HERE.parent
 REPO = HERE.parents[2]
 E_ROOT = REPO.parent
-DEFAULT_OUTPUT = E_ROOT / "队员A_B算法接口交接_2026-10-02.zip"
+DEFAULT_OUTPUT = E_ROOT / "队员A_B算法接口交接_v0.2_2026-10-02.zip"
 
 
 def sources() -> dict[str, Path]:
@@ -24,12 +24,15 @@ def sources() -> dict[str, Path]:
             "RISK_CONFIG_DRAFT_NOT_LOADABLE.json", "golden_vectors.TEST_ONLY.json", "run_vectors.py",
         )
     }
-    for name in ("__init__.py", "reference.py", "risk_math.py"):
+    for name in ("__init__.py", "reference.py", "risk_math.py", "causal_window.py",
+                 "test_reference.py", "test_causal_window.py"):
         mapping[f"candidate_features/{name}"] = B_ROOT / "candidate_features" / name
     for name in ("__init__.py", "check_experiment_csv.py", "README.md"):
         mapping[f"data_intake/{name}"] = B_ROOT / "data_intake" / name
     mapping["00_TEAM_SHARED_CONTRACT.pdf"] = REPO / "00_TEAM_SHARED_CONTRACT.pdf"
     mapping["01_硬件嵌入式与系统负责人开发文档.pdf"] = E_ROOT / "01_硬件嵌入式与系统负责人开发文档.pdf"
+    mapping["02_算法与数据负责人开发文档.pdf"] = REPO / "docs" / "reference" / "02_算法与数据负责人开发文档.pdf"
+    mapping["B_CODE_USAGE_AUDIT_2026-10-02.md"] = B_ROOT / "docs" / "B_CODE_USAGE_AUDIT_2026-10-02.md"
     return mapping
 
 

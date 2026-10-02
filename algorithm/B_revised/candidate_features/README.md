@@ -22,3 +22,5 @@ python -m unittest discover -s algorithm/B_revised/candidate_features -t algorit
 ```
 
 这些测试使用明确的数学样例；不是队员 A 的实测结果，也不是灾害预测验证。
+
+`causal_window.py` 另提供**显式配置**的因果观测缓冲参考：`segment_key` 由调用方组合 run/boot/传感器/坐标/ODR/校准版本，任一改变即清空；时间倒退、长观测缺口、有效数据长缺口与数据过期均单独标记。测试中的毫秒数只为验证边界，正式窗口长度、最大年龄/缺口和最小有效样本数仍为 `TODO_CALIBRATION`。只有物理新观测调用 `add()`，不能把 CSV 高频行里的前向填充值重复送入。
