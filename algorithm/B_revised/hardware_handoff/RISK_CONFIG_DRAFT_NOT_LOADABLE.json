@@ -1,0 +1,37 @@
+{
+  "document_status": "INTERFACE_DRAFT_DO_NOT_DEPLOY",
+  "loadable_on_device": false,
+  "authority": "00_TEAM_SHARED_CONTRACT.pdf section 5; B/A/C review required",
+  "frozen_math": {
+    "contribution_weights": {
+      "tilt": 0.30,
+      "vibration": 0.25,
+      "moisture": 0.25,
+      "growth": 0.20
+    },
+    "level_boundaries_float": [0, 30, 60, 80, 100],
+    "levels": ["NORMAL", "WATCH", "WARNING", "EMERGENCY"],
+    "dual_imu_bonus_candidate": 5
+  },
+  "todo_calibration": {
+    "filter_and_gravity_removal": null,
+    "window_lengths_ms": null,
+    "sampling_alignment_and_max_age_ms": null,
+    "minimum_valid_coverage": null,
+    "tilt_contribution_curve": null,
+    "vibration_contribution_curve": null,
+    "moisture_contribution_curve": null,
+    "growth_contribution_curve": null,
+    "dual_imu_abnormal_consensus_condition": null,
+    "degraded_scoring_policy": null,
+    "alarm_hysteresis_and_clear_policy": null
+  },
+  "tbd_interface_review": {
+    "risk_config_version": null,
+    "config_hash": null,
+    "calibration_version": null,
+    "reason_mask_bit_table": null,
+    "board_numeric_tolerance": null
+  },
+  "required_device_behavior": "Reject as operational risk config. Keep sensor_score, level and reason_mask null when no previously approved valid config exists; continue sampling and report uncalibrated fault."
+}

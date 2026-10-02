@@ -2,6 +2,12 @@
 
 只记录本次实际改动，不重写 B_original 或早期验证历史。
 
+## 2026-10-02：B→A 算法接口预交接
+
+- 根据共享契约和 A 负责人文档新增 `hardware_handoff/`：模块边界、时间/validity、候选数学、缺测/故障、评分外壳、不可加载的风险配置草案、18 个 TEST_ONLY 黄金向量与首批实验数据交接清单。
+- 新增可复现的向量运行器、测试和 ZIP 构建器；ZIP 同时包含两份权威 PDF、B 参考函数和 CSV 初检工具，并生成包内哈希清单。
+- 真实窗口、滤波、贡献曲线、`reason_mask`、滞回及板端数值容差仍待 A 数据与 A/B/C 会签；本包状态为 `INTERFACE_DRAFT_DO_NOT_DEPLOY`，未宣称正式 Risk 配置已冻结。
+
 ## 2026-09-28：划分预检与交接状态
 
 - 新增 `evaluation/split_preflight.py`、TEST_ONLY 计划样例和测试：检查 run/parent_run 跨分区、合成数据只能属于 Train 且必须有真实 Train 母 run、重复 run 和空计划；结果始终不宣称正式训练就绪。
