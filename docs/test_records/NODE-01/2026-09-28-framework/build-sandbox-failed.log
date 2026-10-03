@@ -1,0 +1,54 @@
+Executing action: all (aliases: build)
+Running cmake in directory C:\Users\LQY\Documents\GitHub\ict-2026\firmware\node01\build
+Executing "cmake -G Ninja -DPYTHON_DEPS_CHECKED=1 -DPYTHON=C:\Users\LQY\Documents\Codex\esp55\tools\python_env\idf5.5_py3.12_env\Scripts\python.exe -DESP_PLATFORM=1 -DCCACHE_ENABLE=1 C:\Users\LQY\Documents\GitHub\ict-2026\firmware\node01"...
+-- IDF_TARGET is not set, guessed 'esp32s3' from sdkconfig 'C:/Users/LQY/Documents/GitHub/ict-2026/firmware/node01/sdkconfig'
+-- Found Git: C:/Users/LQY/Documents/Codex/esp55/git/cmd/git.exe (found version "2.53.0.windows.3")
+-- Minimal build - OFF
+-- ccache will be used for faster recompilation
+-- The C compiler identification is unknown
+-- The CXX compiler identification is unknown
+-- The ASM compiler identification is unknown
+-- Found assembler: C:/Users/LQY/Documents/Codex/esp55/tools/tools/xtensa-esp-elf/esp-14.2.0_20251107/xtensa-esp-elf/bin/xtensa-esp32s3-elf-gcc.exe
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - failed
+-- Check for working C compiler: C:/Users/LQY/Documents/Codex/esp55/tools/tools/xtensa-esp-elf/esp-14.2.0_20251107/xtensa-esp-elf/bin/xtensa-esp32s3-elf-gcc.exe
+-- Check for working C compiler: C:/Users/LQY/Documents/Codex/esp55/tools/tools/xtensa-esp-elf/esp-14.2.0_20251107/xtensa-esp-elf/bin/xtensa-esp32s3-elf-gcc.exe - broken
+CMake Error at C:/Users/LQY/Documents/Codex/esp55/tools/tools/cmake/3.30.2/share/cmake-3.30/Modules/CMakeTestCCompiler.cmake:67 (message):
+  The C compiler
+
+    "C:/Users/LQY/Documents/Codex/esp55/tools/tools/xtensa-esp-elf/esp-14.2.0_20251107/xtensa-esp-elf/bin/xtensa-esp32s3-elf-gcc.exe"
+
+  is not able to compile a simple test program.
+
+  It fails with the following output:
+
+    Change Dir: 'C:/Users/LQY/Documents/GitHub/ict-2026/firmware/node01/build/CMakeFiles/CMakeScratch/TryCompile-tzsytk'
+    
+    Run Build Command(s): C:/Users/LQY/Documents/Codex/esp55/tools/tools/ninja/1.12.1/ninja.exe -v cmTC_34ced
+    [1/2] C:\Users\LQY\Documents\Codex\esp55\tools\tools\xtensa-esp-elf\esp-14.2.0_20251107\xtensa-esp-elf\bin\xtensa-esp32s3-elf-gcc.exe   -mlongcalls  -fno-builtin-memcpy -fno-builtin-memset -fno-builtin-bzero -fno-builtin-stpcpy -fno-builtin-strncpy -o CMakeFiles\cmTC_34ced.dir\testCCompiler.c.obj -c C:\Users\LQY\Documents\GitHub\ict-2026\firmware\node01\build\CMakeFiles\CMakeScratch\TryCompile-tzsytk\testCCompiler.c
+
+    FAILED: CMakeFiles/cmTC_34ced.dir/testCCompiler.c.obj 
+    C:\Users\LQY\Documents\Codex\esp55\tools\tools\xtensa-esp-elf\esp-14.2.0_20251107\xtensa-esp-elf\bin\xtensa-esp32s3-elf-gcc.exe   -mlongcalls  -fno-builtin-memcpy -fno-builtin-memset -fno-builtin-bzero -fno-builtin-stpcpy -fno-builtin-strncpy -o CMakeFiles\cmTC_34ced.dir\testCCompiler.c.obj -c C:\Users\LQY\Documents\GitHub\ict-2026\firmware\node01\build\CMakeFiles\CMakeScratch\TryCompile-tzsytk\testCCompiler.c
+    thread 'main' panicked at 'assertion failed: `(left != right)`
+
+      left: `0`,
+
+     right: `0`: Failed to get path name. Error code: 5', main.rs:54:9
+
+    note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+    ninja: build stopped: subcommand failed.
+
+    
+    
+
+  
+
+  CMake will not be able to correctly generate this project.
+Call Stack (most recent call first):
+  C:/Users/LQY/Documents/Codex/esp55/esp-idf-v5.5.3/tools/cmake/project.cmake:590 (__project)
+  CMakeLists.txt:8 (project)
+
+
+-- Configuring incomplete, errors occurred!
+cmake failed with exit code 1, output of the command is in the C:\Users\LQY\Documents\GitHub\ict-2026\firmware\node01\build\log\idf_py_stderr_output_36976 and C:\Users\LQY\Documents\GitHub\ict-2026\firmware\node01\build\log\idf_py_stdout_output_36976

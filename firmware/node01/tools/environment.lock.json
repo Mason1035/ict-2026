@@ -1,0 +1,15 @@
+{
+  "idf": "v5.5.3",
+  "commit": "2c211b236707889e8400c4dc5644dd5c4ee071e0",
+  "python": "3.12.14",
+  "git": "2.53.0.windows.3",
+  "xtensa": "esp-14.2.0_20251107",
+  "riscv": "esp-14.2.0_20251107",
+  "cmake": "3.30.2",
+  "ninja": "1.12.1",
+  "target": "esp32s3",
+  "cpp_standard": "C++17",
+  "configuration_source": "2026-09-27 esp32s3_env_test (historical verified baseline)",
+  "current_project_verification": "See docs/test_records/NODE-01/2026-09-28-framework; baseline PASS is not current-project PASS",
+  "serial_port_candidate": "COM7"
+}

@@ -1,0 +1,20 @@
+{
+  "app_cpp_translation_units": 5,
+  "cpp_standard": "C++17",
+  "build_log_warnings_or_errors": [],
+  "partition_matches_verified_baseline": true,
+  "artifacts": {
+    "build/zhishao_node01.bin": {
+      "bytes": 181632,
+      "sha256": "1bb7e286aa42d04cec8734224eecd9033cf3e81d9033b36790de2439632b179f"
+    },
+    "build/zhishao_node01.elf": {
+      "bytes": 3522316,
+      "sha256": "c8376ca2e37f94b86062b6a3326b29010f3cd5d6abae77f4d9d8285f712bd235"
+    },
+    "sdkconfig": {
+      "bytes": 48209,
+      "sha256": "15c4b8755f035ad03dfa8316a0844692d6365d496e66520f2d48043294371b6e"
+    }
+  }
+}

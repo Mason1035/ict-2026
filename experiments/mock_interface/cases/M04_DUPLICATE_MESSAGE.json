@@ -1,0 +1,389 @@
+{
+  "source": "MOCK",
+  "case_id": "M04_DUPLICATE_MESSAGE",
+  "purpose": "验证相同身份的重复抑制和不同 payload 冲突保留。",
+  "scenario": "按 messages 数组顺序提交三条：基准、完全重复、同身份改变 top_raw 的冲突。",
+  "messages": [
+    {
+      "source": "MOCK",
+      "sampling_snapshot": {
+        "imu": [
+          {
+            "acceleration_mps2": [
+              0.02,
+              -0.01,
+              9.8
+            ],
+            "angular_rate_dps": [
+              0,
+              0,
+              0
+            ],
+            "acquired_uptime_us": 2480000,
+            "validity": "Valid"
+          },
+          {
+            "acceleration_mps2": [
+              0,
+              0.01,
+              9.81
+            ],
+            "angular_rate_dps": [
+              0,
+              0,
+              0
+            ],
+            "acquired_uptime_us": 2481000,
+            "validity": "Valid"
+          }
+        ],
+        "soil": [
+          {
+            "raw": 12000,
+            "acquired_uptime_us": 2400000,
+            "validity": "Valid"
+          },
+          {
+            "raw": 13000,
+            "acquired_uptime_us": 2410000,
+            "validity": "Valid"
+          },
+          {
+            "raw": 14000,
+            "acquired_uptime_us": 2420000,
+            "validity": "Valid"
+          }
+        ]
+      },
+      "payload": {
+        "schema": "zhifang.telemetry.v2",
+        "site_id": "MOCK-SITE-01",
+        "device_id": "NODE-01",
+        "boot_id": 1,
+        "seq": 4,
+        "timestamp_ms": null,
+        "uptime_ms": 2500,
+        "time_synced": false,
+        "imu": [
+          {
+            "id": "top",
+            "ax": 0.02,
+            "ay": -0.01,
+            "az": 9.8,
+            "gx": 0,
+            "gy": 0,
+            "gz": 0,
+            "tilt_deg": null,
+            "tilt_rate_dps": null,
+            "vibration_rms": null,
+            "valid": true
+          },
+          {
+            "id": "toe",
+            "ax": 0,
+            "ay": 0.01,
+            "az": 9.81,
+            "gx": 0,
+            "gy": 0,
+            "gz": 0,
+            "tilt_deg": null,
+            "tilt_rate_dps": null,
+            "vibration_rms": null,
+            "valid": true
+          }
+        ],
+        "soil": {
+          "top_raw": 12000,
+          "middle_raw": 13000,
+          "toe_raw": 14000,
+          "top_pct": null,
+          "middle_pct": null,
+          "toe_pct": null,
+          "avg_pct": null,
+          "growth_pct_min": null
+        },
+        "experiment": {
+          "run_id": null,
+          "rain_level": null
+        },
+        "risk": {
+          "sensor_score": null,
+          "level": null,
+          "reason_mask": null
+        },
+        "system": {
+          "wifi_up": false,
+          "mqtt_up": false,
+          "lora_ready": false,
+          "sd_ok": false,
+          "edge_online": false,
+          "sensor_degraded": true
+        }
+      }
+    },
+    {
+      "source": "MOCK",
+      "sampling_snapshot": {
+        "imu": [
+          {
+            "acceleration_mps2": [
+              0.02,
+              -0.01,
+              9.8
+            ],
+            "angular_rate_dps": [
+              0,
+              0,
+              0
+            ],
+            "acquired_uptime_us": 2480000,
+            "validity": "Valid"
+          },
+          {
+            "acceleration_mps2": [
+              0,
+              0.01,
+              9.81
+            ],
+            "angular_rate_dps": [
+              0,
+              0,
+              0
+            ],
+            "acquired_uptime_us": 2481000,
+            "validity": "Valid"
+          }
+        ],
+        "soil": [
+          {
+            "raw": 12000,
+            "acquired_uptime_us": 2400000,
+            "validity": "Valid"
+          },
+          {
+            "raw": 13000,
+            "acquired_uptime_us": 2410000,
+            "validity": "Valid"
+          },
+          {
+            "raw": 14000,
+            "acquired_uptime_us": 2420000,
+            "validity": "Valid"
+          }
+        ]
+      },
+      "payload": {
+        "schema": "zhifang.telemetry.v2",
+        "site_id": "MOCK-SITE-01",
+        "device_id": "NODE-01",
+        "boot_id": 1,
+        "seq": 4,
+        "timestamp_ms": null,
+        "uptime_ms": 2500,
+        "time_synced": false,
+        "imu": [
+          {
+            "id": "top",
+            "ax": 0.02,
+            "ay": -0.01,
+            "az": 9.8,
+            "gx": 0,
+            "gy": 0,
+            "gz": 0,
+            "tilt_deg": null,
+            "tilt_rate_dps": null,
+            "vibration_rms": null,
+            "valid": true
+          },
+          {
+            "id": "toe",
+            "ax": 0,
+            "ay": 0.01,
+            "az": 9.81,
+            "gx": 0,
+            "gy": 0,
+            "gz": 0,
+            "tilt_deg": null,
+            "tilt_rate_dps": null,
+            "vibration_rms": null,
+            "valid": true
+          }
+        ],
+        "soil": {
+          "top_raw": 12000,
+          "middle_raw": 13000,
+          "toe_raw": 14000,
+          "top_pct": null,
+          "middle_pct": null,
+          "toe_pct": null,
+          "avg_pct": null,
+          "growth_pct_min": null
+        },
+        "experiment": {
+          "run_id": null,
+          "rain_level": null
+        },
+        "risk": {
+          "sensor_score": null,
+          "level": null,
+          "reason_mask": null
+        },
+        "system": {
+          "wifi_up": false,
+          "mqtt_up": false,
+          "lora_ready": false,
+          "sd_ok": false,
+          "edge_online": false,
+          "sensor_degraded": true
+        }
+      }
+    },
+    {
+      "source": "MOCK",
+      "sampling_snapshot": {
+        "imu": [
+          {
+            "acceleration_mps2": [
+              0.02,
+              -0.01,
+              9.8
+            ],
+            "angular_rate_dps": [
+              0,
+              0,
+              0
+            ],
+            "acquired_uptime_us": 2480000,
+            "validity": "Valid"
+          },
+          {
+            "acceleration_mps2": [
+              0,
+              0.01,
+              9.81
+            ],
+            "angular_rate_dps": [
+              0,
+              0,
+              0
+            ],
+            "acquired_uptime_us": 2481000,
+            "validity": "Valid"
+          }
+        ],
+        "soil": [
+          {
+            "raw": 12001,
+            "acquired_uptime_us": 2400000,
+            "validity": "Valid"
+          },
+          {
+            "raw": 13000,
+            "acquired_uptime_us": 2410000,
+            "validity": "Valid"
+          },
+          {
+            "raw": 14000,
+            "acquired_uptime_us": 2420000,
+            "validity": "Valid"
+          }
+        ]
+      },
+      "payload": {
+        "schema": "zhifang.telemetry.v2",
+        "site_id": "MOCK-SITE-01",
+        "device_id": "NODE-01",
+        "boot_id": 1,
+        "seq": 4,
+        "timestamp_ms": null,
+        "uptime_ms": 2500,
+        "time_synced": false,
+        "imu": [
+          {
+            "id": "top",
+            "ax": 0.02,
+            "ay": -0.01,
+            "az": 9.8,
+            "gx": 0,
+            "gy": 0,
+            "gz": 0,
+            "tilt_deg": null,
+            "tilt_rate_dps": null,
+            "vibration_rms": null,
+            "valid": true
+          },
+          {
+            "id": "toe",
+            "ax": 0,
+            "ay": 0.01,
+            "az": 9.81,
+            "gx": 0,
+            "gy": 0,
+            "gz": 0,
+            "tilt_deg": null,
+            "tilt_rate_dps": null,
+            "vibration_rms": null,
+            "valid": true
+          }
+        ],
+        "soil": {
+          "top_raw": 12001,
+          "middle_raw": 13000,
+          "toe_raw": 14000,
+          "top_pct": null,
+          "middle_pct": null,
+          "toe_pct": null,
+          "avg_pct": null,
+          "growth_pct_min": null
+        },
+        "experiment": {
+          "run_id": null,
+          "rain_level": null
+        },
+        "risk": {
+          "sensor_score": null,
+          "level": null,
+          "reason_mask": null
+        },
+        "system": {
+          "wifi_up": false,
+          "mqtt_up": false,
+          "lora_ready": false,
+          "sd_ok": false,
+          "edge_online": false,
+          "sensor_degraded": true
+        }
+      }
+    }
+  ],
+  "expected_behavior": {
+    "source_preserved": "MOCK",
+    "arrival_outcomes": [
+      "FIRST_MESSAGE",
+      "DUPLICATE_MESSAGE",
+      "MESSAGE_CONFLICT"
+    ],
+    "normal_processing_count": 1,
+    "duplicate_count": 1,
+    "conflict_count": 1,
+    "preserve_payloads_at_message_indices": [
+      0,
+      2
+    ],
+    "interface_gaps": [
+      "G08"
+    ],
+    "notes": [
+      "计数、索引和 outcome 仅是未来测试期望，不是已运行结果或核心字段。",
+      "比较 messages[].payload 完整解析对象；排除外层说明与快照。",
+      "冲突不能覆盖基准，不得再次进入正常 Feature/Risk，必须记录冲突事件。",
+      "第三条 payload 仅改 soil.top_raw；对应快照同步改变以保持映射一致。"
+    ]
+  },
+  "pass_criteria": [
+    "未来实测执行证据显示首次处理一次、重复计数一次、冲突计数一次。",
+    "第二/三条均未重复进入正常业务或 Feature/Risk。",
+    "完整保留第一次及冲突 payload 和关联事件，不能静默覆盖或伪造持久化。",
+    "去重/冲突存储未实现时记录未实现/阻塞，不填写实际 PASS。"
+  ]
+}

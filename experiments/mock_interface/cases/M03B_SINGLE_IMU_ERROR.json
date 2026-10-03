@@ -1,0 +1,150 @@
+{
+  "source": "MOCK",
+  "case_id": "M03B_SINGLE_IMU_ERROR",
+  "purpose": "验证单个 IMU 采集错误的无效值映射，保留 G02/G07/G09，不把单路无效解释为双 IMU 测量不一致。",
+  "scenario": "人工模拟 IMU_TOP Valid、IMU_TOE Error、三路 Soil Valid；TOE 数组为 C++ 非 optional 数组的零初始化占位，不是观测值。",
+  "messages": [
+    {
+      "source": "MOCK",
+      "sampling_snapshot": {
+        "imu": [
+          {
+            "acceleration_mps2": [
+              0.02,
+              -0.01,
+              9.8
+            ],
+            "angular_rate_dps": [
+              0,
+              0,
+              0
+            ],
+            "acquired_uptime_us": 2980000,
+            "validity": "Valid"
+          },
+          {
+            "acceleration_mps2": [
+              0,
+              0,
+              0
+            ],
+            "angular_rate_dps": [
+              0,
+              0,
+              0
+            ],
+            "acquired_uptime_us": null,
+            "validity": "Error"
+          }
+        ],
+        "soil": [
+          {
+            "raw": 12000,
+            "acquired_uptime_us": 2900000,
+            "validity": "Valid"
+          },
+          {
+            "raw": 13000,
+            "acquired_uptime_us": 2910000,
+            "validity": "Valid"
+          },
+          {
+            "raw": 14000,
+            "acquired_uptime_us": 2920000,
+            "validity": "Valid"
+          }
+        ]
+      },
+      "payload": {
+        "schema": "zhifang.telemetry.v2",
+        "site_id": "MOCK-SITE-01",
+        "device_id": "NODE-01",
+        "boot_id": 1,
+        "seq": 5,
+        "timestamp_ms": null,
+        "uptime_ms": 3000,
+        "time_synced": false,
+        "imu": [
+          {
+            "id": "top",
+            "ax": 0.02,
+            "ay": -0.01,
+            "az": 9.8,
+            "gx": 0,
+            "gy": 0,
+            "gz": 0,
+            "tilt_deg": null,
+            "tilt_rate_dps": null,
+            "vibration_rms": null,
+            "valid": true
+          },
+          {
+            "id": "toe",
+            "ax": null,
+            "ay": null,
+            "az": null,
+            "gx": null,
+            "gy": null,
+            "gz": null,
+            "tilt_deg": null,
+            "tilt_rate_dps": null,
+            "vibration_rms": null,
+            "valid": false
+          }
+        ],
+        "soil": {
+          "top_raw": 12000,
+          "middle_raw": 13000,
+          "toe_raw": 14000,
+          "top_pct": null,
+          "middle_pct": null,
+          "toe_pct": null,
+          "avg_pct": null,
+          "growth_pct_min": null
+        },
+        "experiment": {
+          "run_id": null,
+          "rain_level": null
+        },
+        "risk": {
+          "sensor_score": null,
+          "level": null,
+          "reason_mask": null
+        },
+        "system": {
+          "wifi_up": false,
+          "mqtt_up": false,
+          "lora_ready": false,
+          "sd_ok": false,
+          "edge_online": false,
+          "sensor_degraded": true
+        }
+      }
+    }
+  ],
+  "expected_behavior": {
+    "source_preserved": "MOCK",
+    "interface_gaps": [
+      "G02",
+      "G07",
+      "G09"
+    ],
+    "risk_output": {
+      "sensor_score": null,
+      "level": null,
+      "reason_mask": null
+    },
+    "notes": [
+      "TOE 快照 validity=Error、acquired_uptime_us=null；数组占位必须被 validity 门禁忽略，不能用来计算特征或 Risk。",
+      "正式 payload TOE valid=false，ax/ay/az/gx/gy/gz 及派生数值全 null；TOP 与三路 Soil 的有效数据保留。",
+      "bool valid 不能区分 Error/Unavailable，附带快照不关闭 G02；此为人工定义映射，G07 adapter 仍 NOT_IMPLEMENTED。",
+      "单 IMU Error 不是两枚 IMU 测量结果 disagreement；未来 dual IMU consensus 如存在，此时应为 unknown/unavailable 类语义，不能伪造 false。本 payload 不新增 consensus 字段。",
+      "当前 Risk 全 null；G09 / WAITING_RISK_POLICY：单 IMU Error 后，剩余有效输入是否允许评分、minimum valid inputs、degraded behavior 等由张鹏飞后续 Missing Policy / invalid-input policy 决定。这里只记录策略未定，不规定必须继续或停止评分，也不规定可信度降低幅度。"
+    ]
+  },
+  "pass_criteria": [
+    "未来执行证据确认 Error 快照可追溯、无效 TOE 占位未进入观测或计算，payload 对应值全 null 且 valid=false。",
+    "TOP 与 Soil 未因 TOE 无效而被清零；没有新增正式字段或把单 IMU 无效写成双 IMU disagreement。",
+    "G02/G07/G09 未解决时明确记录接口缺口或阻塞；无真实执行证据不得填写实际 PASS。"
+  ]
+}
