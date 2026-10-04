@@ -1,0 +1,434 @@
+{
+  "case_id": "M07_RISK_NOT_CALIBRATED",
+  "source": "MOCK",
+  "input_file": "C:\\Users\\LQY\\Documents\\GitHub\\ict-2026\\experiments\\mock_interface\\cases\\M07_RISK_NOT_CALIBRATED.json",
+  "input_sha256": "9ef567172db19ca1cf9fda00a176a2a470d347ff2f2bf21952a1220e4a0397b6",
+  "execution_time": "2026-10-04T02:40:21.641816+00:00",
+  "scope": "LOCAL_TEST_ONLY_MOCK_RUNNER",
+  "expected": {
+    "message_count": 1,
+    "accepted_message_count": 1,
+    "rejected_message_count": 0,
+    "risk_handoff_call_count": 1,
+    "edge_handoff_call_count": 1
+  },
+  "actual": {
+    "message_count": 1,
+    "accepted_message_count": 1,
+    "rejected_message_count": 0,
+    "risk_handoff_call_count": 1,
+    "edge_handoff_call_count": 1
+  },
+  "messages": [
+    {
+      "message_index": 0,
+      "source": "MOCK",
+      "original_message": {
+        "source": "MOCK",
+        "sampling_snapshot": {
+          "imu": [
+            {
+              "acceleration_mps2": [
+                0.02,
+                -0.01,
+                9.8
+              ],
+              "angular_rate_dps": [
+                0,
+                0,
+                0
+              ],
+              "acquired_uptime_us": 3980000,
+              "validity": "Valid"
+            },
+            {
+              "acceleration_mps2": [
+                0,
+                0.01,
+                9.81
+              ],
+              "angular_rate_dps": [
+                0,
+                0,
+                0
+              ],
+              "acquired_uptime_us": 3981000,
+              "validity": "Valid"
+            }
+          ],
+          "soil": [
+            {
+              "raw": 12000,
+              "acquired_uptime_us": 3900000,
+              "validity": "Valid"
+            },
+            {
+              "raw": 13000,
+              "acquired_uptime_us": 3910000,
+              "validity": "Valid"
+            },
+            {
+              "raw": 14000,
+              "acquired_uptime_us": 3920000,
+              "validity": "Valid"
+            }
+          ]
+        },
+        "payload": {
+          "schema": "zhifang.telemetry.v2",
+          "site_id": "MOCK-SITE-01",
+          "device_id": "NODE-01",
+          "boot_id": 1,
+          "seq": 7,
+          "timestamp_ms": null,
+          "uptime_ms": 4000,
+          "time_synced": false,
+          "imu": [
+            {
+              "id": "top",
+              "ax": 0.02,
+              "ay": -0.01,
+              "az": 9.8,
+              "gx": 0,
+              "gy": 0,
+              "gz": 0,
+              "tilt_deg": null,
+              "tilt_rate_dps": null,
+              "vibration_rms": null,
+              "valid": true
+            },
+            {
+              "id": "toe",
+              "ax": 0,
+              "ay": 0.01,
+              "az": 9.81,
+              "gx": 0,
+              "gy": 0,
+              "gz": 0,
+              "tilt_deg": null,
+              "tilt_rate_dps": null,
+              "vibration_rms": null,
+              "valid": true
+            }
+          ],
+          "soil": {
+            "top_raw": 12000,
+            "middle_raw": 13000,
+            "toe_raw": 14000,
+            "top_pct": null,
+            "middle_pct": null,
+            "toe_pct": null,
+            "avg_pct": null,
+            "growth_pct_min": null
+          },
+          "experiment": {
+            "run_id": null,
+            "rain_level": null
+          },
+          "risk": {
+            "sensor_score": null,
+            "level": null,
+            "reason_mask": null
+          },
+          "system": {
+            "wifi_up": false,
+            "mqtt_up": false,
+            "lora_ready": false,
+            "sd_ok": false,
+            "edge_online": false,
+            "sensor_degraded": true
+          }
+        }
+      },
+      "validator_result": {
+        "status": "ACCEPT",
+        "errors": [],
+        "scope": "TEST_ONLY / MOCK_ONLY / NOT_PRODUCTION_VALIDATOR"
+      },
+      "snapshot_check": {
+        "status": "PASS",
+        "errors": [],
+        "scope": "TEST_ONLY_MAPPING_NOT_PRODUCTION_VALIDITY"
+      },
+      "risk_handoff_result": {
+        "status": "ACCEPTED",
+        "scope": "TEST_ONLY_PROJECTION_NOT_FORMAL_RISK_INPUT",
+        "source": "MOCK",
+        "payload_sha256": "1a1c96003f2d9f4c2db4b226bc6ffa5808eaead29d39fb1a6dc92d3c5388371e",
+        "projection": {
+          "identity": {
+            "device_id": "NODE-01",
+            "boot_id": 1,
+            "seq": 7
+          },
+          "time": {
+            "uptime_ms": 4000,
+            "timestamp_ms": null,
+            "time_synced": false
+          },
+          "imu": [
+            {
+              "id": "top",
+              "ax": 0.02,
+              "ay": -0.01,
+              "az": 9.8,
+              "gx": 0,
+              "gy": 0,
+              "gz": 0,
+              "tilt_deg": null,
+              "tilt_rate_dps": null,
+              "vibration_rms": null,
+              "valid": true
+            },
+            {
+              "id": "toe",
+              "ax": 0,
+              "ay": 0.01,
+              "az": 9.81,
+              "gx": 0,
+              "gy": 0,
+              "gz": 0,
+              "tilt_deg": null,
+              "tilt_rate_dps": null,
+              "vibration_rms": null,
+              "valid": true
+            }
+          ],
+          "soil": {
+            "top_raw": 12000,
+            "middle_raw": 13000,
+            "toe_raw": 14000,
+            "top_pct": null,
+            "middle_pct": null,
+            "toe_pct": null,
+            "avg_pct": null,
+            "growth_pct_min": null
+          },
+          "risk": {
+            "sensor_score": null,
+            "level": null,
+            "reason_mask": null
+          },
+          "system": {
+            "wifi_up": false,
+            "mqtt_up": false,
+            "lora_ready": false,
+            "sd_ok": false,
+            "edge_online": false,
+            "sensor_degraded": true
+          }
+        },
+        "test_only_sidecar": {
+          "scope": "TEST_ONLY_NOT_PRODUCTION_INTERFACE",
+          "sampling_snapshot": {
+            "imu": [
+              {
+                "acceleration_mps2": [
+                  0.02,
+                  -0.01,
+                  9.8
+                ],
+                "angular_rate_dps": [
+                  0,
+                  0,
+                  0
+                ],
+                "acquired_uptime_us": 3980000,
+                "validity": "Valid"
+              },
+              {
+                "acceleration_mps2": [
+                  0,
+                  0.01,
+                  9.81
+                ],
+                "angular_rate_dps": [
+                  0,
+                  0,
+                  0
+                ],
+                "acquired_uptime_us": 3981000,
+                "validity": "Valid"
+              }
+            ],
+            "soil": [
+              {
+                "raw": 12000,
+                "acquired_uptime_us": 3900000,
+                "validity": "Valid"
+              },
+              {
+                "raw": 13000,
+                "acquired_uptime_us": 3910000,
+                "validity": "Valid"
+              },
+              {
+                "raw": 14000,
+                "acquired_uptime_us": 3920000,
+                "validity": "Valid"
+              }
+            ]
+          }
+        },
+        "risk_execution": {
+          "status": "BLOCKED",
+          "integration": "NOT_INTEGRATED",
+          "reason": "No reviewed v2 adapter/calibrated formal Risk entry integrated; no scoring performed."
+        },
+        "open_interface_gaps": [
+          "G01",
+          "G02",
+          "G03",
+          "G04",
+          "G05",
+          "G06",
+          "G07",
+          "G08",
+          "G09"
+        ]
+      },
+      "edge_handoff_result": {
+        "status": "ACCEPTED",
+        "scope": "TEST_ONLY / NOT_PRODUCTION_EDGE_INTAKE",
+        "source": "MOCK",
+        "payload_sha256": "1a1c96003f2d9f4c2db4b226bc6ffa5808eaead29d39fb1a6dc92d3c5388371e",
+        "payload": {
+          "schema": "zhifang.telemetry.v2",
+          "site_id": "MOCK-SITE-01",
+          "device_id": "NODE-01",
+          "boot_id": 1,
+          "seq": 7,
+          "timestamp_ms": null,
+          "uptime_ms": 4000,
+          "time_synced": false,
+          "imu": [
+            {
+              "id": "top",
+              "ax": 0.02,
+              "ay": -0.01,
+              "az": 9.8,
+              "gx": 0,
+              "gy": 0,
+              "gz": 0,
+              "tilt_deg": null,
+              "tilt_rate_dps": null,
+              "vibration_rms": null,
+              "valid": true
+            },
+            {
+              "id": "toe",
+              "ax": 0,
+              "ay": 0.01,
+              "az": 9.81,
+              "gx": 0,
+              "gy": 0,
+              "gz": 0,
+              "tilt_deg": null,
+              "tilt_rate_dps": null,
+              "vibration_rms": null,
+              "valid": true
+            }
+          ],
+          "soil": {
+            "top_raw": 12000,
+            "middle_raw": 13000,
+            "toe_raw": 14000,
+            "top_pct": null,
+            "middle_pct": null,
+            "toe_pct": null,
+            "avg_pct": null,
+            "growth_pct_min": null
+          },
+          "experiment": {
+            "run_id": null,
+            "rain_level": null
+          },
+          "risk": {
+            "sensor_score": null,
+            "level": null,
+            "reason_mask": null
+          },
+          "system": {
+            "wifi_up": false,
+            "mqtt_up": false,
+            "lora_ready": false,
+            "sd_ok": false,
+            "edge_online": false,
+            "sensor_degraded": true
+          }
+        },
+        "production_edge_intake": "NOT_IMPLEMENTED"
+      },
+      "risk_handoff_called": true,
+      "edge_handoff_called": true,
+      "same_payload_object": true,
+      "checks": {
+        "shared_payload_unchanged": true,
+        "same_payload_object": true,
+        "risk_projection_preserved": true,
+        "sidecar_preserved": true,
+        "edge_payload_preserved": true,
+        "consumer_hashes_match": true,
+        "mock_source_retained": true,
+        "risk_null_preserved": true,
+        "all_observations_valid_without_fabricated_risk": true,
+        "validator_accepted": true,
+        "snapshot_mapping_checked": true,
+        "both_handoffs_called": true
+      },
+      "source_check": "ACCEPT",
+      "expected": {
+        "validator": "ACCEPT",
+        "handoffs": "preserve inputs",
+        "risk": "null"
+      },
+      "local_status": "PASS"
+    }
+  ],
+  "overall_status": "LOCAL_RUNNER_PASS",
+  "validator_expectations": "VALIDATOR_PASS",
+  "handoff_expectations": "HANDOFF_PASS",
+  "formal_risk_execution": "BLOCKED / NOT_INTEGRATED",
+  "production_validator": "NOT_IMPLEMENTED",
+  "production_edge_intake": "NOT_IMPLEMENTED",
+  "three_person_integration": "BLOCKED / NOT_INTEGRATED",
+  "open_interface_gaps": [
+    "G01",
+    "G02",
+    "G03",
+    "G04",
+    "G05",
+    "G06",
+    "G07",
+    "G08",
+    "G09"
+  ],
+  "notes": [
+    "PASS labels cover only actually executed local checks; no formal Risk algorithm called.",
+    "M08 rejections are validator observations; fixture expected_behavior is not used as actual counts.",
+    "TEST_ONLY sidecar does not solve G02/G03/G04; no gap is closed.",
+    "Local Mock Runner success is not THREE_PERSON_INTEGRATION_PASS."
+  ],
+  "execution": {
+    "runner_version": "0.1.0",
+    "git_commit": "b77d1943e92d3bb5455294277dad418d718b990a",
+    "git_branch": "李青原",
+    "git_status_before_run": "?? experiments/mock_interface/runner/",
+    "runner_source_sha256": {
+      "edge_handoff.py": "5898c10a9dc345a86946ea09d2adf3c6d8b7ae651bda9a09cd07ca88288a02a7",
+      "mock_loader.py": "c70c6b4649f02fbef3f0414183f8f08ef6a278433555ccfa414313ff45c2eda2",
+      "mock_v2_validator.py": "f0c6ca2cc5feb607c92f398efacbdcd43e7f64d59c4db0ecd81247f2ea393064",
+      "README.md": "ea37b71a60e2ad6cfb8043344219de04204be2593190ed7ae6c93a815f324507",
+      "risk_handoff.py": "df2d9295c4adede546c610e11720e0f4b96f400d46fca238a19e053049ddef6f",
+      "run_mock_integration.py": "a7e78bfa20edaa17c41632c6a174d2b63b258f8c6fe334202140ce61c67f22d1",
+      "test_runner.py": "e53438301c79d1490b85bb8d0cf93eb5786da6b295efb641e14bd23380e0677f"
+    },
+    "python_version": "3.12.14",
+    "python_executable": "C:\\Users\\LQY\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe"
+  },
+  "invocation": [
+    "C:\\Users\\LQY\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+    "C:\\Users\\LQY\\Documents\\GitHub\\ict-2026\\experiments\\mock_interface\\runner\\run_mock_integration.py"
+  ],
+  "original_input_evidence": "inputs/M07_RISK_NOT_CALIBRATED.json"
+}
