@@ -15,7 +15,7 @@ import risk_handoff
 from mock_loader import SUPPORTED_CASES, check_snapshot, freeze, load_case, payload_hash
 from mock_v2_validator import validate
 
-RUNNER_VERSION = "0.1.0"
+RUNNER_VERSION = "0.2.0"
 ROOT = Path(__file__).resolve().parents[3]
 M08_ERRORS = (("payload.schema", "SCHEMA_NAME"), ("payload.boot_id", "TYPE"),
               ("payload.seq", "REQUIRED"), ("payload.soil.middle_raw", "TYPE"))
@@ -34,7 +34,7 @@ def _invoke(consumer, payload, context):
 
 
 def run_case(loaded, *, risk_consumer=risk_handoff.receive_validated,
-             edge_consumer=edge_handoff.receive_validated):
+             edge_consumer=edge_handoff.receive_validated, integration_mode="LOCAL_ONLY"):
     """Execute only the four supported cases; observations drive all actual counts."""
     document = loaded.document
     case_id = document["case_id"]
@@ -50,6 +50,10 @@ def run_case(loaded, *, risk_consumer=risk_handoff.receive_validated,
                "edge_handoff_result": {"status": "NOT_CALLED"},
                "risk_handoff_called": False, "edge_handoff_called": False,
                "same_payload_object": False, "checks": {}}
+        for direction in ("zhang", "he"):
+            row[direction + "_adapter_result"] = {
+                "adapter_status": "NOT_CALLED", "execution_status": "NOT_CALLED",
+                "reach_status": "NOT_CALLED", "real_code_called": False, "calls": []}
         source_ok = (document.get("source") == "MOCK" and isinstance(message, dict)
                      and message.get("source") == "MOCK")
         if not source_ok:
@@ -82,6 +86,16 @@ def run_case(loaded, *, risk_consumer=risk_handoff.receive_validated,
                 row["edge_handoff_result"] = _invoke(edge_consumer, edge_input, context)
                 risk = row["risk_handoff_result"]
                 edge = row["edge_handoff_result"]
+                if integration_mode == "TEAMMATE_BOUNDARY_V0.1":
+                    row["zhang_adapter_result"] = risk.get("teammate_integration", row["zhang_adapter_result"])
+                    row["he_adapter_result"] = edge.get("teammate_integration", row["he_adapter_result"])
+                    z, h = row["zhang_adapter_result"], row["he_adapter_result"]
+                    row["checks"]["teammate_boundary_evidence"] = (
+                        z.get("real_code_called") is True and z.get("adapter_status") == "REAL_CODE_REACHED"
+                        and z.get("execution_status") == "RISK_EXECUTION_BLOCKED"
+                        and h.get("real_code_called") is True and h.get("adapter_status") == "INTERFACE_MISMATCH"
+                        and h.get("execution_status") == "EDGE_INTAKE_NOT_IMPLEMENTED"
+                        and z.get("payload_sha256") == h.get("payload_sha256") == digest)
                 expected_projection = {
                     "identity": {k: payload[k] for k in ("device_id", "boot_id", "seq")},
                     "time": {k: payload[k] for k in ("uptime_ms", "timestamp_ms", "time_synced")},
@@ -126,6 +140,10 @@ def run_case(loaded, *, risk_consumer=risk_handoff.receive_validated,
                                   "snapshot_mapping_checked": row["snapshot_check"]["status"] == "PASS",
                                   "both_handoffs_called": row["risk_handoff_result"]["status"] != "NOT_CALLED"
                                   and row["edge_handoff_result"]["status"] != "NOT_CALLED"})
+        if negative and integration_mode == "TEAMMATE_BOUNDARY_V0.1":
+            row["checks"]["real_teammate_code_not_called"] = (
+                not row["zhang_adapter_result"]["real_code_called"]
+                and not row["he_adapter_result"]["real_code_called"])
         row["local_status"] = "PASS" if all(row["checks"].values()) else "FAIL"
         rows.append(row)
 
@@ -139,11 +157,17 @@ def run_case(loaded, *, risk_consumer=risk_handoff.receive_validated,
     expected = {"message_count": 4 if negative else 1, "accepted_message_count": 0 if negative else 1,
                 "rejected_message_count": 4 if negative else 0,
                 "risk_handoff_call_count": 0 if negative else 1, "edge_handoff_call_count": 0 if negative else 1}
+    if integration_mode == "TEAMMATE_BOUNDARY_V0.1":
+        for direction, expected_calls in (("zhang", 4), ("he", 1)):
+            key = direction + "_real_function_call_count"
+            actual[key] = sum(call["real_code_called"] for row in rows
+                              for call in row[direction + "_adapter_result"]["calls"])
+            expected[key] = 0 if negative else expected_calls
     passed = actual == expected and all(r["local_status"] == "PASS" for r in rows)
     return {
         "case_id": case_id, "source": "MOCK", "input_file": str(loaded.path),
         "input_sha256": loaded.input_sha256, "execution_time": now(),
-        "scope": "LOCAL_TEST_ONLY_MOCK_RUNNER", "expected": expected, "actual": actual,
+        "scope": "LOCAL_TEST_ONLY_MOCK_RUNNER", "integration_mode": integration_mode, "expected": expected, "actual": actual,
         "messages": rows, "overall_status": "LOCAL_RUNNER_PASS" if passed else "FAIL",
         "validator_expectations": "VALIDATOR_PASS" if all(
             r["checks"].get("rejected_for_expected_error", r["checks"].get("validator_accepted", False)) for r in rows
@@ -170,7 +194,7 @@ def version_evidence(root):
         except (OSError, subprocess.CalledProcessError):
             return "UNAVAILABLE"
     runner = Path(__file__).resolve().parent
-    files = sorted(list(runner.glob("*.py")) + list(runner.glob("*.md")))
+    files = sorted(list(runner.glob("*.py")) + list(runner.glob("*.md")) + list(runner.glob("*.json")))
     return {"runner_version": RUNNER_VERSION, "git_commit": git("rev-parse", "HEAD"),
             "git_branch": git("branch", "--show-current"), "git_status_before_run": git("status", "--porcelain"),
             "runner_source_sha256": {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in files},
@@ -187,11 +211,24 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--case", action="append", choices=SUPPORTED_CASES,
                         help="Repeat to select cases; default M01/M02/M07/M08 only")
+    parser.add_argument("--teammates", action="store_true",
+                        help="Reach pinned teammate source functions; preserve BLOCKED/mismatch, not full integration success")
     args = parser.parse_args(argv)
     selected = list(dict.fromkeys(args.case or SUPPORTED_CASES))
     evidence = version_evidence(ROOT)
+    integration_mode = "TEAMMATE_BOUNDARY_V0.1" if args.teammates else "LOCAL_ONLY"
+    consumers = {}
+    if args.teammates:
+        import zhang_adapter
+        import he_adapter
+        from teammate_source import source_spec
+        consumers = {"risk_consumer": zhang_adapter.receive_validated,
+                     "edge_consumer": he_adapter.receive_validated}
+        evidence["teammate_sources"] = {name: source_spec(name) for name in ("zhang", "he")}
+        evidence["teammate_version_policy"] = "Pinned Git objects; no fetch/merge; source SHA-256 and blob ID checked before import."
+
     directory = ROOT / "experiments/mock_interface/results" / (
-        "local_" + datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ") + "_" + uuid.uuid4().hex[:8])
+        ("teammate_" if args.teammates else "local_") + datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ") + "_" + uuid.uuid4().hex[:8])
     directory.mkdir(parents=True, exist_ok=False)
     (directory / "inputs").mkdir()
     records = []
@@ -205,12 +242,13 @@ def main(argv=None):
             loaded = load_case(path)
             if loaded.input_bytes != raw:
                 raise ValueError("Input changed during loading")
-            report = run_case(loaded)
+            report = run_case(loaded, integration_mode=integration_mode, **consumers)
         except Exception as exc:
             report = {"case_id": case_id, "input_file": str(path),
                       "input_sha256": hashlib.sha256(raw).hexdigest(), "execution_time": now(),
                       "overall_status": "FAIL", "error": type(exc).__name__ + ": " + str(exc),
                       "three_person_integration": "BLOCKED / NOT_INTEGRATED"}
+        report["integration_mode"] = integration_mode
         report["execution"] = evidence
         report["invocation"] = [sys.executable, str(Path(__file__).resolve()), *sys.argv[1:]]
         report["original_input_evidence"] = "inputs/" + path.name
@@ -219,7 +257,7 @@ def main(argv=None):
                         "actual": report.get("actual"), "report": case_id + ".result.json"})
     passed = all(r["overall_status"] == "LOCAL_RUNNER_PASS" for r in records)
     summary = {"scope": "TEST_ONLY / MOCK_ONLY", "execution_time": now(), "execution": evidence,
-               "cases": records, "overall_status": "LOCAL_RUNNER_PASS" if passed else "FAIL",
+               "integration_mode": integration_mode, "cases": records, "overall_status": "LOCAL_RUNNER_PASS" if passed else "FAIL",
                "three_person_integration": "BLOCKED / NOT_INTEGRATED",
                "notes": "本轮 Local Mock Runner 的通过不等于完整三人 Mock Integration PASS。"}
     write_json(directory / "summary.json", summary)

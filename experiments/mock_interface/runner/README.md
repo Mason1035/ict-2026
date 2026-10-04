@@ -72,3 +72,7 @@ Runner 未提交时，Git commit 不能单独代表实现版本，因此同时�
 何宇轩：以 `mock_v2_validator.validate(payload)` 的返回边界接入自己实现/审核的 v2 校验器，并在 `edge_handoff.receive_validated(payload, *, context)` 接入自己的 Edge 接收层。训练契约 `validate_contract()` / `validate_handoff()` 不适用于这些 Telemetry 消息，不能直接替换。
 
 两人真实代码接入后，再以同一输入 hash 和版本证据执行联调并记录状态；本 Runner 不自动将状态升级为三人联调通过。
+
+## 队友真实代码边界接入 V0.1
+
+Runner 实现版本 0.2.0 新增可选 `--teammates` 模式；不带参数仍是上述 Local 工作流。固定 commit、原始源码加载、实际函数调用及阻塞语义见 [TEAMMATE_INTEGRATION.md](TEAMMATE_INTEGRATION.md)。该模式不把训练契约校验当 Telemetry Validator，不把 RealAdapter 的阻塞异常当 Edge 接收成功。
