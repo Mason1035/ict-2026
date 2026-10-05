@@ -2,6 +2,12 @@
 
 只记录本次实际改动，不重写 B_original 或早期验证历史。
 
+## 2026-10-05：Telemetry v2 → Feature/Risk 最小正式入口
+
+- 新增 `telemetry_v2_intake.evaluate_telemetry_v2(payload, *, context=None)`：消费上游已通过验证的 v2 消息，保留三元身份和原始 time/IMU/Soil/system 投影，真实调用现有 B 候选函数，不改写原 payload 或发明风险值。
+- 显式标记 M02 的 `null` 原因未知、原始码存在时 validity 仍未决；TEST_ONLY `sampling_snapshot` 不参与计算。无校准/窗口/贡献映射/Missing Policy 时返回 `RISK_EXECUTION_BLOCKED` 并保留原 risk。
+- 新增四项入口单测和只读跨分支 Mock 兼容脚本：读取 A 分支的现有 fixture/TEST_ONLY Validator，不复制到本分支；M01/M02/M07 调用入口，M08 在 Validator 拒绝后为零调用。该结果不是正式 Risk 或三人集成 PASS。
+
 ## 2026-10-02：用途审计与 A 接口 v0.2
 
 - 新增 `docs/B_CODE_USAGE_AUDIT_2026-10-02.md`，逐项区分正式候选数学、手动初检、规则蒸馏 TEST_ONLY 与旧七字段演示；明确 A 可设计模块边界，但不能用未标定参数发布正式 Risk。

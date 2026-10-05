@@ -22,6 +22,7 @@
 - 发给 A 的首轮实验与交接方案见 [`docs/B_EXPERIMENT_PLAN.md`](docs/B_EXPERIMENT_PLAN.md)。
 - 给 A 设计固件 Feature/Risk 接口的预交接包见 [`hardware_handoff/README_给队员A.md`](hardware_handoff/README_给队员A.md)，包含待会签的模块边界、不可加载的配置草案、TEST_ONLY 黄金向量与 A→B 原始数据清单。
 - 既有代码是否真正进入正式链路、A 目前能设计到哪一步及阻塞材料见 [`docs/B_CODE_USAGE_AUDIT_2026-10-02.md`](docs/B_CODE_USAGE_AUDIT_2026-10-02.md)。
+- 新增由 B 维护的 [`telemetry_v2_intake/README.md`](telemetry_v2_intake/README.md)：消费上游已校验的 `zhifang.telemetry.v2`，显式映射并调用真实候选函数；未标定时保持原 Risk 字段并返回 `RISK_EXECUTION_BLOCKED`。这替代 A 联调 Adapter 对独立函数的猜测调用，不是正式评分或第二套 Schema Validator。
 - 先阅读 [`docs/HANDOFF_TO_C.md`](docs/HANDOFF_TO_C.md)。
 - 程序读取 [`contracts/B_RULE_DISTILLATION_CONTRACT.json`](contracts/B_RULE_DISTILLATION_CONTRACT.json)
   进行 TEST_ONLY 接口联调；读取
