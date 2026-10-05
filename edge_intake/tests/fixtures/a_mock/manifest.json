@@ -1,0 +1,33 @@
+{
+  "scope": "TEST_ONLY / MOCK_ONLY / NOT_REAL_DATA / NOT_PROJECT_TRAINING_DATA / NOT_PRODUCTION_VALIDATOR",
+  "source_repository": "https://github.com/Mason1035/ict-2026",
+  "source_branch": "李青原",
+  "source_commit": "25c55ca0ab2e9d0f18e3640833a575102f7e48c6",
+  "copy_policy": "Exact byte snapshots; upstream schema expectations are not promoted to a production Validator.",
+  "files": {
+    "cases/M01_NORMAL.json": {
+      "source_path": "experiments/mock_interface/cases/M01_NORMAL.json",
+      "sha256": "2ff9215cfe0f1f33df77e510b275c7eb7f621e04a987ffda966426850762121a"
+    },
+    "cases/M02_MISSING_SENSOR.json": {
+      "source_path": "experiments/mock_interface/cases/M02_MISSING_SENSOR.json",
+      "sha256": "9c526998df496902bcbe0c69bac92f9c6469b7d499e0f13ab7ae0630d2af756c"
+    },
+    "cases/M07_RISK_NOT_CALIBRATED.json": {
+      "source_path": "experiments/mock_interface/cases/M07_RISK_NOT_CALIBRATED.json",
+      "sha256": "9ef567172db19ca1cf9fda00a176a2a470d347ff2f2bf21952a1220e4a0397b6"
+    },
+    "cases/M08_INVALID_SCHEMA.json": {
+      "source_path": "experiments/mock_interface/cases/M08_INVALID_SCHEMA.json",
+      "sha256": "6a0d6d3cefb2d9adab8dcabea47a96e742f25f849858c876d05989be2ada81a1"
+    },
+    "runner/mock_loader.py": {
+      "source_path": "experiments/mock_interface/runner/mock_loader.py",
+      "sha256": "c70c6b4649f02fbef3f0414183f8f08ef6a278433555ccfa414313ff45c2eda2"
+    },
+    "runner/mock_v2_validator.py": {
+      "source_path": "experiments/mock_interface/runner/mock_v2_validator.py",
+      "sha256": "f0c6ca2cc5feb607c92f398efacbdcd43e7f64d59c4db0ecd81247f2ea393064"
+    }
+  }
+}

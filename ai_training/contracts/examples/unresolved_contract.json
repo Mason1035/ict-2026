@@ -1,0 +1,23 @@
+{
+  "schema_version": "ai_training.contract-envelope.v0.1",
+  "contract_version": null,
+  "status": "WAITING_FOR_B",
+  "declarations": [],
+  "approved_by": null,
+  "feature_version": null,
+  "ordered_features": null,
+  "feature_units": null,
+  "feature_sources": null,
+  "feature_lookahead_s": null,
+  "dtype": null,
+  "mask_semantics": null,
+  "coordinate_semantics": null,
+  "sampling_alignment": null,
+  "window": null,
+  "label": null,
+  "split_manifest": null,
+  "normalization": null,
+  "metrics": null,
+  "synthetic_constraints": null,
+  "nonfinite_policy": null
+}

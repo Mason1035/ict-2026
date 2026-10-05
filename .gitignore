@@ -1,0 +1,7 @@
+# Local development environment and generated verification artifacts.
+work/
+outputs/
+.pytest_cache/
+__pycache__/
+*.py[cod]
+**/.DS_Store
