@@ -1,0 +1,234 @@
+{
+  "scope": "TEST_ONLY / MOCK_ONLY",
+  "execution_time": "2026-10-05T14:56:09.929289+00:00",
+  "execution": {
+    "runner_version": "0.3.0",
+    "git_commit": "25c55ca0ab2e9d0f18e3640833a575102f7e48c6",
+    "git_branch": "李青原",
+    "git_status_before_run": "M experiments/mock_interface/runner/README.md\n M experiments/mock_interface/runner/TEAMMATE_INTEGRATION.md\n M experiments/mock_interface/runner/he_adapter.py\n M experiments/mock_interface/runner/run_mock_integration.py\n M experiments/mock_interface/runner/teammate_source.py\n M experiments/mock_interface/runner/teammate_sources.json\n M experiments/mock_interface/runner/test_teammate_integration.py\n M experiments/mock_interface/runner/zhang_adapter.py\n?? experiments/mock_interface/results/teammate_20261005T063351Z_0978884d/",
+    "runner_source_sha256": {
+      "edge_handoff.py": "5898c10a9dc345a86946ea09d2adf3c6d8b7ae651bda9a09cd07ca88288a02a7",
+      "he_adapter.py": "1a721a14397ebd267372687f520496961a6a2162adcb96fc1ca0af2f045ef0a5",
+      "mock_loader.py": "c70c6b4649f02fbef3f0414183f8f08ef6a278433555ccfa414313ff45c2eda2",
+      "mock_v2_validator.py": "f0c6ca2cc5feb607c92f398efacbdcd43e7f64d59c4db0ecd81247f2ea393064",
+      "README.md": "d08ec37e7627de48a327a2265fe4b88a06f001396fc4deb9bc05a28af326ba57",
+      "risk_handoff.py": "df2d9295c4adede546c610e11720e0f4b96f400d46fca238a19e053049ddef6f",
+      "run_mock_integration.py": "fea91e1f1ba65da2c88c1ce8eca93e617f8040673b011ea4032e7a427daa48c3",
+      "TEAMMATE_INTEGRATION.md": "389c31b97fe854ab441985dcf7739b874b9e4ccb11becd6fce34d21777172af8",
+      "teammate_source.py": "32d00dae578dbc274acb05c7d4b7538e3c15f6157dbcb63ee904cf720c166e18",
+      "teammate_sources.json": "9c8c70af338961c9f8bbf33a3a95d91226b51562329ecc3318d3b1519e90499c",
+      "test_runner.py": "e53438301c79d1490b85bb8d0cf93eb5786da6b295efb641e14bd23380e0677f",
+      "test_teammate_integration.py": "4a9e1f6cd6bae920de905d5480df15cb2bce3a8806b8a09dae29843f985be961",
+      "zhang_adapter.py": "f4e845199540ca6d6e0c73e451c3d5b87fcbb30b8824b1cf69e955dda7061f91"
+    },
+    "python_version": "3.12.14",
+    "python_executable": "C:\\Users\\LQY\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+    "teammate_sources": {
+      "zhang": {
+        "integration_target": "张鹏飞",
+        "source_branch": "origin/张鹏飞",
+        "source_commit": "568e229aa1d2534ea42a9f5812cdc7d9fa786cbf",
+        "modules": [
+          {
+            "name": "candidate_features",
+            "path": "algorithm/B_revised/candidate_features/__init__.py",
+            "package": true,
+            "sha256": "f8d37fa13ad1fb7c4bcd6e81bb922323f199c5e177307260bdfced9a0f3c1a31",
+            "git_blob": "cb7ad13eedf63db48b012c427d25406f80af85f7"
+          },
+          {
+            "name": "candidate_features.reference",
+            "path": "algorithm/B_revised/candidate_features/reference.py",
+            "package": false,
+            "sha256": "cf7a707c11f429e01f734eaa0dcf4cf04fa7edcb095e28e9bb44fbdc01871022",
+            "git_blob": "72f0eb1201504ef95cfb535c641ed3dee8ff4bd4"
+          },
+          {
+            "name": "telemetry_v2_intake.entry",
+            "path": "algorithm/B_revised/telemetry_v2_intake/entry.py",
+            "package": false,
+            "sha256": "a1d581dd1d6110907dcc2dc5d22eac95582ebcdc21ef4c6c9f03b1c3ca1a96fe",
+            "git_blob": "a1846a19f205244ba3bc4b50b922c79352b517c5"
+          },
+          {
+            "name": "telemetry_v2_intake",
+            "path": "algorithm/B_revised/telemetry_v2_intake/__init__.py",
+            "package": true,
+            "sha256": "ac314596682e468f4278b9421ef91ed93655ad5438a85cc33842c89e44b057e8",
+            "git_blob": "25e2f015fff5509c66600649c932bc563c449057"
+          }
+        ]
+      },
+      "he": {
+        "integration_target": "何宇轩",
+        "source_branch": "origin/何宇轩",
+        "source_commit": "7ada9fb084cc40975a2ef8bba6387635c54ce240",
+        "modules": [
+          {
+            "name": "edge_intake.intake",
+            "path": "edge_intake/intake.py",
+            "package": false,
+            "sha256": "09d9d604e11d6a5b4bdc514dfcc5c8be57311887993c68d196bc9fe489e13f35",
+            "git_blob": "82adb51e151f963bb1233d6840872e1fd70f9017"
+          },
+          {
+            "name": "edge_intake",
+            "path": "edge_intake/__init__.py",
+            "package": true,
+            "sha256": "f62ff1c249221c3bd72b87682fdd586acbb045722ae41c9238d2b16f1d98c3b4",
+            "git_blob": "18b0f4c89a7ce5e07a977af2acc90f9697f842d1"
+          }
+        ]
+      }
+    },
+    "repository_refs_at_review": {
+      "HEAD": "25c55ca0ab2e9d0f18e3640833a575102f7e48c6",
+      "origin/李青原": "25c55ca0ab2e9d0f18e3640833a575102f7e48c6",
+      "origin/张鹏飞": "568e229aa1d2534ea42a9f5812cdc7d9fa786cbf",
+      "origin/何宇轩": "7ada9fb084cc40975a2ef8bba6387635c54ce240",
+      "origin/main": "ed4449670a81629b917e8cd177f6a836b0be1b5b"
+    },
+    "remote_refresh": {
+      "status": "BLOCKED_AUTH",
+      "checked_at_utc": "2026-10-05T14:55:13.011068+00:00",
+      "remote_source_verified": false,
+      "detail": "Non-interactive fetch failed with SEC_E_NO_CREDENTIALS. Continue with existing pinned local Git objects; GitHub latest is not verified.",
+      "attempt": {
+        "command": [
+          "git",
+          "-c",
+          "safe.directory=C:/Users/LQY/Documents/GitHub/ict-2026",
+          "-c",
+          "credential.interactive=false",
+          "-C",
+          "C:\\Users\\LQY\\Documents\\GitHub\\ict-2026",
+          "fetch",
+          "origin"
+        ],
+        "exit_code": 128,
+        "stdout": "",
+        "stderr": "fatal: unable to access 'https://github.com/Mason1035/ict-2026.git/': schannel: AcquireCredentialsHandle failed: SEC_E_NO_CREDENTIALS (0x8009030e) - 安全包中没有可用的凭证\n",
+        "timed_out": false,
+        "elapsed_seconds": 1.984
+      },
+      "pinned_matches_local_tracking_refs": {
+        "zhang": true,
+        "he": true
+      }
+    },
+    "teammate_version_policy": "Pinned Git objects; no fetch/merge; source SHA-256 and blob ID checked before import."
+  },
+  "integration_mode": "TEAMMATE_INTAKE_V0.2",
+  "cases": [
+    {
+      "case_id": "M01_NORMAL",
+      "overall_status": "LOCAL_RUNNER_PASS",
+      "telemetry_boundary_expectations": "MET",
+      "teammate_edge_intake": [
+        "EDGE_INTAKE_ACCEPTED"
+      ],
+      "formal_risk_execution": [
+        "RISK_EXECUTION_BLOCKED"
+      ],
+      "teammate_downstream": [
+        "DOWNSTREAM_NOT_IMPLEMENTED"
+      ],
+      "actual": {
+        "message_count": 1,
+        "accepted_message_count": 1,
+        "rejected_message_count": 0,
+        "risk_handoff_call_count": 1,
+        "edge_handoff_call_count": 1,
+        "zhang_real_function_call_count": 1,
+        "he_real_function_call_count": 1
+      },
+      "report": "M01_NORMAL.result.json"
+    },
+    {
+      "case_id": "M02_MISSING_SENSOR",
+      "overall_status": "LOCAL_RUNNER_PASS",
+      "telemetry_boundary_expectations": "MET",
+      "teammate_edge_intake": [
+        "EDGE_INTAKE_ACCEPTED"
+      ],
+      "formal_risk_execution": [
+        "RISK_EXECUTION_BLOCKED"
+      ],
+      "teammate_downstream": [
+        "DOWNSTREAM_NOT_IMPLEMENTED"
+      ],
+      "actual": {
+        "message_count": 1,
+        "accepted_message_count": 1,
+        "rejected_message_count": 0,
+        "risk_handoff_call_count": 1,
+        "edge_handoff_call_count": 1,
+        "zhang_real_function_call_count": 1,
+        "he_real_function_call_count": 1
+      },
+      "report": "M02_MISSING_SENSOR.result.json"
+    },
+    {
+      "case_id": "M07_RISK_NOT_CALIBRATED",
+      "overall_status": "LOCAL_RUNNER_PASS",
+      "telemetry_boundary_expectations": "MET",
+      "teammate_edge_intake": [
+        "EDGE_INTAKE_ACCEPTED"
+      ],
+      "formal_risk_execution": [
+        "RISK_EXECUTION_BLOCKED"
+      ],
+      "teammate_downstream": [
+        "DOWNSTREAM_NOT_IMPLEMENTED"
+      ],
+      "actual": {
+        "message_count": 1,
+        "accepted_message_count": 1,
+        "rejected_message_count": 0,
+        "risk_handoff_call_count": 1,
+        "edge_handoff_call_count": 1,
+        "zhang_real_function_call_count": 1,
+        "he_real_function_call_count": 1
+      },
+      "report": "M07_RISK_NOT_CALIBRATED.result.json"
+    },
+    {
+      "case_id": "M08_INVALID_SCHEMA",
+      "overall_status": "LOCAL_RUNNER_PASS",
+      "telemetry_boundary_expectations": "MET",
+      "teammate_edge_intake": [
+        "NOT_CALLED"
+      ],
+      "formal_risk_execution": [
+        "NOT_CALLED"
+      ],
+      "teammate_downstream": [
+        "NOT_CALLED"
+      ],
+      "actual": {
+        "message_count": 4,
+        "accepted_message_count": 0,
+        "rejected_message_count": 4,
+        "risk_handoff_call_count": 0,
+        "edge_handoff_call_count": 0,
+        "zhang_real_function_call_count": 0,
+        "he_real_function_call_count": 0
+      },
+      "report": "M08_INVALID_SCHEMA.result.json"
+    }
+  ],
+  "overall_status": "LOCAL_RUNNER_PASS",
+  "three_person_integration": "NOT_DECLARED",
+  "open_interface_gaps": [
+    "G01",
+    "G02",
+    "G03",
+    "G04",
+    "G05",
+    "G06",
+    "G07",
+    "G08",
+    "G09"
+  ],
+  "notes": "本轮 Local Mock Runner 的通过不等于完整三人 Mock Integration PASS。"
+}

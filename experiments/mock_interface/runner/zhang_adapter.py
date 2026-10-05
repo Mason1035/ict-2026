@@ -1,47 +1,50 @@
-"""TEST_ONLY / INTEGRATION_ADAPTER, no replacement Feature/Risk implementation."""
+"""TEST_ONLY adapter to Zhang Pengfei's pinned Telemetry v2 entry; no algorithm implementation."""
 
 import risk_handoff
+from mock_loader import plain
 from teammate_source import initial_result, invoke_real, target_modules
 
 
 def receive_validated(payload, *, context):
-    # Retain the existing local preservation checks, distinctly from real calls.
     handoff = risk_handoff.receive_validated(payload, context=context)
     result = initial_result("zhang", handoff["payload_sha256"])
-    result.update(
-        execution_status="RISK_EXECUTION_BLOCKED", formal_risk_executed=False,
-        risk_score_produced=False, risk_fields_preserved=handoff["projection"]["risk"],
-        blocked_reason=["No reviewed per-probe dry/wet calibration; pass None, never guessed constants.",
-                        "No calibrated tilt/baseline, dynamic-acceleration/window or contribution mapping.",
-                        "No integrated formal Missing Policy / invalid-input policy or reason_mask table."],
-        boundary_scope="REAL_CANDIDATE_FUNCTIONS_WITH_MISSING_PARAMETERS_NOT_FORMAL_SCORING",
-    )
+    result.update(telemetry_accepted_by_teammate=False, formal_risk_executed=False,
+                  risk_score_produced=False, boundary_scope="VALIDATED_TELEMETRY_V2_INTAKE")
     try:
         with target_modules("zhang") as modules:
-            reference = modules["candidate_features.reference"]
-            for site in ("top", "middle", "toe"):
-                call = invoke_real("zhang", reference.__name__, reference.relative_wetness_index,
-                                   payload["soil"][site + "_raw"], None, None)
-                call["channel"] = site
-                call["parameter_source"] = "raw from unchanged v2; dry_raw/wet_raw unavailable (None)"
-                result["calls"].append(call)
-            # Existing derived tilt fields are unknown in these cases; preserve None.
-            call = invoke_real("zhang", reference.__name__, reference.dual_imu_tilt_difference_deg,
-                               payload["imu"][0]["tilt_deg"], payload["imu"][1]["tilt_deg"])
-            call["parameter_source"] = "existing v2 tilt_deg fields; no baseline, filter or angle invented"
+            entry = modules["telemetry_v2_intake.entry"]
+            call = invoke_real("zhang", entry.__name__, entry.evaluate_telemetry_v2,
+                               payload, context=context)
             result["calls"].append(call)
-        calls = result["calls"]
-        result["real_code_called"] = any(c["real_code_called"] for c in calls)
-        result["reach_status"] = "REAL_CODE_REACHED" if result["real_code_called"] else "NOT_CALLED"
-        # These pinned functions explicitly return None when required inputs are absent.
-        expected = len(calls) == 4 and all(c["real_code_called"] and c["call_status"] == "RETURNED"
-                                         and c.get("returned") is None for c in calls)
-        result["adapter_status"] = "REAL_CODE_REACHED" if expected else "FAIL"
-        if not expected:
-            result["execution_status"] = "FAIL"
+        result.update(real_code_called=call["real_code_called"], reach_status=call["reach_status"])
+        returned = call.get("returned")
+        returned = returned if isinstance(returned, dict) else {}
+        original = plain(payload)
+        expected_observations = {
+            "time": {k: original[k] for k in ("timestamp_ms", "uptime_ms", "time_synced")},
+            "imu": {position: {k: v for k, v in imu.items() if k != "id"}
+                    for position, imu in zip(("top", "toe"), original["imu"])},
+            **{k: original[k] for k in ("soil", "system", "experiment")},
+        }
+        # Acceptance is established from a real returned receipt plus unchanged
+        # identity/observations/risk, not from the local handoff's ACCEPTED label.
+        checks = {
+            "entry_returned": call["real_code_called"] and call["call_status"] == "RETURNED",
+            "entry_status": returned.get("status") == "REAL_CODE_REACHED",
+            "identity_preserved": returned.get("identity") == {k: original[k] for k in ("site_id", "device_id", "boot_id", "seq")},
+            "observations_preserved": returned.get("observations") == expected_observations,
+            "risk_preserved": returned.get("risk") == original["risk"],
+            "risk_remains_blocked": returned.get("risk_execution") == "RISK_EXECUTION_BLOCKED",
+            "sidecar_not_used_for_computation": returned.get("context_used_for_computation") is False,
+        }
+        accepted = all(checks.values())
+        result.update(receipt_checks=checks, telemetry_accepted_by_teammate=accepted,
+                      adapter_status="TELEMETRY_ACCEPTED" if accepted else "FAIL",
+                      execution_status=returned.get("risk_execution", "FAIL") if accepted else "FAIL",
+                      feature_status=returned.get("feature_status", "UNKNOWN"),
+                      blocked_reason=returned.get("blocked_reason", []),
+                      risk_fields_preserved=returned.get("risk"))
     except Exception as exc:
         result.update(adapter_status="BLOCKED", blocked_error=type(exc).__name__ + ": " + str(exc))
-        result["real_code_called"] = any(c["real_code_called"] for c in result["calls"])
-        result["reach_status"] = "REAL_CODE_REACHED" if result["real_code_called"] else "NOT_CALLED"
     handoff["teammate_integration"] = result
     return handoff

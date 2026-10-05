@@ -1,0 +1,25 @@
+{
+  "scope": "TEAMMATE_SOURCE_PROVENANCE_ONLY",
+  "verification_status": "REMOTE_SOURCE_VERIFIED",
+  "method": "GitHub Desktop Fetch origin, followed by read-only local ref and pin comparison",
+  "branch": "李青原",
+  "head": "25c55ca0ab2e9d0f18e3640833a575102f7e48c6",
+  "sources": {
+    "zhang": {
+      "remote_ref": "origin/张鹏飞",
+      "remote_commit": "568e229aa1d2534ea42a9f5812cdc7d9fa786cbf",
+      "pinned_commit": "568e229aa1d2534ea42a9f5812cdc7d9fa786cbf",
+      "status": "REMOTE_SOURCE_VERIFIED"
+    },
+    "he": {
+      "remote_ref": "origin/何宇轩",
+      "remote_commit": "7ada9fb084cc40975a2ef8bba6387635c54ce240",
+      "pinned_commit": "7ada9fb084cc40975a2ef8bba6387635c54ce240",
+      "status": "REMOTE_SOURCE_VERIFIED"
+    }
+  },
+  "historical_blocked_auth": "Retained in teammate_sources.json and prior result records; not the current verification status.",
+  "business_code_changed": false,
+  "fixtures_protocol_schema_cpp_changed": false,
+  "existing_results_overwritten": false
+}

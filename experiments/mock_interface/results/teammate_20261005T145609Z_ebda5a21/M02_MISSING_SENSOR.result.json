@@ -1,0 +1,1748 @@
+{
+  "case_id": "M02_MISSING_SENSOR",
+  "source": "MOCK",
+  "input_file": "C:\\Users\\LQY\\Documents\\GitHub\\ict-2026\\experiments\\mock_interface\\cases\\M02_MISSING_SENSOR.json",
+  "input_sha256": "9c526998df496902bcbe0c69bac92f9c6469b7d499e0f13ab7ae0630d2af756c",
+  "execution_time": "2026-10-05T14:56:09.915576+00:00",
+  "scope": "LOCAL_TEST_ONLY_MOCK_RUNNER",
+  "integration_mode": "TEAMMATE_INTAKE_V0.2",
+  "expected": {
+    "message_count": 1,
+    "accepted_message_count": 1,
+    "rejected_message_count": 0,
+    "risk_handoff_call_count": 1,
+    "edge_handoff_call_count": 1,
+    "zhang_real_function_call_count": 1,
+    "he_real_function_call_count": 1
+  },
+  "actual": {
+    "message_count": 1,
+    "accepted_message_count": 1,
+    "rejected_message_count": 0,
+    "risk_handoff_call_count": 1,
+    "edge_handoff_call_count": 1,
+    "zhang_real_function_call_count": 1,
+    "he_real_function_call_count": 1
+  },
+  "messages": [
+    {
+      "message_index": 0,
+      "source": "MOCK",
+      "original_message": {
+        "source": "MOCK",
+        "sampling_snapshot": {
+          "imu": [
+            {
+              "acceleration_mps2": [
+                0.02,
+                -0.01,
+                9.8
+              ],
+              "angular_rate_dps": [
+                0,
+                0,
+                0
+              ],
+              "acquired_uptime_us": 1480000,
+              "validity": "Valid"
+            },
+            {
+              "acceleration_mps2": [
+                0,
+                0.01,
+                9.81
+              ],
+              "angular_rate_dps": [
+                0,
+                0,
+                0
+              ],
+              "acquired_uptime_us": 1481000,
+              "validity": "Valid"
+            }
+          ],
+          "soil": [
+            {
+              "raw": 12000,
+              "acquired_uptime_us": 1400000,
+              "validity": "Valid"
+            },
+            {
+              "raw": null,
+              "acquired_uptime_us": null,
+              "validity": "Unavailable"
+            },
+            {
+              "raw": 14000,
+              "acquired_uptime_us": 1420000,
+              "validity": "Valid"
+            }
+          ]
+        },
+        "payload": {
+          "schema": "zhifang.telemetry.v2",
+          "site_id": "MOCK-SITE-01",
+          "device_id": "NODE-01",
+          "boot_id": 1,
+          "seq": 2,
+          "timestamp_ms": null,
+          "uptime_ms": 1500,
+          "time_synced": false,
+          "imu": [
+            {
+              "id": "top",
+              "ax": 0.02,
+              "ay": -0.01,
+              "az": 9.8,
+              "gx": 0,
+              "gy": 0,
+              "gz": 0,
+              "tilt_deg": null,
+              "tilt_rate_dps": null,
+              "vibration_rms": null,
+              "valid": true
+            },
+            {
+              "id": "toe",
+              "ax": 0,
+              "ay": 0.01,
+              "az": 9.81,
+              "gx": 0,
+              "gy": 0,
+              "gz": 0,
+              "tilt_deg": null,
+              "tilt_rate_dps": null,
+              "vibration_rms": null,
+              "valid": true
+            }
+          ],
+          "soil": {
+            "top_raw": 12000,
+            "middle_raw": null,
+            "toe_raw": 14000,
+            "top_pct": null,
+            "middle_pct": null,
+            "toe_pct": null,
+            "avg_pct": null,
+            "growth_pct_min": null
+          },
+          "experiment": {
+            "run_id": null,
+            "rain_level": null
+          },
+          "risk": {
+            "sensor_score": null,
+            "level": null,
+            "reason_mask": null
+          },
+          "system": {
+            "wifi_up": false,
+            "mqtt_up": false,
+            "lora_ready": false,
+            "sd_ok": false,
+            "edge_online": false,
+            "sensor_degraded": true
+          }
+        }
+      },
+      "validator_result": {
+        "status": "ACCEPT",
+        "errors": [],
+        "scope": "TEST_ONLY / MOCK_ONLY / NOT_PRODUCTION_VALIDATOR"
+      },
+      "snapshot_check": {
+        "status": "PASS",
+        "errors": [],
+        "scope": "TEST_ONLY_MAPPING_NOT_PRODUCTION_VALIDITY"
+      },
+      "risk_handoff_result": {
+        "status": "ACCEPTED",
+        "scope": "TEST_ONLY_PROJECTION_NOT_FORMAL_RISK_INPUT",
+        "source": "MOCK",
+        "payload_sha256": "b237d3947d8a1185fc25d561552bd5ce36aa64aea392608d93f472dfb1653b3b",
+        "projection": {
+          "identity": {
+            "device_id": "NODE-01",
+            "boot_id": 1,
+            "seq": 2
+          },
+          "time": {
+            "uptime_ms": 1500,
+            "timestamp_ms": null,
+            "time_synced": false
+          },
+          "imu": [
+            {
+              "id": "top",
+              "ax": 0.02,
+              "ay": -0.01,
+              "az": 9.8,
+              "gx": 0,
+              "gy": 0,
+              "gz": 0,
+              "tilt_deg": null,
+              "tilt_rate_dps": null,
+              "vibration_rms": null,
+              "valid": true
+            },
+            {
+              "id": "toe",
+              "ax": 0,
+              "ay": 0.01,
+              "az": 9.81,
+              "gx": 0,
+              "gy": 0,
+              "gz": 0,
+              "tilt_deg": null,
+              "tilt_rate_dps": null,
+              "vibration_rms": null,
+              "valid": true
+            }
+          ],
+          "soil": {
+            "top_raw": 12000,
+            "middle_raw": null,
+            "toe_raw": 14000,
+            "top_pct": null,
+            "middle_pct": null,
+            "toe_pct": null,
+            "avg_pct": null,
+            "growth_pct_min": null
+          },
+          "risk": {
+            "sensor_score": null,
+            "level": null,
+            "reason_mask": null
+          },
+          "system": {
+            "wifi_up": false,
+            "mqtt_up": false,
+            "lora_ready": false,
+            "sd_ok": false,
+            "edge_online": false,
+            "sensor_degraded": true
+          }
+        },
+        "test_only_sidecar": {
+          "scope": "TEST_ONLY_NOT_PRODUCTION_INTERFACE",
+          "sampling_snapshot": {
+            "imu": [
+              {
+                "acceleration_mps2": [
+                  0.02,
+                  -0.01,
+                  9.8
+                ],
+                "angular_rate_dps": [
+                  0,
+                  0,
+                  0
+                ],
+                "acquired_uptime_us": 1480000,
+                "validity": "Valid"
+              },
+              {
+                "acceleration_mps2": [
+                  0,
+                  0.01,
+                  9.81
+                ],
+                "angular_rate_dps": [
+                  0,
+                  0,
+                  0
+                ],
+                "acquired_uptime_us": 1481000,
+                "validity": "Valid"
+              }
+            ],
+            "soil": [
+              {
+                "raw": 12000,
+                "acquired_uptime_us": 1400000,
+                "validity": "Valid"
+              },
+              {
+                "raw": null,
+                "acquired_uptime_us": null,
+                "validity": "Unavailable"
+              },
+              {
+                "raw": 14000,
+                "acquired_uptime_us": 1420000,
+                "validity": "Valid"
+              }
+            ]
+          }
+        },
+        "risk_execution": {
+          "status": "BLOCKED",
+          "integration": "NOT_INTEGRATED",
+          "reason": "No reviewed v2 adapter/calibrated formal Risk entry integrated; no scoring performed."
+        },
+        "open_interface_gaps": [
+          "G01",
+          "G02",
+          "G03",
+          "G04",
+          "G05",
+          "G06",
+          "G07",
+          "G08",
+          "G09"
+        ],
+        "teammate_integration": {
+          "scope": "TEST_ONLY / INTEGRATION_ADAPTER",
+          "integration_target": "张鹏飞",
+          "source_branch": "origin/张鹏飞",
+          "source_commit": "568e229aa1d2534ea42a9f5812cdc7d9fa786cbf",
+          "payload_sha256": "b237d3947d8a1185fc25d561552bd5ce36aa64aea392608d93f472dfb1653b3b",
+          "real_code_called": true,
+          "reach_status": "REAL_CODE_REACHED",
+          "calls": [
+            {
+              "integration_target": "张鹏飞",
+              "source_branch": "origin/张鹏飞",
+              "source_commit": "568e229aa1d2534ea42a9f5812cdc7d9fa786cbf",
+              "source_module": "algorithm/B_revised/telemetry_v2_intake/entry.py",
+              "source_file": "algorithm/B_revised/telemetry_v2_intake/entry.py",
+              "source_function": "evaluate_telemetry_v2",
+              "source_sha256": "a1d581dd1d6110907dcc2dc5d22eac95582ebcdc21ef4c6c9f03b1c3ca1a96fe",
+              "source_git_blob": "a1846a19f205244ba3bc4b50b922c79352b517c5",
+              "source_line": 16,
+              "arguments": {
+                "args": [
+                  {
+                    "schema": "zhifang.telemetry.v2",
+                    "site_id": "MOCK-SITE-01",
+                    "device_id": "NODE-01",
+                    "boot_id": 1,
+                    "seq": 2,
+                    "timestamp_ms": null,
+                    "uptime_ms": 1500,
+                    "time_synced": false,
+                    "imu": [
+                      {
+                        "id": "top",
+                        "ax": 0.02,
+                        "ay": -0.01,
+                        "az": 9.8,
+                        "gx": 0,
+                        "gy": 0,
+                        "gz": 0,
+                        "tilt_deg": null,
+                        "tilt_rate_dps": null,
+                        "vibration_rms": null,
+                        "valid": true
+                      },
+                      {
+                        "id": "toe",
+                        "ax": 0,
+                        "ay": 0.01,
+                        "az": 9.81,
+                        "gx": 0,
+                        "gy": 0,
+                        "gz": 0,
+                        "tilt_deg": null,
+                        "tilt_rate_dps": null,
+                        "vibration_rms": null,
+                        "valid": true
+                      }
+                    ],
+                    "soil": {
+                      "top_raw": 12000,
+                      "middle_raw": null,
+                      "toe_raw": 14000,
+                      "top_pct": null,
+                      "middle_pct": null,
+                      "toe_pct": null,
+                      "avg_pct": null,
+                      "growth_pct_min": null
+                    },
+                    "experiment": {
+                      "run_id": null,
+                      "rain_level": null
+                    },
+                    "risk": {
+                      "sensor_score": null,
+                      "level": null,
+                      "reason_mask": null
+                    },
+                    "system": {
+                      "wifi_up": false,
+                      "mqtt_up": false,
+                      "lora_ready": false,
+                      "sd_ok": false,
+                      "edge_online": false,
+                      "sensor_degraded": true
+                    }
+                  }
+                ],
+                "kwargs": {
+                  "context": {
+                    "source": "MOCK",
+                    "case_id": "M02_MISSING_SENSOR",
+                    "sampling_snapshot": {
+                      "imu": [
+                        {
+                          "acceleration_mps2": [
+                            0.02,
+                            -0.01,
+                            9.8
+                          ],
+                          "angular_rate_dps": [
+                            0,
+                            0,
+                            0
+                          ],
+                          "acquired_uptime_us": 1480000,
+                          "validity": "Valid"
+                        },
+                        {
+                          "acceleration_mps2": [
+                            0,
+                            0.01,
+                            9.81
+                          ],
+                          "angular_rate_dps": [
+                            0,
+                            0,
+                            0
+                          ],
+                          "acquired_uptime_us": 1481000,
+                          "validity": "Valid"
+                        }
+                      ],
+                      "soil": [
+                        {
+                          "raw": 12000,
+                          "acquired_uptime_us": 1400000,
+                          "validity": "Valid"
+                        },
+                        {
+                          "raw": null,
+                          "acquired_uptime_us": null,
+                          "validity": "Unavailable"
+                        },
+                        {
+                          "raw": 14000,
+                          "acquired_uptime_us": 1420000,
+                          "validity": "Valid"
+                        }
+                      ]
+                    },
+                    "scope": "TEST_ONLY"
+                  }
+                }
+              },
+              "real_code_called": true,
+              "call_status": "RETURNED",
+              "returned": {
+                "status": "REAL_CODE_REACHED",
+                "identity": {
+                  "site_id": "MOCK-SITE-01",
+                  "device_id": "NODE-01",
+                  "boot_id": 1,
+                  "seq": 2
+                },
+                "observations": {
+                  "time": {
+                    "timestamp_ms": null,
+                    "uptime_ms": 1500,
+                    "time_synced": false
+                  },
+                  "imu": {
+                    "top": {
+                      "valid": true,
+                      "ax": 0.02,
+                      "ay": -0.01,
+                      "az": 9.8,
+                      "gx": 0,
+                      "gy": 0,
+                      "gz": 0,
+                      "tilt_deg": null,
+                      "tilt_rate_dps": null,
+                      "vibration_rms": null
+                    },
+                    "toe": {
+                      "valid": true,
+                      "ax": 0,
+                      "ay": 0.01,
+                      "az": 9.81,
+                      "gx": 0,
+                      "gy": 0,
+                      "gz": 0,
+                      "tilt_deg": null,
+                      "tilt_rate_dps": null,
+                      "vibration_rms": null
+                    }
+                  },
+                  "soil": {
+                    "top_raw": 12000,
+                    "middle_raw": null,
+                    "toe_raw": 14000,
+                    "top_pct": null,
+                    "middle_pct": null,
+                    "toe_pct": null,
+                    "avg_pct": null,
+                    "growth_pct_min": null
+                  },
+                  "system": {
+                    "wifi_up": false,
+                    "mqtt_up": false,
+                    "lora_ready": false,
+                    "sd_ok": false,
+                    "edge_online": false,
+                    "sensor_degraded": true
+                  },
+                  "experiment": {
+                    "run_id": null,
+                    "rain_level": null
+                  }
+                },
+                "feature_status": "BLOCKED",
+                "features": {
+                  "soil_relative_index": {
+                    "top": null,
+                    "middle": null,
+                    "toe": null
+                  },
+                  "dual_imu_tilt_difference_deg": null
+                },
+                "feature_details": {
+                  "soil_relative_index": {
+                    "top": "RAW_PRESENT_VALIDITY_UNRESOLVED_AND_CALIBRATION_MISSING",
+                    "middle": "MISSING_OBSERVATION_CAUSE_UNKNOWN",
+                    "toe": "RAW_PRESENT_VALIDITY_UNRESOLVED_AND_CALIBRATION_MISSING"
+                  },
+                  "dual_imu_tilt_difference_deg": "MISSING_OR_INVALID_TILT"
+                },
+                "called_functions": [
+                  "candidate_features.reference.relative_wetness_index",
+                  "candidate_features.reference.relative_wetness_index",
+                  "candidate_features.reference.relative_wetness_index",
+                  "candidate_features.reference.dual_imu_tilt_difference_deg"
+                ],
+                "function_calls": [
+                  {
+                    "function": "candidate_features.reference.relative_wetness_index",
+                    "channel": "top",
+                    "returned": null
+                  },
+                  {
+                    "function": "candidate_features.reference.relative_wetness_index",
+                    "channel": "middle",
+                    "returned": null
+                  },
+                  {
+                    "function": "candidate_features.reference.relative_wetness_index",
+                    "channel": "toe",
+                    "returned": null
+                  },
+                  {
+                    "function": "candidate_features.reference.dual_imu_tilt_difference_deg",
+                    "channel": "top_toe",
+                    "returned": null
+                  }
+                ],
+                "risk_execution": "RISK_EXECUTION_BLOCKED",
+                "risk": {
+                  "sensor_score": null,
+                  "level": null,
+                  "reason_mask": null
+                },
+                "blocked_reason": [
+                  "NO_REVIEWED_PER_PROBE_CALIBRATION",
+                  "NO_VALIDATED_FILTER_BASELINE_WINDOW_AND_ALIGNMENT",
+                  "NO_CALIBRATED_CONTRIBUTION_MAPPING",
+                  "NO_FORMAL_MISSING_POLICY_OR_REASON_MASK"
+                ],
+                "context_used_for_computation": false
+              },
+              "reach_status": "REAL_CODE_REACHED"
+            }
+          ],
+          "adapter_status": "TELEMETRY_ACCEPTED",
+          "execution_status": "RISK_EXECUTION_BLOCKED",
+          "telemetry_accepted_by_teammate": true,
+          "formal_risk_executed": false,
+          "risk_score_produced": false,
+          "boundary_scope": "VALIDATED_TELEMETRY_V2_INTAKE",
+          "receipt_checks": {
+            "entry_returned": true,
+            "entry_status": true,
+            "identity_preserved": true,
+            "observations_preserved": true,
+            "risk_preserved": true,
+            "risk_remains_blocked": true,
+            "sidecar_not_used_for_computation": true
+          },
+          "feature_status": "BLOCKED",
+          "blocked_reason": [
+            "NO_REVIEWED_PER_PROBE_CALIBRATION",
+            "NO_VALIDATED_FILTER_BASELINE_WINDOW_AND_ALIGNMENT",
+            "NO_CALIBRATED_CONTRIBUTION_MAPPING",
+            "NO_FORMAL_MISSING_POLICY_OR_REASON_MASK"
+          ],
+          "risk_fields_preserved": {
+            "sensor_score": null,
+            "level": null,
+            "reason_mask": null
+          }
+        }
+      },
+      "edge_handoff_result": {
+        "status": "ACCEPTED",
+        "scope": "TEST_ONLY / NOT_PRODUCTION_EDGE_INTAKE",
+        "source": "MOCK",
+        "payload_sha256": "b237d3947d8a1185fc25d561552bd5ce36aa64aea392608d93f472dfb1653b3b",
+        "payload": {
+          "schema": "zhifang.telemetry.v2",
+          "site_id": "MOCK-SITE-01",
+          "device_id": "NODE-01",
+          "boot_id": 1,
+          "seq": 2,
+          "timestamp_ms": null,
+          "uptime_ms": 1500,
+          "time_synced": false,
+          "imu": [
+            {
+              "id": "top",
+              "ax": 0.02,
+              "ay": -0.01,
+              "az": 9.8,
+              "gx": 0,
+              "gy": 0,
+              "gz": 0,
+              "tilt_deg": null,
+              "tilt_rate_dps": null,
+              "vibration_rms": null,
+              "valid": true
+            },
+            {
+              "id": "toe",
+              "ax": 0,
+              "ay": 0.01,
+              "az": 9.81,
+              "gx": 0,
+              "gy": 0,
+              "gz": 0,
+              "tilt_deg": null,
+              "tilt_rate_dps": null,
+              "vibration_rms": null,
+              "valid": true
+            }
+          ],
+          "soil": {
+            "top_raw": 12000,
+            "middle_raw": null,
+            "toe_raw": 14000,
+            "top_pct": null,
+            "middle_pct": null,
+            "toe_pct": null,
+            "avg_pct": null,
+            "growth_pct_min": null
+          },
+          "experiment": {
+            "run_id": null,
+            "rain_level": null
+          },
+          "risk": {
+            "sensor_score": null,
+            "level": null,
+            "reason_mask": null
+          },
+          "system": {
+            "wifi_up": false,
+            "mqtt_up": false,
+            "lora_ready": false,
+            "sd_ok": false,
+            "edge_online": false,
+            "sensor_degraded": true
+          }
+        },
+        "production_edge_intake": "NOT_IMPLEMENTED",
+        "teammate_integration": {
+          "scope": "TEST_ONLY / INTEGRATION_ADAPTER",
+          "integration_target": "何宇轩",
+          "source_branch": "origin/何宇轩",
+          "source_commit": "7ada9fb084cc40975a2ef8bba6387635c54ce240",
+          "payload_sha256": "b237d3947d8a1185fc25d561552bd5ce36aa64aea392608d93f472dfb1653b3b",
+          "real_code_called": true,
+          "reach_status": "REAL_CODE_REACHED",
+          "calls": [
+            {
+              "integration_target": "何宇轩",
+              "source_branch": "origin/何宇轩",
+              "source_commit": "7ada9fb084cc40975a2ef8bba6387635c54ce240",
+              "source_module": "edge_intake/intake.py",
+              "source_file": "edge_intake/intake.py",
+              "source_function": "receive_validated_telemetry",
+              "source_sha256": "09d9d604e11d6a5b4bdc514dfcc5c8be57311887993c68d196bc9fe489e13f35",
+              "source_git_blob": "82adb51e151f963bb1233d6840872e1fd70f9017",
+              "source_line": 53,
+              "arguments": {
+                "args": [
+                  {
+                    "schema": "zhifang.telemetry.v2",
+                    "site_id": "MOCK-SITE-01",
+                    "device_id": "NODE-01",
+                    "boot_id": 1,
+                    "seq": 2,
+                    "timestamp_ms": null,
+                    "uptime_ms": 1500,
+                    "time_synced": false,
+                    "imu": [
+                      {
+                        "id": "top",
+                        "ax": 0.02,
+                        "ay": -0.01,
+                        "az": 9.8,
+                        "gx": 0,
+                        "gy": 0,
+                        "gz": 0,
+                        "tilt_deg": null,
+                        "tilt_rate_dps": null,
+                        "vibration_rms": null,
+                        "valid": true
+                      },
+                      {
+                        "id": "toe",
+                        "ax": 0,
+                        "ay": 0.01,
+                        "az": 9.81,
+                        "gx": 0,
+                        "gy": 0,
+                        "gz": 0,
+                        "tilt_deg": null,
+                        "tilt_rate_dps": null,
+                        "vibration_rms": null,
+                        "valid": true
+                      }
+                    ],
+                    "soil": {
+                      "top_raw": 12000,
+                      "middle_raw": null,
+                      "toe_raw": 14000,
+                      "top_pct": null,
+                      "middle_pct": null,
+                      "toe_pct": null,
+                      "avg_pct": null,
+                      "growth_pct_min": null
+                    },
+                    "experiment": {
+                      "run_id": null,
+                      "rain_level": null
+                    },
+                    "risk": {
+                      "sensor_score": null,
+                      "level": null,
+                      "reason_mask": null
+                    },
+                    "system": {
+                      "wifi_up": false,
+                      "mqtt_up": false,
+                      "lora_ready": false,
+                      "sd_ok": false,
+                      "edge_online": false,
+                      "sensor_degraded": true
+                    }
+                  }
+                ],
+                "kwargs": {
+                  "context": {
+                    "source": "MOCK",
+                    "case_id": "M02_MISSING_SENSOR",
+                    "sampling_snapshot": {
+                      "imu": [
+                        {
+                          "acceleration_mps2": [
+                            0.02,
+                            -0.01,
+                            9.8
+                          ],
+                          "angular_rate_dps": [
+                            0,
+                            0,
+                            0
+                          ],
+                          "acquired_uptime_us": 1480000,
+                          "validity": "Valid"
+                        },
+                        {
+                          "acceleration_mps2": [
+                            0,
+                            0.01,
+                            9.81
+                          ],
+                          "angular_rate_dps": [
+                            0,
+                            0,
+                            0
+                          ],
+                          "acquired_uptime_us": 1481000,
+                          "validity": "Valid"
+                        }
+                      ],
+                      "soil": [
+                        {
+                          "raw": 12000,
+                          "acquired_uptime_us": 1400000,
+                          "validity": "Valid"
+                        },
+                        {
+                          "raw": null,
+                          "acquired_uptime_us": null,
+                          "validity": "Unavailable"
+                        },
+                        {
+                          "raw": 14000,
+                          "acquired_uptime_us": 1420000,
+                          "validity": "Valid"
+                        }
+                      ]
+                    },
+                    "scope": "TEST_ONLY"
+                  }
+                }
+              },
+              "real_code_called": true,
+              "call_status": "RETURNED",
+              "returned": {
+                "status": "ACCEPTED_BY_EDGE_INTAKE",
+                "identity": {
+                  "device_id": "NODE-01",
+                  "boot_id": 1,
+                  "seq": 2
+                },
+                "source": "MOCK",
+                "payload": {
+                  "schema": "zhifang.telemetry.v2",
+                  "site_id": "MOCK-SITE-01",
+                  "device_id": "NODE-01",
+                  "boot_id": 1,
+                  "seq": 2,
+                  "timestamp_ms": null,
+                  "uptime_ms": 1500,
+                  "time_synced": false,
+                  "imu": [
+                    {
+                      "id": "top",
+                      "ax": 0.02,
+                      "ay": -0.01,
+                      "az": 9.8,
+                      "gx": 0,
+                      "gy": 0,
+                      "gz": 0,
+                      "tilt_deg": null,
+                      "tilt_rate_dps": null,
+                      "vibration_rms": null,
+                      "valid": true
+                    },
+                    {
+                      "id": "toe",
+                      "ax": 0,
+                      "ay": 0.01,
+                      "az": 9.81,
+                      "gx": 0,
+                      "gy": 0,
+                      "gz": 0,
+                      "tilt_deg": null,
+                      "tilt_rate_dps": null,
+                      "vibration_rms": null,
+                      "valid": true
+                    }
+                  ],
+                  "soil": {
+                    "top_raw": 12000,
+                    "middle_raw": null,
+                    "toe_raw": 14000,
+                    "top_pct": null,
+                    "middle_pct": null,
+                    "toe_pct": null,
+                    "avg_pct": null,
+                    "growth_pct_min": null
+                  },
+                  "experiment": {
+                    "run_id": null,
+                    "rain_level": null
+                  },
+                  "risk": {
+                    "sensor_score": null,
+                    "level": null,
+                    "reason_mask": null
+                  },
+                  "system": {
+                    "wifi_up": false,
+                    "mqtt_up": false,
+                    "lora_ready": false,
+                    "sd_ok": false,
+                    "edge_online": false,
+                    "sensor_degraded": true
+                  }
+                },
+                "context": {
+                  "source": "MOCK",
+                  "case_id": "M02_MISSING_SENSOR",
+                  "sampling_snapshot": {
+                    "imu": [
+                      {
+                        "acceleration_mps2": [
+                          0.02,
+                          -0.01,
+                          9.8
+                        ],
+                        "angular_rate_dps": [
+                          0,
+                          0,
+                          0
+                        ],
+                        "acquired_uptime_us": 1480000,
+                        "validity": "Valid"
+                      },
+                      {
+                        "acceleration_mps2": [
+                          0,
+                          0.01,
+                          9.81
+                        ],
+                        "angular_rate_dps": [
+                          0,
+                          0,
+                          0
+                        ],
+                        "acquired_uptime_us": 1481000,
+                        "validity": "Valid"
+                      }
+                    ],
+                    "soil": [
+                      {
+                        "raw": 12000,
+                        "acquired_uptime_us": 1400000,
+                        "validity": "Valid"
+                      },
+                      {
+                        "raw": null,
+                        "acquired_uptime_us": null,
+                        "validity": "Unavailable"
+                      },
+                      {
+                        "raw": 14000,
+                        "acquired_uptime_us": 1420000,
+                        "validity": "Valid"
+                      }
+                    ]
+                  },
+                  "scope": "TEST_ONLY"
+                },
+                "payload_sha256": "b237d3947d8a1185fc25d561552bd5ce36aa64aea392608d93f472dfb1653b3b",
+                "intake_version": "0.1.0",
+                "downstream": "NOT_IMPLEMENTED",
+                "downstream_status": "DOWNSTREAM_NOT_IMPLEMENTED",
+                "durable": false
+              },
+              "reach_status": "REAL_CODE_REACHED"
+            }
+          ],
+          "adapter_status": "EDGE_INTAKE_ACCEPTED",
+          "execution_status": "DOWNSTREAM_NOT_IMPLEMENTED",
+          "edge_intake_exists": true,
+          "telemetry_accepted_by_teammate": true,
+          "boundary_scope": "VALIDATED_TELEMETRY_V2_IN_MEMORY_EDGE_INTAKE",
+          "receipt_checks": {
+            "entry_returned": true,
+            "entry_status": true,
+            "payload_preserved": true,
+            "context_preserved": true,
+            "source_preserved": true,
+            "identity_preserved": true,
+            "payload_hash_matches": true,
+            "not_durable": true,
+            "downstream_not_implemented": true
+          },
+          "durable": false
+        }
+      },
+      "risk_handoff_called": true,
+      "edge_handoff_called": true,
+      "same_payload_object": true,
+      "checks": {
+        "teammate_boundary_evidence": true,
+        "shared_payload_unchanged": true,
+        "same_payload_object": true,
+        "risk_projection_preserved": true,
+        "sidecar_preserved": true,
+        "edge_payload_preserved": true,
+        "consumer_hashes_match": true,
+        "mock_source_retained": true,
+        "risk_null_preserved": true,
+        "middle_missing_preserved": true,
+        "validator_accepted": true,
+        "snapshot_mapping_checked": true,
+        "both_handoffs_called": true
+      },
+      "zhang_adapter_result": {
+        "scope": "TEST_ONLY / INTEGRATION_ADAPTER",
+        "integration_target": "张鹏飞",
+        "source_branch": "origin/张鹏飞",
+        "source_commit": "568e229aa1d2534ea42a9f5812cdc7d9fa786cbf",
+        "payload_sha256": "b237d3947d8a1185fc25d561552bd5ce36aa64aea392608d93f472dfb1653b3b",
+        "real_code_called": true,
+        "reach_status": "REAL_CODE_REACHED",
+        "calls": [
+          {
+            "integration_target": "张鹏飞",
+            "source_branch": "origin/张鹏飞",
+            "source_commit": "568e229aa1d2534ea42a9f5812cdc7d9fa786cbf",
+            "source_module": "algorithm/B_revised/telemetry_v2_intake/entry.py",
+            "source_file": "algorithm/B_revised/telemetry_v2_intake/entry.py",
+            "source_function": "evaluate_telemetry_v2",
+            "source_sha256": "a1d581dd1d6110907dcc2dc5d22eac95582ebcdc21ef4c6c9f03b1c3ca1a96fe",
+            "source_git_blob": "a1846a19f205244ba3bc4b50b922c79352b517c5",
+            "source_line": 16,
+            "arguments": {
+              "args": [
+                {
+                  "schema": "zhifang.telemetry.v2",
+                  "site_id": "MOCK-SITE-01",
+                  "device_id": "NODE-01",
+                  "boot_id": 1,
+                  "seq": 2,
+                  "timestamp_ms": null,
+                  "uptime_ms": 1500,
+                  "time_synced": false,
+                  "imu": [
+                    {
+                      "id": "top",
+                      "ax": 0.02,
+                      "ay": -0.01,
+                      "az": 9.8,
+                      "gx": 0,
+                      "gy": 0,
+                      "gz": 0,
+                      "tilt_deg": null,
+                      "tilt_rate_dps": null,
+                      "vibration_rms": null,
+                      "valid": true
+                    },
+                    {
+                      "id": "toe",
+                      "ax": 0,
+                      "ay": 0.01,
+                      "az": 9.81,
+                      "gx": 0,
+                      "gy": 0,
+                      "gz": 0,
+                      "tilt_deg": null,
+                      "tilt_rate_dps": null,
+                      "vibration_rms": null,
+                      "valid": true
+                    }
+                  ],
+                  "soil": {
+                    "top_raw": 12000,
+                    "middle_raw": null,
+                    "toe_raw": 14000,
+                    "top_pct": null,
+                    "middle_pct": null,
+                    "toe_pct": null,
+                    "avg_pct": null,
+                    "growth_pct_min": null
+                  },
+                  "experiment": {
+                    "run_id": null,
+                    "rain_level": null
+                  },
+                  "risk": {
+                    "sensor_score": null,
+                    "level": null,
+                    "reason_mask": null
+                  },
+                  "system": {
+                    "wifi_up": false,
+                    "mqtt_up": false,
+                    "lora_ready": false,
+                    "sd_ok": false,
+                    "edge_online": false,
+                    "sensor_degraded": true
+                  }
+                }
+              ],
+              "kwargs": {
+                "context": {
+                  "source": "MOCK",
+                  "case_id": "M02_MISSING_SENSOR",
+                  "sampling_snapshot": {
+                    "imu": [
+                      {
+                        "acceleration_mps2": [
+                          0.02,
+                          -0.01,
+                          9.8
+                        ],
+                        "angular_rate_dps": [
+                          0,
+                          0,
+                          0
+                        ],
+                        "acquired_uptime_us": 1480000,
+                        "validity": "Valid"
+                      },
+                      {
+                        "acceleration_mps2": [
+                          0,
+                          0.01,
+                          9.81
+                        ],
+                        "angular_rate_dps": [
+                          0,
+                          0,
+                          0
+                        ],
+                        "acquired_uptime_us": 1481000,
+                        "validity": "Valid"
+                      }
+                    ],
+                    "soil": [
+                      {
+                        "raw": 12000,
+                        "acquired_uptime_us": 1400000,
+                        "validity": "Valid"
+                      },
+                      {
+                        "raw": null,
+                        "acquired_uptime_us": null,
+                        "validity": "Unavailable"
+                      },
+                      {
+                        "raw": 14000,
+                        "acquired_uptime_us": 1420000,
+                        "validity": "Valid"
+                      }
+                    ]
+                  },
+                  "scope": "TEST_ONLY"
+                }
+              }
+            },
+            "real_code_called": true,
+            "call_status": "RETURNED",
+            "returned": {
+              "status": "REAL_CODE_REACHED",
+              "identity": {
+                "site_id": "MOCK-SITE-01",
+                "device_id": "NODE-01",
+                "boot_id": 1,
+                "seq": 2
+              },
+              "observations": {
+                "time": {
+                  "timestamp_ms": null,
+                  "uptime_ms": 1500,
+                  "time_synced": false
+                },
+                "imu": {
+                  "top": {
+                    "valid": true,
+                    "ax": 0.02,
+                    "ay": -0.01,
+                    "az": 9.8,
+                    "gx": 0,
+                    "gy": 0,
+                    "gz": 0,
+                    "tilt_deg": null,
+                    "tilt_rate_dps": null,
+                    "vibration_rms": null
+                  },
+                  "toe": {
+                    "valid": true,
+                    "ax": 0,
+                    "ay": 0.01,
+                    "az": 9.81,
+                    "gx": 0,
+                    "gy": 0,
+                    "gz": 0,
+                    "tilt_deg": null,
+                    "tilt_rate_dps": null,
+                    "vibration_rms": null
+                  }
+                },
+                "soil": {
+                  "top_raw": 12000,
+                  "middle_raw": null,
+                  "toe_raw": 14000,
+                  "top_pct": null,
+                  "middle_pct": null,
+                  "toe_pct": null,
+                  "avg_pct": null,
+                  "growth_pct_min": null
+                },
+                "system": {
+                  "wifi_up": false,
+                  "mqtt_up": false,
+                  "lora_ready": false,
+                  "sd_ok": false,
+                  "edge_online": false,
+                  "sensor_degraded": true
+                },
+                "experiment": {
+                  "run_id": null,
+                  "rain_level": null
+                }
+              },
+              "feature_status": "BLOCKED",
+              "features": {
+                "soil_relative_index": {
+                  "top": null,
+                  "middle": null,
+                  "toe": null
+                },
+                "dual_imu_tilt_difference_deg": null
+              },
+              "feature_details": {
+                "soil_relative_index": {
+                  "top": "RAW_PRESENT_VALIDITY_UNRESOLVED_AND_CALIBRATION_MISSING",
+                  "middle": "MISSING_OBSERVATION_CAUSE_UNKNOWN",
+                  "toe": "RAW_PRESENT_VALIDITY_UNRESOLVED_AND_CALIBRATION_MISSING"
+                },
+                "dual_imu_tilt_difference_deg": "MISSING_OR_INVALID_TILT"
+              },
+              "called_functions": [
+                "candidate_features.reference.relative_wetness_index",
+                "candidate_features.reference.relative_wetness_index",
+                "candidate_features.reference.relative_wetness_index",
+                "candidate_features.reference.dual_imu_tilt_difference_deg"
+              ],
+              "function_calls": [
+                {
+                  "function": "candidate_features.reference.relative_wetness_index",
+                  "channel": "top",
+                  "returned": null
+                },
+                {
+                  "function": "candidate_features.reference.relative_wetness_index",
+                  "channel": "middle",
+                  "returned": null
+                },
+                {
+                  "function": "candidate_features.reference.relative_wetness_index",
+                  "channel": "toe",
+                  "returned": null
+                },
+                {
+                  "function": "candidate_features.reference.dual_imu_tilt_difference_deg",
+                  "channel": "top_toe",
+                  "returned": null
+                }
+              ],
+              "risk_execution": "RISK_EXECUTION_BLOCKED",
+              "risk": {
+                "sensor_score": null,
+                "level": null,
+                "reason_mask": null
+              },
+              "blocked_reason": [
+                "NO_REVIEWED_PER_PROBE_CALIBRATION",
+                "NO_VALIDATED_FILTER_BASELINE_WINDOW_AND_ALIGNMENT",
+                "NO_CALIBRATED_CONTRIBUTION_MAPPING",
+                "NO_FORMAL_MISSING_POLICY_OR_REASON_MASK"
+              ],
+              "context_used_for_computation": false
+            },
+            "reach_status": "REAL_CODE_REACHED"
+          }
+        ],
+        "adapter_status": "TELEMETRY_ACCEPTED",
+        "execution_status": "RISK_EXECUTION_BLOCKED",
+        "telemetry_accepted_by_teammate": true,
+        "formal_risk_executed": false,
+        "risk_score_produced": false,
+        "boundary_scope": "VALIDATED_TELEMETRY_V2_INTAKE",
+        "receipt_checks": {
+          "entry_returned": true,
+          "entry_status": true,
+          "identity_preserved": true,
+          "observations_preserved": true,
+          "risk_preserved": true,
+          "risk_remains_blocked": true,
+          "sidecar_not_used_for_computation": true
+        },
+        "feature_status": "BLOCKED",
+        "blocked_reason": [
+          "NO_REVIEWED_PER_PROBE_CALIBRATION",
+          "NO_VALIDATED_FILTER_BASELINE_WINDOW_AND_ALIGNMENT",
+          "NO_CALIBRATED_CONTRIBUTION_MAPPING",
+          "NO_FORMAL_MISSING_POLICY_OR_REASON_MASK"
+        ],
+        "risk_fields_preserved": {
+          "sensor_score": null,
+          "level": null,
+          "reason_mask": null
+        }
+      },
+      "he_adapter_result": {
+        "scope": "TEST_ONLY / INTEGRATION_ADAPTER",
+        "integration_target": "何宇轩",
+        "source_branch": "origin/何宇轩",
+        "source_commit": "7ada9fb084cc40975a2ef8bba6387635c54ce240",
+        "payload_sha256": "b237d3947d8a1185fc25d561552bd5ce36aa64aea392608d93f472dfb1653b3b",
+        "real_code_called": true,
+        "reach_status": "REAL_CODE_REACHED",
+        "calls": [
+          {
+            "integration_target": "何宇轩",
+            "source_branch": "origin/何宇轩",
+            "source_commit": "7ada9fb084cc40975a2ef8bba6387635c54ce240",
+            "source_module": "edge_intake/intake.py",
+            "source_file": "edge_intake/intake.py",
+            "source_function": "receive_validated_telemetry",
+            "source_sha256": "09d9d604e11d6a5b4bdc514dfcc5c8be57311887993c68d196bc9fe489e13f35",
+            "source_git_blob": "82adb51e151f963bb1233d6840872e1fd70f9017",
+            "source_line": 53,
+            "arguments": {
+              "args": [
+                {
+                  "schema": "zhifang.telemetry.v2",
+                  "site_id": "MOCK-SITE-01",
+                  "device_id": "NODE-01",
+                  "boot_id": 1,
+                  "seq": 2,
+                  "timestamp_ms": null,
+                  "uptime_ms": 1500,
+                  "time_synced": false,
+                  "imu": [
+                    {
+                      "id": "top",
+                      "ax": 0.02,
+                      "ay": -0.01,
+                      "az": 9.8,
+                      "gx": 0,
+                      "gy": 0,
+                      "gz": 0,
+                      "tilt_deg": null,
+                      "tilt_rate_dps": null,
+                      "vibration_rms": null,
+                      "valid": true
+                    },
+                    {
+                      "id": "toe",
+                      "ax": 0,
+                      "ay": 0.01,
+                      "az": 9.81,
+                      "gx": 0,
+                      "gy": 0,
+                      "gz": 0,
+                      "tilt_deg": null,
+                      "tilt_rate_dps": null,
+                      "vibration_rms": null,
+                      "valid": true
+                    }
+                  ],
+                  "soil": {
+                    "top_raw": 12000,
+                    "middle_raw": null,
+                    "toe_raw": 14000,
+                    "top_pct": null,
+                    "middle_pct": null,
+                    "toe_pct": null,
+                    "avg_pct": null,
+                    "growth_pct_min": null
+                  },
+                  "experiment": {
+                    "run_id": null,
+                    "rain_level": null
+                  },
+                  "risk": {
+                    "sensor_score": null,
+                    "level": null,
+                    "reason_mask": null
+                  },
+                  "system": {
+                    "wifi_up": false,
+                    "mqtt_up": false,
+                    "lora_ready": false,
+                    "sd_ok": false,
+                    "edge_online": false,
+                    "sensor_degraded": true
+                  }
+                }
+              ],
+              "kwargs": {
+                "context": {
+                  "source": "MOCK",
+                  "case_id": "M02_MISSING_SENSOR",
+                  "sampling_snapshot": {
+                    "imu": [
+                      {
+                        "acceleration_mps2": [
+                          0.02,
+                          -0.01,
+                          9.8
+                        ],
+                        "angular_rate_dps": [
+                          0,
+                          0,
+                          0
+                        ],
+                        "acquired_uptime_us": 1480000,
+                        "validity": "Valid"
+                      },
+                      {
+                        "acceleration_mps2": [
+                          0,
+                          0.01,
+                          9.81
+                        ],
+                        "angular_rate_dps": [
+                          0,
+                          0,
+                          0
+                        ],
+                        "acquired_uptime_us": 1481000,
+                        "validity": "Valid"
+                      }
+                    ],
+                    "soil": [
+                      {
+                        "raw": 12000,
+                        "acquired_uptime_us": 1400000,
+                        "validity": "Valid"
+                      },
+                      {
+                        "raw": null,
+                        "acquired_uptime_us": null,
+                        "validity": "Unavailable"
+                      },
+                      {
+                        "raw": 14000,
+                        "acquired_uptime_us": 1420000,
+                        "validity": "Valid"
+                      }
+                    ]
+                  },
+                  "scope": "TEST_ONLY"
+                }
+              }
+            },
+            "real_code_called": true,
+            "call_status": "RETURNED",
+            "returned": {
+              "status": "ACCEPTED_BY_EDGE_INTAKE",
+              "identity": {
+                "device_id": "NODE-01",
+                "boot_id": 1,
+                "seq": 2
+              },
+              "source": "MOCK",
+              "payload": {
+                "schema": "zhifang.telemetry.v2",
+                "site_id": "MOCK-SITE-01",
+                "device_id": "NODE-01",
+                "boot_id": 1,
+                "seq": 2,
+                "timestamp_ms": null,
+                "uptime_ms": 1500,
+                "time_synced": false,
+                "imu": [
+                  {
+                    "id": "top",
+                    "ax": 0.02,
+                    "ay": -0.01,
+                    "az": 9.8,
+                    "gx": 0,
+                    "gy": 0,
+                    "gz": 0,
+                    "tilt_deg": null,
+                    "tilt_rate_dps": null,
+                    "vibration_rms": null,
+                    "valid": true
+                  },
+                  {
+                    "id": "toe",
+                    "ax": 0,
+                    "ay": 0.01,
+                    "az": 9.81,
+                    "gx": 0,
+                    "gy": 0,
+                    "gz": 0,
+                    "tilt_deg": null,
+                    "tilt_rate_dps": null,
+                    "vibration_rms": null,
+                    "valid": true
+                  }
+                ],
+                "soil": {
+                  "top_raw": 12000,
+                  "middle_raw": null,
+                  "toe_raw": 14000,
+                  "top_pct": null,
+                  "middle_pct": null,
+                  "toe_pct": null,
+                  "avg_pct": null,
+                  "growth_pct_min": null
+                },
+                "experiment": {
+                  "run_id": null,
+                  "rain_level": null
+                },
+                "risk": {
+                  "sensor_score": null,
+                  "level": null,
+                  "reason_mask": null
+                },
+                "system": {
+                  "wifi_up": false,
+                  "mqtt_up": false,
+                  "lora_ready": false,
+                  "sd_ok": false,
+                  "edge_online": false,
+                  "sensor_degraded": true
+                }
+              },
+              "context": {
+                "source": "MOCK",
+                "case_id": "M02_MISSING_SENSOR",
+                "sampling_snapshot": {
+                  "imu": [
+                    {
+                      "acceleration_mps2": [
+                        0.02,
+                        -0.01,
+                        9.8
+                      ],
+                      "angular_rate_dps": [
+                        0,
+                        0,
+                        0
+                      ],
+                      "acquired_uptime_us": 1480000,
+                      "validity": "Valid"
+                    },
+                    {
+                      "acceleration_mps2": [
+                        0,
+                        0.01,
+                        9.81
+                      ],
+                      "angular_rate_dps": [
+                        0,
+                        0,
+                        0
+                      ],
+                      "acquired_uptime_us": 1481000,
+                      "validity": "Valid"
+                    }
+                  ],
+                  "soil": [
+                    {
+                      "raw": 12000,
+                      "acquired_uptime_us": 1400000,
+                      "validity": "Valid"
+                    },
+                    {
+                      "raw": null,
+                      "acquired_uptime_us": null,
+                      "validity": "Unavailable"
+                    },
+                    {
+                      "raw": 14000,
+                      "acquired_uptime_us": 1420000,
+                      "validity": "Valid"
+                    }
+                  ]
+                },
+                "scope": "TEST_ONLY"
+              },
+              "payload_sha256": "b237d3947d8a1185fc25d561552bd5ce36aa64aea392608d93f472dfb1653b3b",
+              "intake_version": "0.1.0",
+              "downstream": "NOT_IMPLEMENTED",
+              "downstream_status": "DOWNSTREAM_NOT_IMPLEMENTED",
+              "durable": false
+            },
+            "reach_status": "REAL_CODE_REACHED"
+          }
+        ],
+        "adapter_status": "EDGE_INTAKE_ACCEPTED",
+        "execution_status": "DOWNSTREAM_NOT_IMPLEMENTED",
+        "edge_intake_exists": true,
+        "telemetry_accepted_by_teammate": true,
+        "boundary_scope": "VALIDATED_TELEMETRY_V2_IN_MEMORY_EDGE_INTAKE",
+        "receipt_checks": {
+          "entry_returned": true,
+          "entry_status": true,
+          "payload_preserved": true,
+          "context_preserved": true,
+          "source_preserved": true,
+          "identity_preserved": true,
+          "payload_hash_matches": true,
+          "not_durable": true,
+          "downstream_not_implemented": true
+        },
+        "durable": false
+      },
+      "source_check": "ACCEPT",
+      "expected": {
+        "validator": "ACCEPT",
+        "handoffs": "preserve inputs",
+        "risk": "null"
+      },
+      "local_status": "PASS"
+    }
+  ],
+  "overall_status": "LOCAL_RUNNER_PASS",
+  "validator_expectations": "VALIDATOR_PASS",
+  "handoff_expectations": "HANDOFF_PASS",
+  "formal_risk_execution": [
+    "RISK_EXECUTION_BLOCKED"
+  ],
+  "teammate_edge_intake": [
+    "EDGE_INTAKE_ACCEPTED"
+  ],
+  "teammate_downstream": [
+    "DOWNSTREAM_NOT_IMPLEMENTED"
+  ],
+  "telemetry_boundary_expectations": "MET",
+  "production_validator": "NOT_IMPLEMENTED",
+  "production_edge_intake": "NOT_IMPLEMENTED",
+  "three_person_integration": "NOT_DECLARED",
+  "open_interface_gaps": [
+    "G01",
+    "G02",
+    "G03",
+    "G04",
+    "G05",
+    "G06",
+    "G07",
+    "G08",
+    "G09"
+  ],
+  "notes": [
+    "PASS labels cover only actually executed local checks; no formal Risk algorithm called.",
+    "M08 rejections are validator observations; fixture expected_behavior is not used as actual counts.",
+    "TEST_ONLY sidecar does not solve G02/G03/G04; no gap is closed.",
+    "Local Mock Runner success is not THREE_PERSON_INTEGRATION_PASS."
+  ],
+  "execution": {
+    "runner_version": "0.3.0",
+    "git_commit": "25c55ca0ab2e9d0f18e3640833a575102f7e48c6",
+    "git_branch": "李青原",
+    "git_status_before_run": "M experiments/mock_interface/runner/README.md\n M experiments/mock_interface/runner/TEAMMATE_INTEGRATION.md\n M experiments/mock_interface/runner/he_adapter.py\n M experiments/mock_interface/runner/run_mock_integration.py\n M experiments/mock_interface/runner/teammate_source.py\n M experiments/mock_interface/runner/teammate_sources.json\n M experiments/mock_interface/runner/test_teammate_integration.py\n M experiments/mock_interface/runner/zhang_adapter.py\n?? experiments/mock_interface/results/teammate_20261005T063351Z_0978884d/",
+    "runner_source_sha256": {
+      "edge_handoff.py": "5898c10a9dc345a86946ea09d2adf3c6d8b7ae651bda9a09cd07ca88288a02a7",
+      "he_adapter.py": "1a721a14397ebd267372687f520496961a6a2162adcb96fc1ca0af2f045ef0a5",
+      "mock_loader.py": "c70c6b4649f02fbef3f0414183f8f08ef6a278433555ccfa414313ff45c2eda2",
+      "mock_v2_validator.py": "f0c6ca2cc5feb607c92f398efacbdcd43e7f64d59c4db0ecd81247f2ea393064",
+      "README.md": "d08ec37e7627de48a327a2265fe4b88a06f001396fc4deb9bc05a28af326ba57",
+      "risk_handoff.py": "df2d9295c4adede546c610e11720e0f4b96f400d46fca238a19e053049ddef6f",
+      "run_mock_integration.py": "fea91e1f1ba65da2c88c1ce8eca93e617f8040673b011ea4032e7a427daa48c3",
+      "TEAMMATE_INTEGRATION.md": "389c31b97fe854ab441985dcf7739b874b9e4ccb11becd6fce34d21777172af8",
+      "teammate_source.py": "32d00dae578dbc274acb05c7d4b7538e3c15f6157dbcb63ee904cf720c166e18",
+      "teammate_sources.json": "9c8c70af338961c9f8bbf33a3a95d91226b51562329ecc3318d3b1519e90499c",
+      "test_runner.py": "e53438301c79d1490b85bb8d0cf93eb5786da6b295efb641e14bd23380e0677f",
+      "test_teammate_integration.py": "4a9e1f6cd6bae920de905d5480df15cb2bce3a8806b8a09dae29843f985be961",
+      "zhang_adapter.py": "f4e845199540ca6d6e0c73e451c3d5b87fcbb30b8824b1cf69e955dda7061f91"
+    },
+    "python_version": "3.12.14",
+    "python_executable": "C:\\Users\\LQY\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+    "teammate_sources": {
+      "zhang": {
+        "integration_target": "张鹏飞",
+        "source_branch": "origin/张鹏飞",
+        "source_commit": "568e229aa1d2534ea42a9f5812cdc7d9fa786cbf",
+        "modules": [
+          {
+            "name": "candidate_features",
+            "path": "algorithm/B_revised/candidate_features/__init__.py",
+            "package": true,
+            "sha256": "f8d37fa13ad1fb7c4bcd6e81bb922323f199c5e177307260bdfced9a0f3c1a31",
+            "git_blob": "cb7ad13eedf63db48b012c427d25406f80af85f7"
+          },
+          {
+            "name": "candidate_features.reference",
+            "path": "algorithm/B_revised/candidate_features/reference.py",
+            "package": false,
+            "sha256": "cf7a707c11f429e01f734eaa0dcf4cf04fa7edcb095e28e9bb44fbdc01871022",
+            "git_blob": "72f0eb1201504ef95cfb535c641ed3dee8ff4bd4"
+          },
+          {
+            "name": "telemetry_v2_intake.entry",
+            "path": "algorithm/B_revised/telemetry_v2_intake/entry.py",
+            "package": false,
+            "sha256": "a1d581dd1d6110907dcc2dc5d22eac95582ebcdc21ef4c6c9f03b1c3ca1a96fe",
+            "git_blob": "a1846a19f205244ba3bc4b50b922c79352b517c5"
+          },
+          {
+            "name": "telemetry_v2_intake",
+            "path": "algorithm/B_revised/telemetry_v2_intake/__init__.py",
+            "package": true,
+            "sha256": "ac314596682e468f4278b9421ef91ed93655ad5438a85cc33842c89e44b057e8",
+            "git_blob": "25e2f015fff5509c66600649c932bc563c449057"
+          }
+        ]
+      },
+      "he": {
+        "integration_target": "何宇轩",
+        "source_branch": "origin/何宇轩",
+        "source_commit": "7ada9fb084cc40975a2ef8bba6387635c54ce240",
+        "modules": [
+          {
+            "name": "edge_intake.intake",
+            "path": "edge_intake/intake.py",
+            "package": false,
+            "sha256": "09d9d604e11d6a5b4bdc514dfcc5c8be57311887993c68d196bc9fe489e13f35",
+            "git_blob": "82adb51e151f963bb1233d6840872e1fd70f9017"
+          },
+          {
+            "name": "edge_intake",
+            "path": "edge_intake/__init__.py",
+            "package": true,
+            "sha256": "f62ff1c249221c3bd72b87682fdd586acbb045722ae41c9238d2b16f1d98c3b4",
+            "git_blob": "18b0f4c89a7ce5e07a977af2acc90f9697f842d1"
+          }
+        ]
+      }
+    },
+    "repository_refs_at_review": {
+      "HEAD": "25c55ca0ab2e9d0f18e3640833a575102f7e48c6",
+      "origin/李青原": "25c55ca0ab2e9d0f18e3640833a575102f7e48c6",
+      "origin/张鹏飞": "568e229aa1d2534ea42a9f5812cdc7d9fa786cbf",
+      "origin/何宇轩": "7ada9fb084cc40975a2ef8bba6387635c54ce240",
+      "origin/main": "ed4449670a81629b917e8cd177f6a836b0be1b5b"
+    },
+    "remote_refresh": {
+      "status": "BLOCKED_AUTH",
+      "checked_at_utc": "2026-10-05T14:55:13.011068+00:00",
+      "remote_source_verified": false,
+      "detail": "Non-interactive fetch failed with SEC_E_NO_CREDENTIALS. Continue with existing pinned local Git objects; GitHub latest is not verified.",
+      "attempt": {
+        "command": [
+          "git",
+          "-c",
+          "safe.directory=C:/Users/LQY/Documents/GitHub/ict-2026",
+          "-c",
+          "credential.interactive=false",
+          "-C",
+          "C:\\Users\\LQY\\Documents\\GitHub\\ict-2026",
+          "fetch",
+          "origin"
+        ],
+        "exit_code": 128,
+        "stdout": "",
+        "stderr": "fatal: unable to access 'https://github.com/Mason1035/ict-2026.git/': schannel: AcquireCredentialsHandle failed: SEC_E_NO_CREDENTIALS (0x8009030e) - 安全包中没有可用的凭证\n",
+        "timed_out": false,
+        "elapsed_seconds": 1.984
+      },
+      "pinned_matches_local_tracking_refs": {
+        "zhang": true,
+        "he": true
+      }
+    },
+    "teammate_version_policy": "Pinned Git objects; no fetch/merge; source SHA-256 and blob ID checked before import."
+  },
+  "invocation": [
+    "C:\\Users\\LQY\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+    "C:\\Users\\LQY\\Documents\\GitHub\\ict-2026\\experiments\\mock_interface\\runner\\run_mock_integration.py",
+    "--teammates"
+  ],
+  "original_input_evidence": "inputs/M02_MISSING_SENSOR.json"
+}

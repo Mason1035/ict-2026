@@ -1,0 +1,122 @@
+{
+  "scope": "ADAPTER_CLEANUP_REGRESSION",
+  "execution_time": "2026-10-05T14:57:12.542407+00:00",
+  "local_source_status": "LOCAL_PINNED_SOURCE_TESTED",
+  "remote_source_verification": "BLOCKED_AUTH",
+  "remote_source_verified": false,
+  "git_branch": "李青原",
+  "refs": {
+    "HEAD": "25c55ca0ab2e9d0f18e3640833a575102f7e48c6",
+    "origin/李青原": "25c55ca0ab2e9d0f18e3640833a575102f7e48c6",
+    "origin/张鹏飞": "568e229aa1d2534ea42a9f5812cdc7d9fa786cbf",
+    "origin/何宇轩": "7ada9fb084cc40975a2ef8bba6387635c54ce240",
+    "origin/main": "ed4449670a81629b917e8cd177f6a836b0be1b5b"
+  },
+  "worktree_after_run": " M experiments/mock_interface/runner/README.md\n M experiments/mock_interface/runner/TEAMMATE_INTEGRATION.md\n M experiments/mock_interface/runner/he_adapter.py\n M experiments/mock_interface/runner/run_mock_integration.py\n M experiments/mock_interface/runner/teammate_source.py\n M experiments/mock_interface/runner/teammate_sources.json\n M experiments/mock_interface/runner/test_teammate_integration.py\n M experiments/mock_interface/runner/zhang_adapter.py\n?? experiments/mock_interface/results/teammate_20261005T063351Z_0978884d/\n?? experiments/mock_interface/results/teammate_20261005T145609Z_ebda5a21/\n",
+  "changed_files_this_turn": [
+    "experiments/mock_interface/runner/TEAMMATE_INTEGRATION.md",
+    "experiments/mock_interface/runner/he_adapter.py",
+    "experiments/mock_interface/runner/teammate_sources.json",
+    "experiments/mock_interface/runner/test_teammate_integration.py",
+    "experiments/mock_interface/runner/zhang_adapter.py"
+  ],
+  "unchanged_preexisting_files": 107,
+  "fixtures_protocols_reviews_cpp_schema_unchanged": true,
+  "all_preexisting_results_unchanged": true,
+  "runner_hashes_match_run": true,
+  "input_copies_and_hashes_match": true,
+  "git_diff_check_exit_code": 0,
+  "cases": [
+    {
+      "case_id": "M01_NORMAL",
+      "observed_public_entry_calls": {
+        "zhang": [
+          "evaluate_telemetry_v2"
+        ],
+        "he": [
+          "receive_validated_telemetry"
+        ]
+      },
+      "actual": {
+        "message_count": 1,
+        "accepted_message_count": 1,
+        "rejected_message_count": 0,
+        "risk_handoff_call_count": 1,
+        "edge_handoff_call_count": 1,
+        "zhang_real_function_call_count": 1,
+        "he_real_function_call_count": 1
+      }
+    },
+    {
+      "case_id": "M02_MISSING_SENSOR",
+      "observed_public_entry_calls": {
+        "zhang": [
+          "evaluate_telemetry_v2"
+        ],
+        "he": [
+          "receive_validated_telemetry"
+        ]
+      },
+      "actual": {
+        "message_count": 1,
+        "accepted_message_count": 1,
+        "rejected_message_count": 0,
+        "risk_handoff_call_count": 1,
+        "edge_handoff_call_count": 1,
+        "zhang_real_function_call_count": 1,
+        "he_real_function_call_count": 1
+      }
+    },
+    {
+      "case_id": "M07_RISK_NOT_CALIBRATED",
+      "observed_public_entry_calls": {
+        "zhang": [
+          "evaluate_telemetry_v2"
+        ],
+        "he": [
+          "receive_validated_telemetry"
+        ]
+      },
+      "actual": {
+        "message_count": 1,
+        "accepted_message_count": 1,
+        "rejected_message_count": 0,
+        "risk_handoff_call_count": 1,
+        "edge_handoff_call_count": 1,
+        "zhang_real_function_call_count": 1,
+        "he_real_function_call_count": 1
+      }
+    },
+    {
+      "case_id": "M08_INVALID_SCHEMA",
+      "observed_public_entry_calls": {
+        "zhang": [],
+        "he": []
+      },
+      "actual": {
+        "message_count": 4,
+        "accepted_message_count": 0,
+        "rejected_message_count": 4,
+        "risk_handoff_call_count": 0,
+        "edge_handoff_call_count": 0,
+        "zhang_real_function_call_count": 0,
+        "he_real_function_call_count": 0
+      }
+    }
+  ],
+  "he_return_regression": "PASS (success and caught loading/invocation exceptions)",
+  "legacy_probe_regression": "PASS (profile observation in positive-case unit tests; no direct Feature or training probes)",
+  "open_interface_gaps": [
+    "G01",
+    "G02",
+    "G03",
+    "G04",
+    "G05",
+    "G06",
+    "G07",
+    "G08",
+    "G09"
+  ],
+  "protocol_change": "NO PROTOCOL CHANGE REQUIRED",
+  "three_person_mock_integration_pass": "NO"
+}

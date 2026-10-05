@@ -73,6 +73,6 @@ Runner 未提交时，Git commit 不能单独代表实现版本，因此同时�
 
 两人真实代码接入后，再以同一输入 hash 和版本证据执行联调并记录状态；本 Runner 不自动将状态升级为三人联调通过。
 
-## 队友真实代码边界接入 V0.1
+## 队友真实 Telemetry 接收入口接入 V0.2
 
-Runner 实现版本 0.2.0 新增可选 `--teammates` 模式；不带参数仍是上述 Local 工作流。固定 commit、原始源码加载、实际函数调用及阻塞语义见 [TEAMMATE_INTEGRATION.md](TEAMMATE_INTEGRATION.md)。该模式不把训练契约校验当 Telemetry Validator，不把 RealAdapter 的阻塞异常当 Edge 接收成功。
+以上章节描述不带参数的 Local 工作流及历史限制。Runner 0.3.0 的可选 `--teammates` 模式已改为调用 B 的 `evaluate_telemetry_v2()` 和 C 的 `receive_validated_telemetry()`，不再使用旧能力探针。版本、源码加载、接收判据和证据范围见 [TEAMMATE_INTEGRATION.md](TEAMMATE_INTEGRATION.md)。Risk 仍需合法标定/策略，C 仅实现内存 Intake，下游未实现；旧结果不覆盖。最小接收成功不自动成为完整三人联调 PASS。

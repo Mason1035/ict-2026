@@ -1,0 +1,27 @@
+{
+  "scope": "POST_RUN_FILE_AND_EVIDENCE_VERIFICATION",
+  "execution_time": "2026-10-05T06:34:44.879588+00:00",
+  "changed_tracked_files": [
+    "experiments/mock_interface/runner/README.md",
+    "experiments/mock_interface/runner/TEAMMATE_INTEGRATION.md",
+    "experiments/mock_interface/runner/he_adapter.py",
+    "experiments/mock_interface/runner/run_mock_integration.py",
+    "experiments/mock_interface/runner/teammate_source.py",
+    "experiments/mock_interface/runner/teammate_sources.json",
+    "experiments/mock_interface/runner/test_teammate_integration.py",
+    "experiments/mock_interface/runner/zhang_adapter.py"
+  ],
+  "other_tracked_files_byte_identical": true,
+  "baseline_file_count": 102,
+  "fixtures_unchanged": true,
+  "protocols_reviews_unchanged": true,
+  "cpp_and_formal_schema_unchanged": true,
+  "old_results_unchanged": true,
+  "recorded_runner_hashes_match": true,
+  "input_copies_match_fixtures_and_hashes": true,
+  "all_recorded_message_checks_true": true,
+  "python_syntax": "VALID",
+  "git_diff_check_exit_code": 0,
+  "remote_refresh": "NOT_CONFIRMED",
+  "three_person_integration": "NOT_DECLARED"
+}

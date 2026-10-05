@@ -46,10 +46,12 @@ def target_modules(target):
     """Isolate original import names; refuse to reuse or overwrite other modules."""
     spec = source_spec(target)
     modules = spec["modules"]
-    prefix = modules[0]["name"]
+    prefixes = {item["name"].split(".")[0] for item in modules}
+    def owned(name):
+        return any(name == prefix or name.startswith(prefix + ".") for prefix in prefixes)
     with _IMPORT_LOCK:
-        if any(name == prefix or name.startswith(prefix + ".") for name in sys.modules):
-            raise RuntimeError("Refusing to shadow existing teammate namespace: " + prefix)
+        if any(owned(name) for name in sys.modules):
+            raise RuntimeError("Refusing to shadow existing teammate namespaces: " + str(sorted(prefixes)))
         loaded = {}
         try:
             for item in modules:
@@ -65,13 +67,21 @@ def target_modules(target):
                 parent, _, child = item["name"].rpartition(".")
                 if parent in loaded:
                     setattr(loaded[parent], child, module)
-                # Execute EXACT bytes from the pinned, verified teammate commit.
-                exec(compile(source, origin, "exec"), module.__dict__)
                 loaded[item["name"]] = module
+            # Register packages before children execute; manifest order is reviewed
+            # dependency order (entry before the package that re-exports its API).
+            for name, module in loaded.items():
+                parent, _, child = name.rpartition(".")
+                if parent in loaded:
+                    setattr(loaded[parent], child, module)
+            for item in modules:
+                module = loaded[item["name"]]
+                source = _read_source(spec["source_commit"], item["path"], item["sha256"], item["git_blob"])
+                exec(compile(source, module.__file__, "exec"), module.__dict__)
             yield loaded
         finally:
             for name in list(sys.modules):
-                if name == prefix or name.startswith(prefix + "."):
+                if owned(name):
                     del sys.modules[name]
 
 
@@ -98,7 +108,7 @@ def invoke_real(target, module_name, function, *args, expected_exception=None, *
 
     record = {
         "integration_target": spec["integration_target"], "source_branch": spec["source_branch"],
-        "source_commit": spec["source_commit"], "source_module": item["path"],
+        "source_commit": spec["source_commit"], "source_module": item["path"], "source_file": item["path"],
         "source_function": function.__qualname__, "source_sha256": item["sha256"],
         "source_git_blob": item["git_blob"], "source_line": code.co_firstlineno,
         "arguments": {"args": plain(args), "kwargs": plain(kwargs)},
