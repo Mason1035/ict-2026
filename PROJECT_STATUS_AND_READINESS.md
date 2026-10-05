@@ -1,6 +1,36 @@
 # PROJECT-WIDE ADAPTATION AND READINESS REPORT
 
-审查日期：2026-09-25。范围：当前开发仓库的活动源码、文档、契约、测试和已保存 artifact。
+## 2026-10-05 当前进度增量：Telemetry / Edge Intake
+
+已补充 C 独立 `edge_intake` V0.1.0，入口为 `receive_validated_telemetry(payload, *, context=None)`。
+此前 A 实际调用的是训练方向 `RealAdapter.to_dataset()`，真实抛出 ContractNotReadyError，
+是接口职责不匹配；训练入口保持原状，新 Telemetry 入口独立维护。
+
+| 项目 | 当前事实 | 证据与边界 |
+|---|---|---|
+| Physics / Training | 本仓库 0.1.1 软件/骨架已有历史验证 | 本轮未改源码；正式数据/训练仍 WAITING_FOR_A/B |
+| A 固件 | A 分支记录 9/28 Build PASS、host tests PASS | 固定 A commit 25c55ca；Flash/Serial Boot NOT_RUN，不等于传感器/实机验收 |
+| A Mock Runner | 10/4 已有真实跨分支调用记录 | 曾触达 C 训练方法，INTERFACE_MISMATCH；不是三人联调通过 |
+| C 最小 Intake | 本轮 syntax/import、37 tests、四例本地复验通过 | M01/M02/M07 各 1 调用；M08 四拒绝、0 调用；保留身份/null/source/payload |
+| 三人 Mock | NOT_RUN / 等待 A/B 新入口接线重跑 | 旧 he_adapter.py 及旧状态断言仍需 A 更新；本轮未调用 B |
+| 生产 Edge 下游 | NOT_IMPLEMENTED | 生产 Validator、认证、持久化/去重、MQTT、Atlas、Cloud 未接入 |
+| 正式训练/真实效果 | BLOCKED / 无性能主张 | Mock 软件结果不是 Real CSV、标定或灾害模型评价 |
+
+这次远端核对 A/B/C 分支分别为 `25c55ca0ab2e9d0f18e3640833a575102f7e48c6`、
+`4d635759f4b9e222609938ef5e6d829463d40024`、`019a03a53336790a1439485754afdaaf3c34c9c1`。
+B 仅核对分支 revision，未重新审计其全部新交付；下方 B 细节仍限定 9/25 的本地交付快照。
+C revision 是本轮修改前基线，最终被测新入口以测试记录中的源码 hash 定位。
+仓库现有 Git；下方 9/25 的“Git 不可用”仅为历史事实。
+
+下一步：李青原固定包含新 Intake 的 C commit，更新 `he_adapter.py`/返回状态断言，
+与 B 算法入口并列重跑 M01/M02/M07/M08。通过前不能标 `THREE_PERSON_MOCK_INTEGRATION_PASS`。
+
+详见 [新入口说明](edge_intake/README.md)、[接口交接](docs/protocols/telemetry_v2_edge_intake.md)、
+[本轮测试证据](docs/test_records/integration/2026-10-05_edge_intake_v0.1.0/README.md)。
+
+## 2026-09-25 历史完整审计（以下 A–S 保留当时事实）
+
+审查日期：2026-09-25。范围：当时开发仓库的活动源码、文档、契约、测试和已保存 artifact。
 本报告不替代 00 Shared Contract，也不证明仓库以外的硬件/服务没有工作成果；未交付的证据不计为完成。
 机器可读对应：[project_status.json](project_status.json)。不提供缺乏依据的完成度百分比。
 

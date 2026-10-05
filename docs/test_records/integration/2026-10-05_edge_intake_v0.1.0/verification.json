@@ -1,0 +1,71 @@
+{
+  "as_of": "2026-10-05",
+  "scope": "C_EDGE_INTAKE_MOCK_BOUNDARY_ONLY",
+  "C_base_revision": "019a03a53336790a1439485754afdaaf3c34c9c1",
+  "tested_C_source_sha256": {
+    "__init__.py": "f62ff1c249221c3bd72b87682fdd586acbb045722ae41c9238d2b16f1d98c3b4",
+    "intake.py": "09d9d604e11d6a5b4bdc514dfcc5c8be57311887993c68d196bc9fe489e13f35"
+  },
+  "A_source_revision": "25c55ca0ab2e9d0f18e3640833a575102f7e48c6",
+  "shared_contract_sha256": "a0a5877b2ad65cd8360e304d0d93a467f6dd8904172f6206cae769bd91769d4d",
+  "taskbook_filename": "何宇轩_Telemetry_v2_Edge_Intake_最小正式入口任务书_V0.1.docx",
+  "taskbook_sha256": "174ac83845bf541cb7841bb30e85dd8f88635928058ab08333885de45a84ec3d",
+  "environment": {
+    "python": "3.11.9",
+    "pytest": "9.0.2",
+    "added_dependencies": []
+  },
+  "pytest": {
+    "tests": 37,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "passed": 37,
+    "command": "PYTHONDONTWRITEBYTECODE=1 work/.venv/bin/python -m pytest edge_intake/tests -q -p no:cacheprovider"
+  },
+  "syntax_compile": {
+    "status": "PASS",
+    "files": [
+      "edge_intake/__init__.py",
+      "edge_intake/intake.py",
+      "edge_intake/scripts/__init__.py",
+      "edge_intake/scripts/verify_mock_intake.py",
+      "edge_intake/tests/__init__.py",
+      "edge_intake/tests/fixtures/a_mock/runner/mock_loader.py",
+      "edge_intake/tests/fixtures/a_mock/runner/mock_v2_validator.py",
+      "edge_intake/tests/test_intake.py"
+    ],
+    "file_count": 8
+  },
+  "public_import": "PASS",
+  "mock_case_status": {
+    "M01_NORMAL": {
+      "status": "PASS",
+      "edge_call_count": 1
+    },
+    "M02_MISSING_SENSOR": {
+      "status": "PASS",
+      "edge_call_count": 1
+    },
+    "M07_RISK_NOT_CALIBRATED": {
+      "status": "PASS",
+      "edge_call_count": 1
+    },
+    "M08_INVALID_SCHEMA": {
+      "status": "PASS",
+      "edge_call_count": 0
+    }
+  },
+  "repeat_same_code_and_inputs": "IDENTICAL_REPORT",
+  "pinned_snapshot_vs_A_checkout": "IDENTICAL_CASES_AND_C_SOURCE_HASHES",
+  "protected_existing_files": 150,
+  "protected_changed_or_removed": [],
+  "protected_scope": "physics_sim/ai_training/team_handoffs active files and all pre-existing docs; excluded outputs/caches/venv",
+  "code_review": "NO_BLOCKING_FINDINGS; ambiguous hash comment clarified and final tests rerun",
+  "production_validator": "NOT_IMPLEMENTED",
+  "three_person_integration": "NOT_RUN",
+  "B_risk_consumer": "NOT_CALLED",
+  "downstream": "NOT_IMPLEMENTED",
+  "durable_storage": "NOT_IMPLEMENTED",
+  "mock_cases_file_sha256": "45a5661a43edfd4f8c7ee86c19cf1df0f339d729bb8d14252ac173de6eac16dc"
+}

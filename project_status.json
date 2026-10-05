@@ -1,14 +1,21 @@
 {
   "status_schema_version": "zhifang.repository-status.v1",
-  "as_of": "2026-09-25",
-  "scope": "Current repository evidence only; not an assertion about undelivered work elsewhere",
+  "as_of": "2026-10-05",
+  "scope": "Local C evidence plus pinned A firmware/mock review; existing physics/training/B delivery audit remains dated 2026-09-25",
   "ssot": "docs/00_TEAM_SHARED_CONTRACT.pdf",
   "report": "PROJECT_STATUS_AND_READINESS.md",
   "project_status": "BLOCKED",
   "formal_training_ready": false,
   "real_world_validated": false,
-  "source_code_revision": null,
-  "source_revision_note": "No Git repository; source content hashes retained in verification evidence",
+  "source_code_revision": "019a03a53336790a1439485754afdaaf3c34c9c1",
+  "source_revision_note": "Base revision before this intake change; exact tested new intake content hashes retained in edge verification evidence",
+  "team_revision_snapshot": {
+    "as_of": "2026-10-05",
+    "A": "25c55ca0ab2e9d0f18e3640833a575102f7e48c6",
+    "B": "4d635759f4b9e222609938ef5e6d829463d40024",
+    "C_base": "019a03a53336790a1439485754afdaaf3c34c9c1",
+    "B_review_scope": "Revision only; existing local B audit is not promoted to a review of this new branch"
+  },
   "versions": {
     "shared_contract_version": "1.0",
     "generator_version": "0.1.1",
@@ -18,6 +25,7 @@
     "b_fixture_generator_version": "1.0.0-test-only",
     "b_formal_contract_version": "0.1-draft",
     "training_framework_version": "0.1.1",
+    "edge_intake_version": "0.1.0",
     "model_version": null,
     "formal_dataset_version": null,
     "formal_feature_version": null,
@@ -34,6 +42,15 @@
     "waiting_for": ["WAITING_FOR_A"]
   },
   "real_data": {"owner": "A", "status": "WAITING_FOR_A", "delivered_dataset": null},
+  "A_remote_progress": {
+    "source_revision": "25c55ca0ab2e9d0f18e3640833a575102f7e48c6",
+    "firmware_build": "PASS_RECORDED_BY_A",
+    "host_semantic_tests": "PASS_RECORDED_BY_A",
+    "flash_serial_boot": "NOT_RUN",
+    "mock_runner": "LOCAL_RUNNER_PASS_RECORDED_BY_A",
+    "prior_C_entry": "RealAdapter.to_dataset",
+    "prior_C_result": "INTERFACE_MISMATCH / EDGE_INTAKE_NOT_IMPLEMENTED"
+  },
   "physics_sim": {
     "owner": "C",
     "version": "0.1.1",
@@ -104,6 +121,21 @@
     "real_adapter_also_requires_B_contract": true
   },
   "formal_model_training": {"owner": "C", "status": "NOT_STARTED", "model_version": null},
+  "edge_intake": {
+    "owner": "C",
+    "version": "0.1.0",
+    "status": "MINIMAL_INTAKE_MOCK_VERIFIED",
+    "entry": "edge_intake.receive_validated_telemetry",
+    "upstream_validation_required": true,
+    "reception": "DETACHED_IN_MEMORY_JSON_SNAPSHOT",
+    "durable": false,
+    "production_validator": "NOT_IMPLEMENTED",
+    "downstream": "NOT_IMPLEMENTED",
+    "tests_passed": 37,
+    "three_person_integration": "NOT_RUN",
+    "A_adapter": "WAITING_FOR_A_UPDATE_TO_NEW_EDGE_ENTRY",
+    "B_consumer_in_this_validation": "NOT_CALLED"
+  },
   "evaluation": {
     "owner": "C",
     "status": "SKELETON",
@@ -124,9 +156,11 @@
     {"owner": "A", "status": "WAITING_FOR_A", "missing": ["Real Experiment CSV", "Calibration Metadata", "per-channel Validity", "run/time/device metadata", "noise/bias/drift/missingness evidence", "sensor response", "pump/rain mapping"], "blocks": ["real adapter", "scientific calibration", "formal training"]},
     {"owner": "B", "status": "WAITING_FOR_B", "missing": ["Formal Ordered Features", "Label", "Window", "Split Manifest", "Leakage Rules", "Normalization Contract", "Metrics", "Synthetic Constraints", "Independent Real Test protocol", "formal risk reference package"], "blocks": ["formal contract interpreter", "canonical project dataset", "formal training/evaluation", "NODE algorithm parity"]},
     {"owner": "A/B/C", "status": "TODO_CALIBRATION", "missing": ["physical and sensor calibration", "train-domain parameter evidence"], "blocks": ["calibrated synthetic data", "real-world claims"]},
-    {"owner": "C", "status": "NOT_STARTED", "missing": ["v2 validator/intake", "durable storage/dedup/receipt", "spool/cloud acknowledgement", "vision/fusion", "API/Web"], "blocks": ["end-to-edge", "end-to-end"]}
+    {"owner": "A/B/C", "status": "WAITING_FOR_A/B_INTEGRATION", "missing": ["A he_adapter pinned source and status update", "B new algorithm entry wiring", "actual sibling M01/M02/M07/M08 rerun"], "blocks": ["three-person mock integration"]},
+    {"owner": "C", "status": "NOT_IMPLEMENTED", "missing": ["production v2 validator/authentication", "durable storage/dedup/receipt", "spool/cloud acknowledgement", "vision/fusion", "API/Web"], "blocks": ["reliable end-to-edge", "end-to-end"]}
   ],
   "verification": {
+    "as_of": "2026-09-25",
     "before": {"passed": 179, "failed": 0, "skipped": 0, "subtests_passed": 20},
     "after": {"passed": 210, "failed": 0, "skipped": 0, "subtests_passed": 20},
     "compile_files": 65,
@@ -139,9 +173,23 @@
     "protected_changed": 0,
     "evidence": "ai_training/outputs/PROJECT_AUDIT_7rasdry4/verification.json"
   },
+  "edge_verification": {
+    "as_of": "2026-10-05",
+    "passed": 37,
+    "failed": 0,
+    "skipped": 0,
+    "syntax_compile_files": 8,
+    "mock_edge_calls": {"M01_NORMAL": 1, "M02_MISSING_SENSOR": 1, "M07_RISK_NOT_CALIBRATED": 1, "M08_INVALID_SCHEMA": 0},
+    "M08_upstream_rejected": 4,
+    "repeat": "IDENTICAL_REPORT",
+    "protected_existing_files": 150,
+    "protected_changed": 0,
+    "evidence": "docs/test_records/integration/2026-10-05_edge_intake_v0.1.0/verification.json",
+    "full_historical_regression_this_round": "NOT_RUN; taskbook limits this round to intake-related tests"
+  },
   "next_recommended_step": {
-    "owner": "C",
-    "task": "Implement an offline zhifang.telemetry.v2 validator with positive/negative golden fixtures from SSOT; keep unresolved business schemas explicit",
+    "owner": "A/B/C",
+    "task": "A pins the new C intake commit and updates he_adapter/status checks; wire B entry as a sibling and rerun only M01/M02/M07/M08",
     "automatically_started": false
   }
 }
