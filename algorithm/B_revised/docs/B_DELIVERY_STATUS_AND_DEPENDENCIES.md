@@ -1,5 +1,10 @@
 # 队员 B 当前交付与下一次数据交接
 
+2026-10-06 补充：现已新增参数化 Feature/Contribution/Risk 内核、20 项测试和 PyCharm 演示。
+详见 [`../telemetry_v2_intake/RUNTIME_HANDOFF.md`](../telemetry_v2_intake/RUNTIME_HANDOFF.md)。
+以下 2026-09-28 的分支核对是历史记录；A 最新已完成 MOCK 接收边界联调，真实校准材料仍需交接。
+新程序可执行 TEST_ONLY 全链路，但正式 Training Contract 与标定就绪状态不变。
+
 核对时间：2026-09-28。范围是本仓库 `张鹏飞` 分支及只读检查的 `origin/李青原`、`origin/何宇轩` 分支；分支之外的个人设备或未提交材料不在判断范围。正式 Training Contract 仍为 `NOT_READY_FOR_FORMAL_TRAINING`。
 
 ## 已完成、可运行

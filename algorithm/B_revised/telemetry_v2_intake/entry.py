@@ -1,8 +1,8 @@
 """已验证 Telemetry v2 的算法接收边界，不充当 Schema Validator。
 
-入口只映射现有 v2 字段并调用 B 的真实候选数学函数。尚无正式校准、窗口、
-贡献映射和 Missing Policy，因此绝不生成新的 Risk 结果。context/sidecar 只用于
-调用方保存联调证据，不参与本模块计算，也不成为 v2 字段。
+默认入口映射现有 v2 并调用真实候选函数，保留未标定 Risk。
+显式传入 runtime 后才消费 B.observation_batch.v1 内部采样批次计算；
+这不是新增 Telemetry 字段，已有 sampling_snapshot 不会自动启用评分。
 """
 
 from __future__ import annotations
@@ -14,9 +14,11 @@ from candidate_features import reference
 
 
 def evaluate_telemetry_v2(
-    payload: Mapping[str, Any], *, context: Mapping[str, Any] | None = None
+    payload: Mapping[str, Any], *, context: Mapping[str, Any] | None = None, runtime=None
 ) -> dict[str, Any]:
     """消费**上游已通过 v2 校验**的单条消息，返回审计结果而非改写消息。
+
+    runtime 为可选的 FeatureRiskRuntime。省略时保留 A 已联调的默认行为。
 
     M08 等非法输入必须由上游 Validator 在调用本函数前拒绝。这里只做版本
     前置条件断言，不另建一套 Schema 校验器。直接绕过 Validator 调用的结果
@@ -24,6 +26,10 @@ def evaluate_telemetry_v2(
     """
     if payload.get("schema") != "zhifang.telemetry.v2":
         raise ValueError("必须先由上游 Validator 接受 zhifang.telemetry.v2")
+
+    # 显式注入已加载配置的有状态内核。默认路径不引入新依赖，保持 A 固定源码联调兼容。
+    if runtime is not None:
+        return runtime.evaluate(payload, context=context)
 
     top, toe = payload["imu"]
     soil = payload["soil"]

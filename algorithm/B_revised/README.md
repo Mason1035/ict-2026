@@ -15,6 +15,8 @@
 
 ## 对接入口
 
+- 2026-10-06 补充 [`telemetry_v2_intake/RUNTIME_HANDOFF.md`](telemetry_v2_intake/RUNTIME_HANDOFF.md)：参数化的原始观测 → 因果 Feature → 四路贡献 → Risk 内核，附 PyCharm 可直接运行的正常/异常/缺测回放。默认 Telemetry 入口保持未标定阻塞；正式配置模板保留 null，等待 A 实测及团队会签。
+
 - B 下一阶段的真实实验 CSV 初检见 [`data_intake/README.md`](data_intake/README.md)：严格校验 v2 的 20 列并生成质量报告；此步骤不意味着正式训练就绪。
 - 候选特征原语与未决参数见 [`candidate_features/README.md`](candidate_features/README.md)，数据泄漏、评价及下一次交接边界见 [`docs/B_NEXT_STAGE_BOUNDARIES.md`](docs/B_NEXT_STAGE_BOUNDARIES.md)。
 - 拟议 run 划分的防泄漏结构预检见 [`evaluation/README.md`](evaluation/README.md)；它不会批准正式训练。

@@ -2,6 +2,14 @@
 
 只记录本次实际改动，不重写 B_original 或早期验证历史。
 
+## 2026-10-06：参数化 Feature → Contribution → Risk 参考内核
+
+- 在现有 `telemetry_v2_intake` 增加可选 `runtime=`，默认不改变 A 已联调的入口；内部原始采样批次是待团队确认的 B API，不新增 Telemetry 字段。
+- 新增因果重力低通候选实现、独立基线、动态加速度窗口 RMS、倾角趋势、逐探针相对湿润度和实际采样事件增长率；配置绑定节点/物理传感器/坐标/ODR/标定版本。
+- 新增缺测全路有效策略、配置完整性/会签引用门禁、单调折线贡献映射和共享 Risk 外壳。正式 Draft 不可加载，演示无正式 reason bit；没有发布实测阈值、训练模型或现场告警策略。
+- 新增 PyCharm 可直接运行的三场景 TEST_ONLY 演示、配置模板和交接说明；21 项新测试覆盖数值、分批等价、重复/冲突、未来输入、过期、重启、失效恢复、配置回滚及只读输入。
+- 实际验证：B 主线 50 项通过；A `01093f5aaa59b20658019465152ca8a89870e3da` 的 M01/M02/M07 默认入口兼容，M08 四条拒绝/零调用。此结果不等于 A 已集成本轮 runtime 或正式三人验收。
+
 ## 2026-10-05：Telemetry v2 → Feature/Risk 最小正式入口
 
 - 新增 `telemetry_v2_intake.evaluate_telemetry_v2(payload, *, context=None)`：消费上游已通过验证的 v2 消息，保留三元身份和原始 time/IMU/Soil/system 投影，真实调用现有 B 候选函数，不改写原 payload 或发明风险值。
