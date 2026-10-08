@@ -1,0 +1,20 @@
+{
+  "contract_id": "B_RULE_DISTILLATION_CONTRACT",
+  "positive_class": 1,
+  "binary_threshold": 0.5,
+  "definitions": [
+    "confusion_matrix",
+    "precision",
+    "recall",
+    "specificity",
+    "f1",
+    "balanced_accuracy",
+    "average_precision_pr_auc",
+    "roc_auc",
+    "coverage",
+    "unknown_rate"
+  ],
+  "undefined_denominators": "report null with reason; never fabricate a score",
+  "model_metrics": null,
+  "reason": "此阶段只生成契约数据，不拟合模型或伪报模型分数。"
+}

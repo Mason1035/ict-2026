@@ -1,0 +1,9 @@
+{
+  "purpose": "TEST_ONLY_SPLIT_PREFLIGHT_EXAMPLE_NOT_REAL_RUNS",
+  "entries": [
+    {"run_id": "TEST_real_train", "parent_run": null, "split": "train", "is_synthetic": false},
+    {"run_id": "TEST_aug_train", "parent_run": "TEST_real_train", "split": "train", "is_synthetic": true},
+    {"run_id": "TEST_real_validation", "parent_run": null, "split": "validation", "is_synthetic": false},
+    {"run_id": "TEST_real_test", "parent_run": null, "split": "test", "is_synthetic": false}
+  ]
+}

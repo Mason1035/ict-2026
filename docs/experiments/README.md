@@ -21,4 +21,5 @@
 - 失败或异常说明
 
 B 负责实验设计、run_id 和标签规则；A 负责真实执行与采集。
+首轮实验交接方案见 [`../../algorithm/B_revised/docs/B_EXPERIMENT_PLAN.md`](../../algorithm/B_revised/docs/B_EXPERIMENT_PLAN.md)；方案不是已执行的实验记录。
 失败 run 不删除；沙盘实验不得描述为真实山区验证。

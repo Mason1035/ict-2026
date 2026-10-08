@@ -1,0 +1,25 @@
+{
+  "normal": {
+    "risk_level": "normal",
+    "reasons": [],
+    "missing_fields": []
+  },
+  "abnormal": {
+    "risk_level": "warning",
+    "reasons": [
+      "演示湿度趋势：20 秒内净增 6.000 个百分点，斜率 18.000 个百分点/分钟，逐点不下降",
+      "演示倾角变化：相对固定基线 0.200°，连续 3 点同方向偏离至少 1.300°，持续 20 秒；不等同山体位移",
+      "触发演示 warning：持续倾角偏离与较强湿度上升同时满足；不代表灾害预测结论"
+    ],
+    "missing_fields": []
+  },
+  "missing": {
+    "risk_level": "unknown",
+    "reasons": [
+      "基线或当前窗口存在湿度/倾角缺测；未校准湿度必须为 null，不能按 0 计算"
+    ],
+    "missing_fields": [
+      "soil_moisture_pct"
+    ]
+  }
+}
