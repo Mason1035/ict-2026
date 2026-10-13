@@ -41,6 +41,13 @@ class SplitPreflightTests(unittest.TestCase):
         result = audit_split_plan([item("real_a", None, {}, False)])
         self.assertIn("INVALID_SPLIT_OR_SOURCE", {issue["code"] for issue in result["issues"]})
 
+    def test_transitive_parent_leakage_and_cycle(self):
+        result = audit_split_plan([item("root", None, "train"), item("child", "root", "train"),
+                                   item("grandchild", "child", "test")])
+        self.assertIn("PARENT_GROUP_LEAKAGE", {i["code"] for i in result["issues"]})
+        cycle = audit_split_plan([item("a", "b", "train"), item("b", "a", "train")])
+        self.assertIn("PARENT_CYCLE", {i["code"] for i in cycle["issues"]})
+
 
 if __name__ == "__main__":
     unittest.main()

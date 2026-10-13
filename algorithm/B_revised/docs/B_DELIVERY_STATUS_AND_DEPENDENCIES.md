@@ -1,5 +1,9 @@
 # 队员 B 当前交付与下一次数据交接
 
+2026-10-13：不等待 A/C 真实数据的本地软件工具已完成，详见 [`../LOCAL_WORK_GUIDE.md`](../LOCAL_WORK_GUIDE.md)。
+可运行 `run_independent.py` 生成 8 场景回放、候选特征审计、Train-only 归一化/指标示例、交接预检和哈希清单。
+正式 Train 参数、标签证据、独立 Real Test 和模型部署验收仍待材料，不将本轮软件 PASS 提升为正式 readiness。
+
 2026-10-06 补充：现已新增参数化 Feature/Contribution/Risk 内核、20 项测试和 PyCharm 演示。
 详见 [`../telemetry_v2_intake/RUNTIME_HANDOFF.md`](../telemetry_v2_intake/RUNTIME_HANDOFF.md)。
 以下 2026-09-28 的分支核对是历史记录；A 最新已完成 MOCK 接收边界联调，真实校准材料仍需交接。

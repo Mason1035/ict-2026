@@ -13,3 +13,6 @@ Thumbs.db
 data/raw/
 data/private/
 data/reports/
+.venv/
+artifacts/local_runs/
+*.egg-info/
