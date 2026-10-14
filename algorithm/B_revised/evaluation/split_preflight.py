@@ -23,6 +23,7 @@ def audit_split_plan(entries: list[dict]) -> dict:
     real_roots: dict[str, set[str]] = defaultdict(set)
     seen_runs: set[str] = set()
     synthetic_entries: list[tuple[int, str]] = []
+    accepted: dict[str, tuple[int, dict]] = {}
 
     def fail(code: str, row: int, detail: str) -> None:
         issues.append({"code": code, "entry": row, "detail": detail})
@@ -56,6 +57,7 @@ def audit_split_plan(entries: list[dict]) -> dict:
             fail("DUPLICATE_RUN_ID", row_number, f"run_id={run_id} 重复；即使内容相同也须去重")
             continue
         seen_runs.add(run_id)
+        accepted[run_id] = (row_number, item)
         counts[split] += 1
         group_splits[root].add(split)
         if synthetic:
@@ -64,6 +66,30 @@ def audit_split_plan(entries: list[dict]) -> dict:
                 fail("SYNTHETIC_OUTSIDE_TRAIN", row_number, "合成数据只能属于 Train")
         else:
             real_roots[root].add(split)
+
+    # 解析完整母 run 链，避免 derived→derived→real 的后代逃过直接父级分组。
+    group_splits.clear()
+    real_roots.clear()
+    synthetic_entries.clear()
+    for run_id, (row_number, item) in accepted.items():
+        root, visited = run_id, set()
+        while root in accepted:
+            if root in visited:
+                fail("PARENT_CYCLE", row_number, f"{run_id!r} 的母 run 链存在环")
+                root = None
+                break
+            visited.add(root)
+            parent = accepted[root][1]["parent_run"]
+            if parent is None:
+                break
+            root = parent
+        if root is None:
+            continue
+        group_splits[root].add(item["split"])
+        if item["is_synthetic"]:
+            synthetic_entries.append((row_number, root))
+        else:
+            real_roots[root].add(item["split"])
 
     for root, assigned in group_splits.items():
         if len(assigned) > 1:

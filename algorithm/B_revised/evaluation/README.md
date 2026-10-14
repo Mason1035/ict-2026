@@ -1,5 +1,9 @@
 # B 划分计划初检（不执行训练）
 
+2026-10-13：新增 `normalization.py`（真实 Train-only 拟合、mask/null 保留、显式列顺序）和
+`metrics.py`（分类/PR/事件指标）；母 run 检查扩展为完整来源链并拒绝环。
+调用口径与运行示例见 [`../LOCAL_WORK_GUIDE.md`](../LOCAL_WORK_GUIDE.md)。这些工具不冻结正式类别、窗口或模型 X。
+
 `split_preflight.py` 检查拟议 `run_id`/`parent_run` 分组有没有跨 Train/Validation/Test、合成记录是否只进入 Train，以及其母 run 是否确实是 Train 中的真实 run。它接受 B 的**临时划分计划**，不生成 split、不读取特征、不检查独立真实 Test 的科学独立性，也不批准正式 Training Contract。
 
 从仓库根目录运行明确标注的 TEST_ONLY 样例：

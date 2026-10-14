@@ -1,5 +1,9 @@
 # B 阶段 1：真实实验 CSV 接收初检
 
+2026-10-13：新增 `check_handoff.py` 和 `A_RUN_HANDOFF_DRAFT.json`，只核对交接文件引用、SHA-256、
+CSV/run 一致性与元数据字段是否提供。模板是待确认的 B 索引提案，不新增核心 Telemetry/CSV 字段，
+侧表语义仍需人工审核。见 [`../LOCAL_WORK_GUIDE.md`](../LOCAL_WORK_GUIDE.md)。
+
 本目录按 `00_TEAM_SHARED_CONTRACT.pdf` 与 `02_算法与数据负责人开发文档.pdf` 的正式 v2 实验接口工作。它只检查原始文件结构和可直接观测的质量问题，**不训练模型、不作风险判定、不宣称真实数据已就绪**。旧七字段 JSON 和 `PRE_B_TRAINING_CONTRACT` 仅供旧演示/规则蒸馏，不可作为本程序的正式实验输入。
 
 ## PyCharm 运行
@@ -32,4 +36,4 @@ python algorithm/B_revised/data_intake/check_experiment_csv.py "<A交付CSV完�
 3. 时间和传感器元数据：`row_index → uptime` 映射；各通道实际采样时间与 validity/错误标记；IMU 的 ODR、滤波、量程、安装方向；ADS1115 的 PGA/采样设置；各探针与 IMU 的校准记录、单位和版本。重启、设备换装、ODR 改变须显式记录。
 4. B 审核标签、缺测、漂移、饱和、采样率、时间可信度后才构建特征表。分组与 `parent_run` 先于窗口和合成增强；同一物理实验的派生数据不得跨 Train/Validation/Test。正式 Training Contract 继续保持 `NOT_READY_FOR_FORMAL_TRAINING`，直到特征、窗口、标签、切分、归一化和合成约束经真实数据核定。
 
-此脚本不检查上述元数据完整性，也不把大幅物理变化自动视为噪声。出现 `REVIEW_REQUIRED` 时，B 人工核对原始记录与 A 的设备日志后决定保留或排除，并记录理由。
+此 CSV 脚本不检查上述元数据完整性，也不把大幅物理变化自动视为噪声。出现 `REVIEW_REQUIRED` 时，B 人工核对原始记录与 A 的设备日志后决定保留或排除，并记录理由。
