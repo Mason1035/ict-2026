@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "geohazard-platform"
+version = "0.2.0"
+description = "Local multimodal geohazard ingestion, evidence and configuration platform"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.115,<1", "uvicorn>=0.30,<1", "pydantic>=2.9,<3",
+  "python-multipart>=0.0.18,<1", "paho-mqtt>=2,<3",
+  "numpy>=1.26,<3", "opencv-python-headless>=4.10,<5", "Pillow>=10,<13"
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<10", "httpx>=0.27,<1", "amqtt>=0.11,<0.12"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

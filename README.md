@@ -6,6 +6,8 @@
 最高依据：[00_TEAM_SHARED_CONTRACT.pdf](docs/00_TEAM_SHARED_CONTRACT.pdf)。
 个人文档、交付契约、README 或代码发生冲突时，以 00 为准；正式资料只读。
 
+本地多模态平台：[FastAPI 后端与运行说明](platform_backend/README.md)，从仓库根目录执行 `./scripts/run-platform.sh`。现有 [Vue 指挥中心](apps/geohazard-demo/README.md) 默认读取后端，并保留独立本地演示。当前仅完成本机软件接入与持久化，不改变正式硬件、模型、Atlas、云及端到端验收状态。
+
 | 路径 | Owner | 当前用途和状态 |
 |---|---|---|
 | `docs/` | A/B/C | 00 共享契约、01/02/03 个人文档、04 资产表，文档基线 1.0 |
@@ -14,6 +16,8 @@
 | `team_handoffs/B_original/` | B | 原始交付归档，保留，不作为新正式契约入口 |
 | [ai_training/](ai_training/README.md) | C 何宇轩 | 0.1.1 SKELETON；B fixture 只读接入与 toy Trainer 自检；正式训练拒绝 |
 | [edge_intake/](edge_intake/README.md) | C 何宇轩 | 0.1.0；已验证 v2 对象的内存接收边界，Mock 四例通过；生产下游未实现 |
+| [platform_backend/](platform_backend/README.md) | C 何宇轩 | 0.2.0 本地软件平台；FastAPI、SQLite、MQTT 接收、图像/OpenCV、历史与告警 API；真实 Atlas/云与正式融合未接入 |
+| [apps/geohazard-demo/](apps/geohazard-demo/README.md) | C 何宇轩 | 后端平台页面与独立本地演示；来源与未知值明确区分 |
 | `outputs/`、模块内 `outputs/` | 验证记录 | 历史/新软件验证产物；合成数据与测试 checkpoint 不等于真实数据/正式模型 |
 | `work/` | 本地环境 | 开发虚拟环境，不作为项目交付或真实实验数据 |
 

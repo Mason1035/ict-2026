@@ -1,0 +1,30 @@
+{
+  "name": "geohazard-demo",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "typecheck": "vue-tsc --noEmit",
+    "build": "vue-tsc --noEmit && vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "node --import tsx --test tests/engine.test.ts",
+    "test:browser": "node tests/browser-smoke.mjs",
+    "test:platform": "node tests/platform-smoke.mjs"
+  },
+  "dependencies": {
+    "lucide-vue-next": "0.577.0",
+    "three": "0.180.0",
+    "vue": "3.5.43"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.4",
+    "@types/three": "0.180.0",
+    "@vitejs/plugin-vue": "6.0.9",
+    "playwright": "1.64.0",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3",
+    "vite": "7.3.7",
+    "vue-tsc": "3.3.12"
+  }
+}
