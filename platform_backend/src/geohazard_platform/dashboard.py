@@ -1,6 +1,6 @@
 """Read projections only. Original NODE payloads and unknown values stay intact."""
 from __future__ import annotations
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import base64
 import json
 
@@ -11,6 +11,25 @@ def parse_time(value):
     if value is None:
         return None
     return datetime.fromisoformat(value.replace("Z", "+00:00"))
+
+
+def normalize_time_filter(value, field="time"):
+    """Canonical UTC boundary for millisecond-resolution stored timestamps."""
+    if value is None:
+        return None
+    try:
+        stamp = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        if stamp.tzinfo is None or stamp.utcoffset() is None:
+            raise ValueError
+        stamp = stamp.astimezone(timezone.utc)
+        # Both >= after and < before need the first representable stored
+        # millisecond at/after this boundary. Truncation would include an older
+        # sample for after, or exclude a valid sample for before.
+        if remainder := stamp.microsecond % 1000:
+            stamp += timedelta(microseconds=1000 - remainder)
+        return stamp.isoformat(timespec="milliseconds").replace("+00:00", "Z")
+    except (ValueError, TypeError, AttributeError, OverflowError) as exc:
+        raise ValueError(f"{field} must be an ISO 8601 datetime with an explicit timezone") from exc
 
 
 def project(row, freshness_seconds=30):
@@ -57,17 +76,18 @@ def history(db, *, device_id, site_id=None, source=None, limit=120, before=None,
         if value is not None:
             clauses.append(f"{name}=?")
             args.append(value)
-    if before:
+    if before is not None:
         clauses.append("received_at<?")
-        args.append(before)
-    if after:
+        args.append(normalize_time_filter(before, "before"))
+    if after is not None:
         clauses.append("received_at>=?")
-        args.append(after)
+        args.append(normalize_time_filter(after, "after"))
     if cursor:
         try:
             stamp, identifier = json.loads(base64.urlsafe_b64decode(cursor.encode()).decode())
             if not isinstance(stamp,str) or not isinstance(identifier,str):
                 raise ValueError
+            stamp = normalize_time_filter(stamp, "cursor time")
         except Exception as exc:
             raise ValueError("无效的历史游标") from exc
         clauses.append("(received_at<? OR (received_at=? AND id<?))")

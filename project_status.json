@@ -1,14 +1,14 @@
 {
   "status_schema_version": "zhifang.repository-status.v1",
-  "as_of": "2026-10-05",
-  "scope": "Local C evidence plus pinned A firmware/mock review; existing physics/training/B delivery audit remains dated 2026-09-25",
+  "as_of": "2026-10-18",
+  "scope": "Local multimodal platform update; A/B firmware and formal training assessments retain their explicitly dated historical snapshots",
   "ssot": "docs/00_TEAM_SHARED_CONTRACT.pdf",
   "report": "PROJECT_STATUS_AND_READINESS.md",
   "project_status": "BLOCKED",
   "formal_training_ready": false,
   "real_world_validated": false,
   "source_code_revision": "019a03a53336790a1439485754afdaaf3c34c9c1",
-  "source_revision_note": "Base revision before this intake change; exact tested new intake content hashes retained in edge verification evidence",
+  "source_revision_note": "source_code_revision remains the historical 2026-10-05 intake baseline; current local platform scope is recorded under local_platform and module source/CHANGELOG files",
   "team_revision_snapshot": {
     "as_of": "2026-10-05",
     "A": "25c55ca0ab2e9d0f18e3640833a575102f7e48c6",
@@ -29,19 +29,34 @@
     "model_version": null,
     "formal_dataset_version": null,
     "formal_feature_version": null,
-    "calibration_version": null
+    "calibration_version": null,
+    "platform_backend_version": "0.2.1",
+    "web_app_version": "1.1.0"
   },
   "hardware": {
     "owner": "A",
     "status": "PARTIAL",
     "evidence": "docs/04_硬件资产采购与兼容性管理.xlsx",
-    "experimental_topology": {"imu": 2, "soil": 3},
-    "existing_boards_documented": ["NODE-01", "GW-01", "CAM-01"],
+    "experimental_topology": {
+      "imu": 2,
+      "soil": 3
+    },
+    "existing_boards_documented": [
+      "NODE-01",
+      "GW-01",
+      "CAM-01"
+    ],
     "sensor_acceptance_evidence": null,
     "hil_evidence": null,
-    "waiting_for": ["WAITING_FOR_A"]
+    "waiting_for": [
+      "WAITING_FOR_A"
+    ]
   },
-  "real_data": {"owner": "A", "status": "WAITING_FOR_A", "delivered_dataset": null},
+  "real_data": {
+    "owner": "A",
+    "status": "WAITING_FOR_A",
+    "delivered_dataset": null
+  },
   "A_remote_progress": {
     "source_revision": "25c55ca0ab2e9d0f18e3640833a575102f7e48c6",
     "firmware_build": "PASS_RECORDED_BY_A",
@@ -85,7 +100,13 @@
     "formal_training_dataset": false,
     "physics_inspired": false,
     "contract_version": "1.0-test-only",
-    "row_counts": {"dataset_all": 180, "train": 126, "validation": 27, "test": 27, "excluded_unknown": 18},
+    "row_counts": {
+      "dataset_all": 180,
+      "train": 126,
+      "validation": 27,
+      "test": 27,
+      "excluded_unknown": 18
+    },
     "run_id": null,
     "parent_run": null,
     "parameter_hash": null
@@ -97,7 +118,11 @@
     "training_ready": false,
     "validator_status": "NOT_READY_FOR_FORMAL_TRAINING",
     "unresolved_field_count": 20,
-    "blocking_statuses": ["WAITING_FOR_A", "WAITING_FOR_B", "TODO_CALIBRATION"]
+    "blocking_statuses": [
+      "WAITING_FOR_A",
+      "WAITING_FOR_B",
+      "TODO_CALIBRATION"
+    ]
   },
   "ai_training_framework": {
     "owner": "C",
@@ -120,7 +145,11 @@
     "real_adapter": "WAITING_FOR_A",
     "real_adapter_also_requires_B_contract": true
   },
-  "formal_model_training": {"owner": "C", "status": "NOT_STARTED", "model_version": null},
+  "formal_model_training": {
+    "owner": "C",
+    "status": "NOT_STARTED",
+    "model_version": null
+  },
   "edge_intake": {
     "owner": "C",
     "version": "0.1.0",
@@ -145,24 +174,148 @@
     "real_plus_synthetic_experiment": "NOT_RUN",
     "real_world_metrics": null
   },
-  "onnx": {"owner": "C", "status": "NOT_STARTED", "interface_status": "SKELETON", "export_status": "NOT_RUN", "parity_status": "NOT_RUN", "onnx_hash": null},
-  "ascend": {"owner": "C", "status": "NOT_STARTED", "atc": "NOT_RUN", "om_hash": null, "acl": "NOT_RUN"},
-  "atlas": {"owner": "C/A", "status": "NOT_STARTED", "real_device_validation": "NOT_RUN", "environment_lock": null},
-  "vision": {"owner": "C", "status": "NOT_STARTED"},
-  "cloud": {"owner": "C", "status": "NOT_STARTED"},
-  "web": {"owner": "C", "status": "NOT_STARTED"},
-  "end_to_end": {"owner": "A/B/C", "status": "BLOCKED", "real_hil": "NOT_RUN"},
+  "onnx": {
+    "owner": "C",
+    "status": "NOT_STARTED",
+    "interface_status": "SKELETON",
+    "export_status": "NOT_RUN",
+    "parity_status": "NOT_RUN",
+    "onnx_hash": null
+  },
+  "ascend": {
+    "owner": "C",
+    "status": "NOT_STARTED",
+    "atc": "NOT_RUN",
+    "om_hash": null,
+    "acl": "NOT_RUN"
+  },
+  "atlas": {
+    "owner": "C/A",
+    "status": "NOT_STARTED",
+    "real_device_validation": "NOT_RUN",
+    "environment_lock": null
+  },
+  "vision": {
+    "owner": "C",
+    "status": "OPENCV_BASELINE_IMPLEMENTED",
+    "path": "platform_backend/src/geohazard_platform/vision.py",
+    "calibrated": false,
+    "vision_score": null,
+    "model_version": null,
+    "continuous_camera_capture": "NOT_IMPLEMENTED"
+  },
+  "cloud": {
+    "owner": "C",
+    "status": "NOT_STARTED"
+  },
+  "web": {
+    "owner": "C",
+    "status": "LOCAL_BACKEND_CONNECTED",
+    "path": "apps/geohazard-demo",
+    "version": "1.1.0",
+    "standalone_simulator": "EXPLICIT_LOCAL_MODE",
+    "real_device_end_to_end": "NOT_VERIFIED"
+  },
+  "end_to_end": {
+    "owner": "A/B/C",
+    "status": "BLOCKED",
+    "real_hil": "NOT_RUN"
+  },
   "blockers": [
-    {"owner": "A", "status": "WAITING_FOR_A", "missing": ["Real Experiment CSV", "Calibration Metadata", "per-channel Validity", "run/time/device metadata", "noise/bias/drift/missingness evidence", "sensor response", "pump/rain mapping"], "blocks": ["real adapter", "scientific calibration", "formal training"]},
-    {"owner": "B", "status": "WAITING_FOR_B", "missing": ["Formal Ordered Features", "Label", "Window", "Split Manifest", "Leakage Rules", "Normalization Contract", "Metrics", "Synthetic Constraints", "Independent Real Test protocol", "formal risk reference package"], "blocks": ["formal contract interpreter", "canonical project dataset", "formal training/evaluation", "NODE algorithm parity"]},
-    {"owner": "A/B/C", "status": "TODO_CALIBRATION", "missing": ["physical and sensor calibration", "train-domain parameter evidence"], "blocks": ["calibrated synthetic data", "real-world claims"]},
-    {"owner": "A/B/C", "status": "WAITING_FOR_A/B_INTEGRATION", "missing": ["A he_adapter pinned source and status update", "B new algorithm entry wiring", "actual sibling M01/M02/M07/M08 rerun"], "blocks": ["three-person mock integration"]},
-    {"owner": "C", "status": "NOT_IMPLEMENTED", "missing": ["production v2 validator/authentication", "durable storage/dedup/receipt", "spool/cloud acknowledgement", "vision/fusion", "API/Web"], "blocks": ["reliable end-to-edge", "end-to-end"]}
+    {
+      "owner": "A",
+      "status": "WAITING_FOR_A",
+      "missing": [
+        "Real Experiment CSV",
+        "Calibration Metadata",
+        "per-channel Validity",
+        "run/time/device metadata",
+        "noise/bias/drift/missingness evidence",
+        "sensor response",
+        "pump/rain mapping"
+      ],
+      "blocks": [
+        "real adapter",
+        "scientific calibration",
+        "formal training"
+      ]
+    },
+    {
+      "owner": "B",
+      "status": "WAITING_FOR_B",
+      "missing": [
+        "Formal Ordered Features",
+        "Label",
+        "Window",
+        "Split Manifest",
+        "Leakage Rules",
+        "Normalization Contract",
+        "Metrics",
+        "Synthetic Constraints",
+        "Independent Real Test protocol",
+        "formal risk reference package"
+      ],
+      "blocks": [
+        "formal contract interpreter",
+        "canonical project dataset",
+        "formal training/evaluation",
+        "NODE algorithm parity"
+      ]
+    },
+    {
+      "owner": "A/B/C",
+      "status": "TODO_CALIBRATION",
+      "missing": [
+        "physical and sensor calibration",
+        "train-domain parameter evidence"
+      ],
+      "blocks": [
+        "calibrated synthetic data",
+        "real-world claims"
+      ]
+    },
+    {
+      "owner": "A/B/C",
+      "status": "WAITING_FOR_A/B_INTEGRATION",
+      "missing": [
+        "A he_adapter pinned source and status update",
+        "B new algorithm entry wiring",
+        "actual sibling M01/M02/M07/M08 rerun"
+      ],
+      "blocks": [
+        "three-person mock integration"
+      ]
+    },
+    {
+      "owner": "C",
+      "status": "PARTIAL_LOCAL_SOFTWARE",
+      "missing": [
+        "production device identity/authentication",
+        "NODE-authorized durable receipt and spool/cloud acknowledgement",
+        "Atlas and cloud deployment",
+        "calibrated vision score and complete risk fusion",
+        "real hardware end-to-end verification"
+      ],
+      "blocks": [
+        "reliable end-to-edge",
+        "end-to-end"
+      ]
+    }
   ],
   "verification": {
     "as_of": "2026-09-25",
-    "before": {"passed": 179, "failed": 0, "skipped": 0, "subtests_passed": 20},
-    "after": {"passed": 210, "failed": 0, "skipped": 0, "subtests_passed": 20},
+    "before": {
+      "passed": 179,
+      "failed": 0,
+      "skipped": 0,
+      "subtests_passed": 20
+    },
+    "after": {
+      "passed": 210,
+      "failed": 0,
+      "skipped": 0,
+      "subtests_passed": 20
+    },
     "compile_files": 65,
     "imported_ai_training_modules": 28,
     "fixture_hash_validation": "DONE",
@@ -179,7 +332,12 @@
     "failed": 0,
     "skipped": 0,
     "syntax_compile_files": 8,
-    "mock_edge_calls": {"M01_NORMAL": 1, "M02_MISSING_SENSOR": 1, "M07_RISK_NOT_CALIBRATED": 1, "M08_INVALID_SCHEMA": 0},
+    "mock_edge_calls": {
+      "M01_NORMAL": 1,
+      "M02_MISSING_SENSOR": 1,
+      "M07_RISK_NOT_CALIBRATED": 1,
+      "M08_INVALID_SCHEMA": 0
+    },
     "M08_upstream_rejected": 4,
     "repeat": "IDENTICAL_REPORT",
     "protected_existing_files": 150,
@@ -189,7 +347,35 @@
   },
   "next_recommended_step": {
     "owner": "A/B/C",
-    "task": "A pins the new C intake commit and updates he_adapter/status checks; wire B entry as a sibling and rerun only M01/M02/M07/M08",
+    "task": "Confirm the exact ESP32 board and firmware, connect an isolated node through a LAN-accessible MQTT Broker using v2 telemetry, then validate real sensor metadata and the existing B/C intake integration before Atlas/cloud deployment",
     "automatically_started": false
+  },
+  "local_platform": {
+    "as_of": "2026-10-18",
+    "status": "LOCAL_SOFTWARE_INTEGRATED",
+    "backend_version": "0.2.1",
+    "web_version": "1.1.0",
+    "storage": "SQLITE_WAL",
+    "telemetry_schema": "zhifang.telemetry.v2",
+    "mqtt": "IMPLEMENTED",
+    "http_device_ingress": "TEST_ONLY",
+    "node_cleanup_authorized": false,
+    "esp32_flashable_firmware": "NOT_INCLUDED_IN_PLATFORM",
+    "esp32_hardware_integration": "NOT_VERIFIED",
+    "atlas": "NOT_CONNECTED",
+    "cloud": "NOT_CONNECTED",
+    "formal_model": null,
+    "full_risk_fusion": "NOT_IMPLEMENTED",
+    "instructions": "platform_backend/README.md",
+    "verification": {
+      "as_of": "2026-10-18",
+      "python_tests_passed": 117,
+      "frontend_http_tests_passed": 2,
+      "frontend_browser_regressions_passed": 7,
+      "typescript": "PASS",
+      "production_build": "PASS",
+      "real_hardware": "NOT_RUN",
+      "test_services_left_running": false
+    }
   }
 }

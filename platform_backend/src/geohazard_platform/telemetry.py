@@ -12,6 +12,7 @@ from typing import Any
 from uuid import uuid4
 
 from edge_intake import receive_validated_telemetry
+from edge_intake.intake import EdgeIntakeError
 from .database import Database, utc_now
 
 SCHEMA = "zhifang.telemetry.v2"
@@ -30,6 +31,14 @@ def _is_finite_number(value: Any) -> bool:
     try:
         return math.isfinite(value)
     except OverflowError:
+        return False
+
+
+def _valid_utf8(value: str) -> bool:
+    try:
+        value.encode("utf-8")
+        return True
+    except UnicodeError:
         return False
 
 
@@ -77,8 +86,8 @@ def validate_telemetry(payload: Any, *, topic: str | None = None) -> list[dict[s
         error("payload.schema", f"must equal {SCHEMA}; LoRa partial profile is not implemented")
     for field in ("site_id", "device_id"):
         value = payload.get(field)
-        if not isinstance(value, str) or not value.strip() or len(value) > 128:
-            error(f"payload.{field}", "expected nonempty string up to 128 characters")
+        if not isinstance(value, str) or not value.strip() or len(value) > 128 or not _valid_utf8(value):
+            error(f"payload.{field}", "expected nonempty UTF-8 string up to 128 characters")
         elif any(c in value for c in "/+#\x00"):
             error(f"payload.{field}", "must be a single MQTT topic segment")
     for field in ("boot_id", "seq", "uptime_ms", "timestamp_ms"):
@@ -128,8 +137,8 @@ def validate_telemetry(payload: Any, *, topic: str | None = None) -> list[dict[s
                 error(f"payload.system.{field}", "expected bool in the full NODE profile")
     experiment = payload.get("experiment")
     if obj(experiment, {"run_id", "rain_level"}, "payload.experiment"):
-        if experiment.get("run_id") is not None and (not isinstance(experiment["run_id"], str) or len(experiment["run_id"]) > 256):
-            error("payload.experiment.run_id", "expected string up to 256 characters or null")
+        if experiment.get("run_id") is not None and (not isinstance(experiment["run_id"], str) or len(experiment["run_id"]) > 256 or not _valid_utf8(experiment["run_id"])):
+            error("payload.experiment.run_id", "expected UTF-8 string up to 256 characters or null")
         integer(experiment.get("rain_level"), "payload.experiment.rain_level", nullable=True, high=3)
     if topic is not None and topic != f"zhifang/v2/{payload.get('site_id')}/{payload.get('device_id')}/telemetry":
         error("topic", "MQTT topic site/device must match payload identity")
@@ -143,9 +152,9 @@ def quarantine_message(db: Database, raw: Any, *, source: str, scope: str, trans
     elif isinstance(raw, str):
         raw_text = raw
     else:
-        raw_text = json.dumps(raw, ensure_ascii=False, default=str)
+        raw_text = json.dumps(raw, ensure_ascii=True, default=str)
     # Bound rejected raw data so a bad publisher cannot exhaust local storage per message.
-    raw_text = raw_text[:262144]
+    raw_text = raw_text.encode("utf-8", errors="backslashreplace").decode("utf-8")[:262144]
     with db.connection() as connection:
         connection.execute("INSERT INTO quarantine(id,source,scope,transport,connector_id,topic,raw_payload,reason,created_at) VALUES(?,?,?,?,?,?,?,?,?)", (identifier, source, scope, transport, connector_id, topic, raw_text, reason[:4096], utc_now()))
     return identifier
@@ -158,7 +167,11 @@ def ingest_telemetry(db: Database, payload: Any, *, source: str = "MOCK", scope:
     if errors:
         quarantine_id = quarantine_message(db, payload, source=source, scope=scope, transport=transport, connector_id=connector_id, topic=topic, reason=json.dumps(errors, ensure_ascii=False))
         raise IngestionError(422, {"message": "Telemetry v2 validation failed", "errors": errors, "quarantine_id": quarantine_id})
-    receipt = receive_validated_telemetry(payload, context={**(context or {}), "source": source, "scope": scope, "transport": transport, "connector_id": connector_id, "topic": topic})
+    try:
+        receipt = receive_validated_telemetry(payload, context={**(context or {}), "source": source, "scope": scope, "transport": transport, "connector_id": connector_id, "topic": topic})
+    except EdgeIntakeError as exc:
+        quarantine_id = quarantine_message(db, payload, source=source, scope=scope, transport=transport, connector_id=connector_id, topic=topic, reason=str(exc))
+        raise IngestionError(422, {"message": "Telemetry payload and context must contain finite UTF-8 JSON values", "quarantine_id": quarantine_id}) from exc
     snapshot = receipt["payload"]
     original = json.dumps(snapshot, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False)
     identity = {field: snapshot[field] for field in ("site_id", "device_id", "boot_id", "seq")}

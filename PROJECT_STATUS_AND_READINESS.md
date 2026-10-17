@@ -1,5 +1,21 @@
 # PROJECT-WIDE ADAPTATION AND READINESS REPORT
 
+## 2026-10-18 当前进度增量：本地多模态平台
+
+已新增并接通 [FastAPI / SQLite / MQTT / OpenCV 平台](platform_backend/README.md) 与 [Vue 指挥中心](apps/geohazard-demo/README.md)。本轮后端版本 0.2.1、前端包版本 1.1.0；模块独立版本化。配置、原始遥测、接收记录、图像、分析、告警和历史可在本机保存，页面默认读取后端。
+
+本轮打磨聚焦设备/来源归属、视觉与历史分页、参考图和 ROI 参数变化、请求超时与取消、带时区的时间筛选、MQTT 保留消息与存储失败，以及代码更新后的启动重建。具体软件验证记录见各模块 README / CHANGELOG。
+
+| 项目 | 当前事实 | 边界 |
+|---|---|---|
+| 本地平台 | SQLite 事务持久化、MQTT 实际订阅、告警与历史 API 已实现 | 本地提交不授权 NODE 清理 SD；不是正式 Atlas durable receipt |
+| Web | 默认读取后端，保留明确独立的本地模拟器 | 后端失联时清空实时读数，未知值保持空值 |
+| Vision | PNG/JPEG 证据、ROI、质量、SSIM、帧差、光流与叠加图 | 技术基线未标定为灾害分数，vision_score / model_version 仍为 null |
+| ESP32 | 平台 MQTT 接收端与 v2 接入约束可用 | 此平台交付不含 ESP32 可烧录固件，真板接入未验证 |
+| Atlas / Cloud / 正式训练 | 本轮未接入 | 真实数据、标定、正式模型、端到端效果状态保持原有阻塞边界 |
+
+下方 2026-10-05 和 2026-09-25 记录保留当时事实；其中 Web / Vision 的 NOT_STARTED 和内存接收边界不代表新增本地平台的当前软件状态。其他 A/B、训练及真实硬件评价仍限定原记录日期，本轮没有重新审计或升级其验收结论。
+
 ## 2026-10-05 当前进度增量：Telemetry / Edge Intake
 
 已补充 C 独立 `edge_intake` V0.1.0，入口为 `receive_validated_telemetry(payload, *, context=None)`。

@@ -58,6 +58,7 @@ function status(item: Connector) {
   if (!item.enabled) return { label: "未启用", detail: "保存配置后，勾选启用以持续订阅", online: false };
   const own = typeof item.status === "object" ? item.status : undefined;
   const current = state || own;
+  if (current?.state === "storage_error" || current?.intake_healthy === false) return { label: "接入存储异常", detail: current.last_error || "Broker 连接存在，但遥测尚未可靠写入存储", online: false };
   return { label: current?.connected ? "已连接" : current?.state || current?.status || (typeof item.status === "string" ? item.status : "等待连接"), detail: current?.last_error || current?.message || `已接收 ${current?.messages_received ?? current?.received_count ?? "—"} 条消息`, online: !!current?.connected };
 }
 </script>

@@ -27,6 +27,10 @@ class ConnectorError(ValueError):
 def _validate(data: dict[str, Any], old: dict[str, Any] | None = None) -> tuple[dict[str, Any], bool, str | None]:
     if not isinstance(data, dict):
         raise ConnectorError(422, "connector must be an object")
+    try:
+        json.dumps(data, ensure_ascii=False, allow_nan=False).encode("utf-8")
+    except (TypeError, ValueError, UnicodeError, RecursionError) as exc:
+        raise ConnectorError(422, "connector settings must contain finite UTF-8 JSON values") from exc
     allowed = {"id", "name", "kind", "config", "enabled", "source", "version", "created_at", "updated_at", "has_password"}
     if set(data) - allowed:
         raise ConnectorError(422, "unknown connector fields")
@@ -54,8 +58,16 @@ def _validate(data: dict[str, Any], old: dict[str, Any] | None = None) -> tuple[
     if kind == "http_json":
         if set(config) - {"url", "timeout_seconds"}:
             raise ConnectorError(422, "reserved http_json config supports url and timeout_seconds only")
-        parsed = urlsplit(config.get("url", ""))
-        if parsed.scheme not in {"http", "https"} or not parsed.hostname or parsed.username or parsed.password:
+        url = config.get("url")
+        if not isinstance(url, str) or not url.strip() or len(url) > 2048:
+            raise ConnectorError(422, "HTTP connector URL must be a nonempty string up to 2048 characters")
+        try:
+            parsed = urlsplit(url)
+            valid = parsed.scheme in {"http", "https"} and parsed.hostname and not parsed.username and not parsed.password
+            parsed.port  # Validate malformed/out-of-range ports before saving.
+        except ValueError as exc:
+            raise ConnectorError(422, "HTTP connector URL is malformed") from exc
+        if not valid:
             raise ConnectorError(422, "HTTP connector requires an http(s) URL without embedded credentials")
         if enabled:
             raise ConnectorError(422, "HTTP polling adapter is reserved and cannot be enabled; use the documented test injection API")
@@ -158,7 +170,7 @@ class _MQTTSession:
         self.db, self.item, self.probe = db, item, probe
         self.ready = Event()
         self.stopped = False
-        self.state: dict[str, Any] = {"connector_id": item["id"], "state": "connecting", "connected": False, "messages_received": 0, "messages_accepted": 0, "messages_rejected": 0, "duplicates": 0, "last_message_at": None, "last_error": None, "updated_at": utc_now()}
+        self.state: dict[str, Any] = {"connector_id": item["id"], "state": "connecting", "connected": False, "messages_received": 0, "messages_accepted": 0, "messages_rejected": 0, "duplicates": 0, "last_message_at": None, "last_durable_at": None, "intake_healthy": True, "last_error": None, "updated_at": utc_now()}
         self._lock = RLock()
         self.client: Any = None
 
@@ -229,6 +241,8 @@ class _MQTTSession:
         scope = "TEST_ONLY" if source == "MOCK" else "OPERATIONAL"
         metadata = {"source": source, "scope": scope, "transport": "mqtt", "connector_id": self.item["id"], "topic": message.topic}
         try:
+            if getattr(message, "retain", False):
+                raise ValueError("Retained telemetry is prohibited by the shared contract; retained messages cannot update realtime state")
             if len(message.payload) > 262144:
                 raise ValueError("MQTT message exceeds 256 KiB limit")
             text = message.payload.decode("utf-8", errors="strict")
@@ -248,22 +262,30 @@ class _MQTTSession:
             with self._lock:
                 self.state["messages_accepted"] += 1
                 self.state["duplicates"] += int(receipt["status"] == "duplicate")
-            self._update(last_error=None)
+            self._update(state="connected" if self.state["connected"] else self.state["state"], intake_healthy=True, last_durable_at=utc_now(), last_error=None)
         except IngestionError as exc:
             with self._lock:
                 self.state["messages_rejected"] += 1
             self._update(last_error=exc.detail["message"])
         except (ValueError, UnicodeError, IndexError) as exc:
-            quarantine_message(self.db, message.payload, **metadata, reason=str(exc))
             with self._lock:
                 self.state["messages_rejected"] += 1
-            self._update(last_error="MQTT payload rejected; see quarantine")
+            try:
+                quarantine_message(self.db, message.payload, **metadata, reason=str(exc))
+            except Exception:
+                self._storage_failure()
+            else:
+                self._update(last_error="MQTT payload rejected; see quarantine")
         except Exception:
-            # Do not propagate into Paho's network thread, nor include payloads,
-            # connection strings or credentials in public errors.
             with self._lock:
                 self.state["messages_rejected"] += 1
-            self._update(last_error="MQTT intake storage/runtime failure; no durable receipt issued")
+            self._storage_failure()
+
+    def _storage_failure(self) -> None:
+        # Preserve actual broker connectivity separately from durable intake
+        # health. A disk failure must never escape and terminate Paho's loop.
+        self._update(state="storage_error", intake_healthy=False,
+                     last_error="MQTT intake storage/runtime failure; message not durably accepted; no receipt issued")
 
     def stop(self) -> None:
         self.stopped = True

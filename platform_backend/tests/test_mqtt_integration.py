@@ -120,3 +120,36 @@ def test_real_mqtt_publish_dedup_quarantine_reload_and_disconnect(tmp_path, brok
         publisher.loop_stop()
         manager.stop()
         db.close()
+
+
+def test_retained_broker_replay_is_quarantined_on_subscription(tmp_path, broker):
+    db = Database(tmp_path / "retained.sqlite3")
+    db.initialize()
+    fixture = Path(__file__).resolve().parents[2] / "edge_intake/tests/fixtures/a_mock/cases/M01_NORMAL.json"
+    payload = json.loads(fixture.read_text())["messages"][0]["payload"]
+    payload["risk"].update(sensor_score=90, level="EMERGENCY")
+    topic = f"zhifang/v2/{payload['site_id']}/{payload['device_id']}/telemetry"
+    publisher = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id="pytest-retained-publisher")
+    manager = MQTTManager(db)
+    try:
+        publisher.connect("127.0.0.1", broker.port)
+        publisher.loop_start()
+        # Reproduce an old retained broker snapshot delivered on a fresh
+        # subscription, which must never become current arrival-only state.
+        publisher.publish(topic, json.dumps(payload), qos=1, retain=True).wait_for_publish(timeout=2)
+        save_connector(db, {"name": "Retained replay test", "kind": "mqtt", "source": "MOCK", "enabled": True,
+                            "config": {"host": "127.0.0.1", "port": broker.port, "site_id": payload["site_id"]}})
+        manager.start()
+        wait_for(lambda: manager.statuses()[0]["connected"])
+        wait_for(lambda: count(db, "quarantine") == 1)
+        assert count(db, "telemetry") == count(db, "alarms") == 0
+        assert manager.statuses()[0]["messages_rejected"] == 1
+        publisher.publish(topic, json.dumps(payload), qos=0, retain=False).wait_for_publish(timeout=2)
+        wait_for(lambda: count(db, "telemetry") == 1)
+        assert count(db, "alarms") == 1
+    finally:
+        publisher.publish(topic, b"", qos=0, retain=True).wait_for_publish(timeout=2)
+        publisher.disconnect()
+        publisher.loop_stop()
+        manager.stop()
+        db.close()

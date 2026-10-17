@@ -346,3 +346,95 @@ def test_synchronized_source_age_and_future_clock_are_not_reported_fresh(tmp_pat
         assert inject(client, future).status_code == 201
         projected = client.get(API + "/dashboard", params={"device_id": "MOCK-FUTURE"}).json()["latest"]
         assert projected["stale"] and projected["clock_error"]
+
+
+def test_connector_url_and_escaped_unicode_errors_return_422(tmp_path):
+    with opened(tmp_path) as (client, _):
+        for url in (123, None, [], "http://[broken"):
+            response = client.post(API + "/connectors", json={"name": "URL boundary", "kind": "http_json", "config": {"url": url}})
+            assert response.status_code == 422, response.text
+        for in_context in (False, True):
+            body = {"payload": payload(), "context": {"note": "\ud800"} if in_context else {}}
+            if not in_context:
+                body["payload"]["experiment"]["run_id"] = "\ud800"
+            # ASCII escaping is valid JSON transport; the decoded surrogate is
+            # still not a valid UTF-8 string and must be a client error.
+            response = client.post(API + "/ingest/test", content=json.dumps(body), headers={"Content-Type": "application/json"})
+            assert response.status_code == 422, response.text
+        assert len(client.get(API + "/quarantine").json()["items"]) == 2
+
+
+def test_time_filters_use_equivalent_utc_offsets_and_reject_naive_dates(tmp_path):
+    with opened(tmp_path) as (client, app):
+        assert inject(client, payload(score=90, level="EMERGENCY")).status_code == 201
+        stamp = "2026-10-18T00:00:00.000Z"
+        with app.state.db.connection() as connection:
+            connection.execute("UPDATE telemetry SET received_at=? WHERE device_id=?", (stamp, "MOCK-API-01"))
+            connection.execute("UPDATE alarms SET created_at=? WHERE device_id=?", (stamp, "MOCK-API-01"))
+            connection.execute("UPDATE events SET created_at=? WHERE device_id=?", (stamp, "MOCK-API-01"))
+        for path in ("/devices/MOCK-API-01/telemetry", "/alarms", "/events"):
+            params = {"device_id": "MOCK-API-01"}
+            # An equal timestamp in another zone must produce the same set.
+            utc = client.get(API + path, params={**params, "after": stamp}).json()["items"]
+            offset = client.get(API + path, params={**params, "after": "2026-10-18T08:00:00+08:00"}).json()["items"]
+            assert len(utc) == len(offset) == 1
+            assert client.get(API + path, params={**params, "before": "2026-10-18T08:00:00+08:00"}).json()["items"] == []
+            assert len(client.get(API + path, params={**params, "before": "2026-10-18T00:00:00.000001Z"}).json()["items"]) == 1
+            assert client.get(API + path, params={**params, "after": "2026-10-18T00:00:00.000001Z"}).json()["items"] == []
+            for invalid in ("not-a-date", "2026-10-18", "2026-10-18T00:00:00", ""):
+                for field in ("before", "after"):
+                    response = client.get(API + path, params={field: invalid})
+                    assert response.status_code == 422, (path, field, invalid, response.text)
+
+
+def test_vision_api_scopes_before_pagination_and_dashboard_uses_total_counts(tmp_path):
+    with opened(tmp_path, demo=False) as (client, app):
+        # Interleave the same station/camera across devices and sources. Every
+        # accepted image must stay in its device/source slice before LIMIT.
+        desired = []
+        for index in range(3):
+            desired.append(upload_image(client, device_id="TARGET", camera_id="CAM-SHARED"))
+            upload_image(client, device_id="OTHER", camera_id="CAM-SHARED")
+            upload_image(client, device_id="TARGET", source="REAL", scope="OPERATIONAL", camera_id="CAM-SHARED")
+        desired_ids = {item["id"] for item in desired}
+        results = [client.post(API + "/vision/analyze", json={"evidence_id": item["id"]}).json() for item in desired]
+        with app.state.db.connection() as connection:
+            connection.execute("UPDATE vision_evidence SET arrival_time=?", ("2026-10-18T00:00:00.000Z",))
+            connection.execute("UPDATE vision_results SET created_at=?", ("2026-10-18T00:00:00.000Z",))
+        for path, ids in (("/evidence", desired_ids), ("/vision/results", {item["id"] for item in results})):
+            seen, cursor = [], None
+            for _ in range(4):
+                params = {"site_id": SITE, "device_id": "TARGET", "source": "MOCK", "camera_id": "CAM-SHARED", "limit": 1}
+                if cursor:
+                    params["cursor"] = cursor
+                response = client.get(API + path, params=params)
+                assert response.status_code == 200, response.text
+                page = response.json()
+                assert page["total"] == 3
+                assert all(item["device_id"] == "TARGET" and item["source"] == "MOCK" for item in page["items"])
+                seen.extend(item["id"] for item in page["items"])
+                cursor = page["next_cursor"]
+                if cursor is None:
+                    break
+            assert len(seen) == len(set(seen)) == 3 and set(seen) == ids
+            assert client.get(API + path, params={"cursor": "broken"}).status_code == 422
+        dashboard = client.get(API + "/dashboard", params={"device_id": "TARGET"}).json()
+        assert {item["id"] for item in dashboard["vision"]["evidence"]} == desired_ids
+        assert dashboard["stats"]["evidence_count"] == 3
+        assert dashboard["stats"]["vision_result_count"] == 3
+        with app.state.db.connection() as connection:
+            template = dict(connection.execute("SELECT * FROM vision_evidence WHERE id=?", (desired[0]["id"],)).fetchone())
+            for index in range(201):
+                item = json.loads(template["data_json"])
+                item["id"] = f"extra-evidence-{index}"
+                connection.execute("INSERT INTO vision_evidence(id,site_id,camera_id,source,scope,arrival_time,path,data_json) VALUES(?,?,?,?,?,?,?,?)", (item["id"],template["site_id"],template["camera_id"],template["source"],template["scope"],template["arrival_time"],template["path"],json.dumps(item)))
+        dashboard = client.get(API + "/dashboard", params={"device_id": "TARGET"}).json()
+        assert dashboard["stats"]["evidence_count"] == 204
+        assert len(dashboard["vision"]["evidence"]) == 200
+        assert dashboard["vision"]["evidence_next_cursor"]
+        # Count all alarms while returning only the recent display slice.
+        with app.state.db.connection() as connection:
+            connection.executemany("INSERT INTO alarms(id,site_id,device_id,source,level,score,reason,source_message_id,created_at) VALUES(?,?,?,?,?,?,?,?,?)", [(f"alarm-{i}", SITE, "TARGET", "MOCK", "WATCH", 40, "count test", None, "2026-10-18T00:00:00.000Z") for i in range(105)])
+        dashboard = client.get(API + "/dashboard", params={"device_id": "TARGET"}).json()
+        assert dashboard["stats"]["alarm_count"] == 105
+        assert len(dashboard["alarms"]) == 100

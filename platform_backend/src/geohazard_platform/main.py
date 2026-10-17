@@ -31,7 +31,7 @@ from .telemetry import IngestionError, ingest_telemetry, validate_telemetry
 from .connectors import ConnectorError, MQTTManager, list_connectors, get_connector, save_connector, delete_connector, test_connector
 from .vision import VisionService, VisionError
 from .demo import BackendDemo, SITE, DEVICE
-from .dashboard import latest, history
+from .dashboard import latest, history, normalize_time_filter
 
 
 class StrictModel(BaseModel):
@@ -166,10 +166,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             if value is not None:
                 where.append(f"{name}=?")
                 args.append(value)
-        for op, value in (("<",before),(">=",after)):
-            if value:
+        for op, value, field in (("<",before,"before"),(">=",after,"after")):
+            if value is not None:
+                try:
+                    boundary = normalize_time_filter(value, field)
+                except ValueError as exc:
+                    raise HTTPException(422,str(exc)) from exc
                 where.append(f"created_at{op}?")
-                args.append(value)
+                args.append(boundary)
         query = f"SELECT * FROM {table}" + (" WHERE "+" AND ".join(where) if where else "")
         with db.connection() as c:
             return [dict(r) for r in c.execute(query+" ORDER BY created_at DESC,id DESC LIMIT ?",(*args,limit)).fetchall()]
@@ -306,8 +310,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return evidence
 
     @api.get("/evidence")
-    def evidence_list(site_id:str|None=None,limit:int=Query(50,ge=1,le=200)):
-        return {"items":app.state.vision.list_evidence(site_id,limit)}
+    def evidence_list(site_id:str|None=None,device_id:str|None=None,source:Literal["REAL","MOCK","SYNTHETIC"]|None=None,
+                      camera_id:str|None=None,limit:int=Query(50,ge=1,le=200),cursor:str|None=None):
+        return app.state.vision.evidence_page(site_id,limit,device_id=device_id,source=source,camera_id=camera_id,cursor=cursor)
 
     @api.get("/evidence/{evidence_id}")
     def evidence_detail(evidence_id:str):
@@ -325,8 +330,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return result
 
     @api.get("/vision/results")
-    def vision_results(site_id:str|None=None,limit:int=Query(50,ge=1,le=200)):
-        return {"items":app.state.vision.list_results(site_id,limit)}
+    def vision_results(site_id:str|None=None,device_id:str|None=None,source:Literal["REAL","MOCK","SYNTHETIC"]|None=None,
+                       camera_id:str|None=None,limit:int=Query(50,ge=1,le=200),cursor:str|None=None):
+        return app.state.vision.results_page(site_id,limit,device_id=device_id,source=source,camera_id=camera_id,cursor=cursor)
 
     @api.get("/vision/results/{result_id}")
     def vision_result(result_id:str):
@@ -393,15 +399,19 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         charts=[{"time":r["received_at"],"score":r["risk"]["final_score"],**r["sensors"]} for r in reversed(entries)]
         alarm_rows=filtered_rows("alarms",site_id=site_id,device_id=device_id,source=source)
         event_rows=filtered_rows("events",site_id=site_id,source=source,limit=80)
-        evidence=[e for e in app.state.vision.list_evidence(site_id,200) if e["source"]==source]
-        results=[r for r in app.state.vision.list_results(site_id,200) if r["source"]==source]
+        evidence_page=app.state.vision.evidence_page(site_id,200,device_id=device_id,source=source)
+        results_page=app.state.vision.results_page(site_id,200,device_id=device_id,source=source)
+        evidence=evidence_page["items"]
+        results=results_page["items"]
         with db.connection() as c:
             count=c.execute("SELECT count(*) FROM telemetry WHERE site_id=? AND device_id=? AND source=?",(site_id,device_id,source)).fetchone()[0]
+            alarm_count=c.execute("SELECT count(*) FROM alarms WHERE site_id=? AND device_id=? AND source=?",(site_id,device_id,source)).fetchone()[0]
         return {"site_id":site_id,"device_id":device_id,"source":source,"scope":current["scope"] if current else None,
                 "latest":current,"history":charts,"alarms":alarm_rows,"events":event_rows,
-                "stats":{"telemetry_count":count,"alarm_count":len(alarm_rows),"evidence_count":len(evidence)},
+                "stats":{"telemetry_count":count,"alarm_count":alarm_count,"evidence_count":evidence_page["total"],"vision_result_count":results_page["total"]},
                 "demo":app.state.demo.state(),"connectors":connector_list()["items"],
-                "vision":{"evidence":evidence,"results":results,"latest_result":results[0] if results else None}}
+                "vision":{"evidence":evidence,"results":results,"latest_result":results[0] if results else None,
+                          "evidence_next_cursor":evidence_page["next_cursor"],"results_next_cursor":results_page["next_cursor"]}}
 
     @api.get("/risk-results")
     def risk_results(site_id:str=SITE,device_id:str=DEVICE,source:Literal["REAL","MOCK"]="MOCK"):
