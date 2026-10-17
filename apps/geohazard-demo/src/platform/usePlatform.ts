@@ -1,5 +1,5 @@
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
-import { api, errorMessage, isAborted } from "./api";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { api, connectionSettings, errorMessage, isAborted } from "./api";
 import { deviceKey, type Dashboard, type Device, type Health, type Items, type TelemetryRow } from "./types";
 export function usePlatform() {
   const dashboard = ref<Dashboard | null>(null);
@@ -17,11 +17,14 @@ export function usePlatform() {
   const actionError = ref("");
   const selected = computed(() => devices.value.find((d) => deviceKey(d) === selectedKey.value));
   let controller: AbortController | undefined;
+  let historyController: AbortController | undefined;
+  let historyRequest = 0;
   let timer: ReturnType<typeof setTimeout> | undefined;
   let disposed = false;
   let refreshing = false;
   let generation = 0;
-  function stop() { clearTimeout(timer); controller?.abort(); generation++; refreshing = false; }
+  function cancelHistory() { historyRequest++; historyController?.abort(); historyController = undefined; historyLoading.value = false; }
+  function stop() { clearTimeout(timer); controller?.abort(); cancelHistory(); generation++; refreshing = false; }
   async function refresh() {
     if (disposed || document.hidden || refreshing) return;
     clearTimeout(timer);
@@ -77,16 +80,22 @@ export function usePlatform() {
     if (!historyCursor.value || !selected.value || historyLoading.value) return;
     const device = selected.value;
     const key = selectedKey.value;
+    const requestGeneration = generation;
+    const request = ++historyRequest;
+    const connectionRevision = connectionSettings.revision;
+    historyController = new AbortController();
+    const signal = historyController.signal;
+    const valid = () => !disposed && request === historyRequest && requestGeneration === generation && selectedKey.value === key && connectionSettings.revision === connectionRevision;
     const query = new URLSearchParams({ site_id: device.site_id, source: device.source, limit: "100", cursor: historyCursor.value });
     historyLoading.value = true; actionError.value = "";
     try {
-      const rows = await api.get<Items<TelemetryRow>>(`/devices/${encodeURIComponent(device.device_id)}/telemetry?${query}`);
-      if (selectedKey.value !== key || disposed) return;
+      const rows = await api.get<Items<TelemetryRow>>(`/devices/${encodeURIComponent(device.device_id)}/telemetry?${query}`, signal);
+      if (!valid()) return;
       const ids = new Set(history.value.map((row) => row.id));
       history.value = [...history.value, ...rows.items.filter((row) => !ids.has(row.id))];
       historyCursor.value = rows.next_cursor || null; loadedMore = true;
-    } catch (cause) { actionError.value = errorMessage(cause); }
-    finally { historyLoading.value = false; }
+    } catch (cause) { if (valid() && !isAborted(cause)) actionError.value = errorMessage(cause); }
+    finally { if (valid()) { historyLoading.value = false; historyController = undefined; } }
   }
   async function action(path: string, body: unknown = {}) {
     if (busy.value) return;
@@ -96,6 +105,7 @@ export function usePlatform() {
     catch (cause) { actionError.value = errorMessage(cause); }
     finally { busy.value = false; }
   }
+  watch(() => connectionSettings.revision, reconnect, { flush: "sync" });
   onMounted(() => { void refresh(); document.addEventListener("visibilitychange", visibility); });
   onBeforeUnmount(() => { disposed = true; stop(); document.removeEventListener("visibilitychange", visibility); });
   return { dashboard, health, devices, selectedKey, selected, history, historyCursor, historyLoading, moreHistory, connection, error, actionError, updatedAt, busy, refresh, reconnect, select, action };

@@ -3,7 +3,7 @@ export type Level = "low" | "moderate" | "high" | "critical" | "unknown";
 export type SensorKey = "moisture" | "tilt" | "vibration" | "rain" | "crack";
 export type Sensors = Record<SensorKey, number | null>;
 export interface Device { site_id: string; device_id: string; source: Source; scope: string; last_received_at: string | null; }
-export interface MqttStatus { id?: string; connector_id?: string; name?: string; status?: string; state?: string; connected?: boolean; last_error?: string | null; message?: string; received_count?: number; messages_received?: number; messages_accepted?: number; messages_rejected?: number; }
+export interface MqttStatus { id?: string; connector_id?: string; name?: string; status?: string; state?: string; connected?: boolean; last_error?: string | null; message?: string; received_count?: number; messages_received?: number; messages_accepted?: number; messages_rejected?: number; intake_healthy?: boolean; last_durable_at?: string | null; }
 export interface Health { status: string; version: string; storage: { durable: boolean }; demo: { running?: boolean; scenario?: string } | boolean; auth_mode: string; mqtt: MqttStatus[]; }
 export interface Risk { sensor_score: number | null; vision_score: number | null; final_score: number | null; level: Level; mode: string; reason: string; }
 export interface Latest { id: string; received_at: string; source_time: number | null; age_seconds: number; stale: boolean; sensors: Sensors; risk: Risk; system: Record<string, boolean | null>; }
@@ -13,11 +13,12 @@ export interface Event { id: string; kind: string; message: string; created_at: 
 export interface ConnectorConfig { host: string; port: number; topic: string; site_id: string; username?: string; password?: string; password_configured?: boolean; tls: boolean; client_id?: string; }
 export interface Connector { id: string; name: string; kind: "mqtt"; source: Source; enabled: boolean; config: ConnectorConfig; status?: MqttStatus | string; password_configured?: boolean; has_password?: boolean; }
 export interface ConnectorWrite { name: string; kind: "mqtt"; source: Source; enabled: boolean; config: ConnectorConfig; }
-export interface Evidence { id: string; file_url: string; original_name?: string; filename?: string; width: number; height: number; camera_id: string; site_id: string; device_id: string; source: Source; scope: string; capture_time?: string | null; captured_at?: string | null; created_at?: string; received_at?: string; arrival_time?: string; }
-export interface VisionResult { id: string; evidence_id: string; reference_id: string | null; vision_score: number | null; quality: Record<string, unknown>; metrics: Record<string, number | string | boolean | null>; baseline_valid: boolean; fusion_eligible: boolean; reasons: string[]; overlay_url: string | null; created_at?: string; }
+export interface Evidence { id: string; file_url: string; original_name?: string; filename?: string; width: number; height: number; camera_id: string; site_id: string; device_id: string | null; source: Source; scope: string; capture_time?: string | null; captured_at?: string | null; created_at?: string; received_at?: string; arrival_time?: string; }
+export interface Region { x: number; y: number; width: number; height: number; }
+export interface VisionResult { site_id?: string; device_id?: string | null; source?: Source; camera_id?: string; scope?: string; roi?: Region; id: string; evidence_id: string; reference_id: string | null; vision_score: number | null; quality: Record<string, unknown>; metrics: Record<string, number | string | boolean | null>; baseline_valid: boolean; fusion_eligible: boolean; reasons: string[]; overlay_url: string | null; created_at?: string; }
 export interface Dashboard { site_id: string; device_id: string; source: Source; scope: string; latest: Latest | null; history: HistoryPoint[]; alarms: Alarm[]; events: Event[]; stats: { telemetry_count: number; alarm_count: number; evidence_count: number }; demo: { running: boolean; scenario: string; elapsed_seconds: number }; connectors: Connector[]; vision: { evidence: Evidence[]; results: VisionResult[]; latest_result: VisionResult | null }; }
 export interface TelemetryRow { id: string; received_at: string; source_time?: string; source?: Source; payload?: Record<string, unknown>; sensors?: Sensors; risk?: Risk; [key: string]: unknown; }
-export interface Items<T> { items: T[]; next_cursor?: string | null; }
+export interface Items<T> { items: T[]; next_cursor?: string | null; total?: number; }
 export const sensorFields: { key: SensorKey; label: string; unit: string; decimals: number }[] = [
   { key: "moisture", label: "土壤湿度", unit: "%", decimals: 1 },
   { key: "tilt", label: "地表倾斜", unit: "°", decimals: 2 },

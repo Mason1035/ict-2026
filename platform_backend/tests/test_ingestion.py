@@ -137,3 +137,22 @@ def test_transaction_rolls_back(db):
             connection.execute("INSERT INTO events VALUES('one','test','message',NULL,NULL,'MOCK','{}','now')")
             raise RuntimeError("interrupted")
     assert rows(db, "events") == []
+
+
+def test_invalid_utf8_payload_is_quarantined_as_escaped_json(db, payload):
+    payload["experiment"]["run_id"] = "bad-\ud800"
+    with pytest.raises(IngestionError) as failure:
+        ingest_telemetry(db, payload)
+    assert failure.value.status_code == 422
+    assert rows(db, "telemetry") == []
+    quarantined = rows(db, "quarantine")[0]
+    assert "\\ud800" in quarantined["raw_payload"]
+    assert json.loads(quarantined["raw_payload"])["experiment"]["run_id"] == "bad-\ud800"
+
+
+def test_invalid_utf8_sidecar_maps_edge_intake_error_to_422(db, payload):
+    with pytest.raises(IngestionError) as failure:
+        ingest_telemetry(db, payload, context={"note": "\ud800"})
+    assert failure.value.status_code == 422
+    assert rows(db, "telemetry") == []
+    assert len(rows(db, "quarantine")) == 1

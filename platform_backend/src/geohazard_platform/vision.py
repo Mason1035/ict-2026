@@ -6,6 +6,8 @@ Only PNG/JPEG still images are accepted and re-encoded without input metadata.
 """
 from __future__ import annotations
 
+import base64
+import binascii
 import io
 import json
 import os
@@ -150,6 +152,9 @@ class VisionService:
                 );
                 CREATE INDEX IF NOT EXISTS ix_vision_evidence_site_time
                     ON vision_evidence(site_id, arrival_time DESC);
+                CREATE INDEX IF NOT EXISTS ix_vision_evidence_stream_time
+                    ON vision_evidence(site_id, source, json_extract(data_json, '$.device_id'),
+                                       arrival_time DESC, id DESC);
                 CREATE TABLE IF NOT EXISTS vision_results (
                     id TEXT PRIMARY KEY, site_id TEXT NOT NULL,
                     evidence_id TEXT NOT NULL REFERENCES vision_evidence(id),
@@ -158,6 +163,8 @@ class VisionService:
                 );
                 CREATE INDEX IF NOT EXISTS ix_vision_results_site_time
                     ON vision_results(site_id, created_at DESC);
+                CREATE INDEX IF NOT EXISTS ix_vision_results_evidence_time
+                    ON vision_results(evidence_id, created_at DESC, id DESC);
             """)
 
     def _safe_path(self, stored: str) -> Path:
@@ -268,35 +275,109 @@ class VisionService:
             raise VisionError(404, "Image evidence was not found")
         return self._safe_path(row["path"])
 
-    def list_evidence(self, site_id: str | None = None, limit: int = 50) -> list[dict[str, Any]]:
-        return self._list("vision_evidence", "arrival_time", site_id, limit)
+    def list_evidence(self, site_id: str | None = None, limit: int = 50, *,
+                      device_id: str | None = None, source: str | None = None,
+                      camera_id: str | None = None) -> list[dict[str, Any]]:
+        """Compatibility list; filtered before limiting, like evidence_page."""
+        return self.evidence_page(site_id, limit, device_id=device_id, source=source,
+                                  camera_id=camera_id)["items"]
 
-    def list_results(self, site_id: str | None = None, limit: int = 50) -> list[dict[str, Any]]:
-        return self._list("vision_results", "created_at", site_id, limit)
+    def list_results(self, site_id: str | None = None, limit: int = 50, *,
+                     device_id: str | None = None, source: str | None = None,
+                     camera_id: str | None = None) -> list[dict[str, Any]]:
+        return self.results_page(site_id, limit, device_id=device_id, source=source,
+                                 camera_id=camera_id)["items"]
 
-    def _list(self, table: str, time_column: str, site_id: str | None, limit: int) -> list[dict[str, Any]]:
+    def evidence_page(self, site_id: str | None = None, limit: int = 50, *,
+                      device_id: str | None = None, source: str | None = None,
+                      camera_id: str | None = None, cursor: str | None = None) -> dict[str, Any]:
+        return self._page("evidence", site_id, limit, device_id, source, camera_id, cursor)
+
+    def results_page(self, site_id: str | None = None, limit: int = 50, *,
+                     device_id: str | None = None, source: str | None = None,
+                     camera_id: str | None = None, cursor: str | None = None) -> dict[str, Any]:
+        return self._page("results", site_id, limit, device_id, source, camera_id, cursor)
+
+    @staticmethod
+    def _read_cursor(cursor: str, kind: str, filters: list[str | None]) -> tuple[str, str]:
+        try:
+            if not isinstance(cursor, str) or not 1 <= len(cursor) <= 4096:
+                raise ValueError("invalid cursor length")
+            padded = cursor + "=" * (-len(cursor) % 4)
+            values = json.loads(base64.b64decode(padded, altchars=b"-_", validate=True).decode("utf-8"))
+            if not isinstance(values, list) or len(values) != 4:
+                raise ValueError("invalid cursor structure")
+            cursor_kind, stamp, identifier, cursor_filters = values
+            if cursor_kind != kind or cursor_filters != filters or not isinstance(stamp, str):
+                raise ValueError("cursor does not belong to this filtered list")
+            if _capture_time(stamp) is None:
+                raise ValueError("missing cursor time")
+            return stamp, _identifier(identifier)
+        except (ValueError, TypeError, UnicodeError, binascii.Error, RecursionError, VisionError) as exc:
+            raise VisionError(422, "Invalid vision cursor; restart pagination for the selected filters") from exc
+
+    def _page(self, kind: str, site_id: str | None, limit: int,
+              device_id: str | None, source: str | None, camera_id: str | None,
+              cursor: str | None) -> dict[str, Any]:
         if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= 200:
             raise VisionError(422, "limit must be an integer between 1 and 200")
-        if site_id is not None:
-            site_id = _label(site_id, "site_id")
-        query = f"SELECT data_json FROM {table}"
+        site_id = _label(site_id, "site_id") if site_id is not None else None
+        device_id = _label(device_id, "device_id") if device_id is not None else None
+        camera_id = _label(camera_id, "camera_id") if camera_id is not None else None
+        if source is not None and (not isinstance(source, str) or source not in {"REAL", "MOCK", "SYNTHETIC"}):
+            raise VisionError(422, "source must be REAL, MOCK or SYNTHETIC")
+        filters = [site_id, device_id, source, camera_id]
+        is_result = kind == "results"
+        # Evidence remains the identity source of truth for pre-existing result
+        # JSON without device_id. No migration guesses an owner for null IDs.
+        from_clause = ("vision_results r JOIN vision_evidence e ON e.id = r.evidence_id"
+                       if is_result else "vision_evidence e")
+        alias, time_column = ("r", "created_at") if is_result else ("e", "arrival_time")
+        conditions: list[str] = []
         parameters: list[Any] = []
-        if site_id is not None:
-            query += " WHERE site_id = ?"
-            parameters.append(site_id)
-        query += f" ORDER BY {time_column} DESC, rowid DESC LIMIT ?"
-        parameters.append(limit)
+        for column, value in (("e.site_id", site_id), ("json_extract(e.data_json, '$.device_id')", device_id),
+                              ("e.source", source), ("e.camera_id", camera_id)):
+            if value is not None:
+                conditions.append(f"{column} = ?")
+                parameters.append(value)
+        where = " WHERE " + " AND ".join(conditions) if conditions else ""
+        page_conditions, page_parameters = list(conditions), list(parameters)
+        if cursor is not None:
+            stamp, identifier = self._read_cursor(cursor, kind, filters)
+            page_conditions.append(f"({alias}.{time_column}, {alias}.id) < (?, ?)")
+            page_parameters.extend((stamp, identifier))
+        page_where = " WHERE " + " AND ".join(page_conditions) if page_conditions else ""
+        query = (f"SELECT {alias}.id AS row_id, {alias}.{time_column} AS row_time, {alias}.data_json, "
+                 f"json_extract(e.data_json, '$.device_id') AS evidence_device_id FROM {from_clause}{page_where} "
+                 f"ORDER BY {alias}.{time_column} DESC, {alias}.id DESC LIMIT ?")
         with self.db.connection() as connection:
-            rows = connection.execute(query, parameters).fetchall()
-        return [json.loads(row["data_json"]) for row in rows]
+            total = connection.execute(f"SELECT count(*) FROM {from_clause}{where}", parameters).fetchone()[0]
+            rows = connection.execute(query, (*page_parameters, limit + 1)).fetchall()
+        visible = rows[:limit]
+        items = [self._result_row(row) if is_result else json.loads(row["data_json"]) for row in visible]
+        next_cursor = None
+        if len(rows) > limit:
+            last = visible[-1]
+            token = json.dumps([kind, last["row_time"], last["row_id"], filters],
+                               separators=(",", ":"), ensure_ascii=False)
+            next_cursor = base64.urlsafe_b64encode(token.encode()).decode().rstrip("=")
+        return {"items": items, "next_cursor": next_cursor, "total": total}
+
+    @staticmethod
+    def _result_row(row: Any) -> dict[str, Any]:
+        data = json.loads(row["data_json"])
+        data["device_id"] = row["evidence_device_id"]
+        return data
 
     def get_result(self, result_id: str) -> dict[str, Any]:
         with self.db.connection() as connection:
-            row = connection.execute("SELECT data_json FROM vision_results WHERE id = ?",
+            row = connection.execute("""SELECT r.data_json,
+                json_extract(e.data_json, '$.device_id') AS evidence_device_id
+                FROM vision_results r JOIN vision_evidence e ON e.id = r.evidence_id WHERE r.id = ?""",
                                      (_identifier(result_id),)).fetchone()
         if row is None:
             raise VisionError(404, "Vision analysis result was not found")
-        return json.loads(row["data_json"])
+        return self._result_row(row)
 
     def result_overlay_path(self, result_id: str) -> Path:
         with self.db.connection() as connection:
@@ -344,8 +425,8 @@ class VisionService:
             if reference_id == evidence_id:
                 raise VisionError(422, "A reference must be a different evidence image")
             reference = self.get_evidence(reference_id)
-            for key in ("site_id", "camera_id", "source", "scope", "width", "height"):
-                if reference[key] != evidence[key]:
+            for key in ("site_id", "device_id", "camera_id", "source", "scope", "width", "height"):
+                if reference.get(key) != evidence.get(key):
                     raise VisionError(422, f"Reference and current image must have matching {key}")
             prior = cv2.imread(str(self.file_path(reference_id)), cv2.IMREAD_COLOR)
             if prior is None or prior.shape != current.shape:
@@ -392,7 +473,8 @@ class VisionService:
         overlay_stored = f"overlays/{result_id}.png" if overlay is not None else None
         result = {
             "id": result_id, "evidence_id": evidence_id, "reference_id": reference_id,
-            "site_id": evidence["site_id"], "camera_id": evidence["camera_id"],
+            "site_id": evidence["site_id"], "device_id": evidence.get("device_id"),
+            "camera_id": evidence["camera_id"],
             "source": evidence["source"], "scope": evidence["scope"],
             "capture_time": evidence["capture_time"], "created_at": created_at,
             "algorithm_mode": "opencv_baseline", "model_version": None,

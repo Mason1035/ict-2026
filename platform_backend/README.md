@@ -11,7 +11,9 @@ chmod +x scripts/run-platform.sh
 ./scripts/run-platform.sh
 ```
 
-打开 <http://127.0.0.1:8000>，交互式 API 文档为 <http://127.0.0.1:8000/docs>。启动脚本在缺少本地虚拟环境时安装后端依赖，在缺少构建页面时安装并构建前端。现有依赖变更后执行 `platform_backend/.venv/bin/python -m pip install -e ./platform_backend`；前端修改后执行 `npm run build --prefix apps/geohazard-demo`。
+打开 <http://127.0.0.1:8000>，交互式 API 文档为 <http://127.0.0.1:8000/docs>。启动脚本自动准备虚拟环境，在依赖声明变化或首次安装未完成时重试安装；页面源码、静态资源或配置更新后自动重新构建，普通重启复用现有构建。首次安装需要联网，安装或构建失败时不会启动一个不完整的平台。
+
+可用 `GEOHAZARD_PYTHON=python3.12 ./scripts/run-platform.sh` 指定首次创建虚拟环境的解释器；已有虚拟环境继续使用自身解释器。用 `GEOHAZARD_PORT=8001 ./scripts/run-platform.sh` 切换本地端口，该端口对应的 loopback Origin 同时允许访问。脚本仍绑定 `127.0.0.1`。
 
 开发模式可以使用两个终端：
 
@@ -56,11 +58,17 @@ npm run dev -- --port 5173
 
 历史接口以 `cursor=next_cursor` 翻页；`before`、`after` 为 ISO UTC 时间筛选。`received_at` 相同的消息通过 ID 游标区分，不因分页跳过。同一设备身份属于一个站点和数据来源，禁止 MOCK 与 REAL 共享该身份。
 
+遥测、告警和事件的时间筛选必须包含时区，`Z` 与 `+08:00` 等时区会先统一到 UTC 再查询；非法日期或缺少时区返回 422。
+
+`GET /evidence` 与 `GET /vision/results` 支持 `site_id`、`device_id`、`source`、`camera_id`、`limit` 和 `cursor`，返回 `items`、`next_cursor`、`total`。筛选在数据库分页前执行，总数为当前筛选下的完整数量。游标只用于生成它时的同一组筛选条件；切换设备或来源后从第一页重新读取。
+
 ## MQTT 接入
 
 连接器配置包括 host、port、site_id、topic、TLS、username/password、client_id、QoS 和 keepalive。Topic 限定为 `zhifang/v2/{site_id}/+/telemetry` 或同站点的指定设备 Topic；回调再次检查 Topic 与 payload 的 site/device 一致性。默认 Telemetry QoS 0。
 
 启用后才启动订阅，连接并获得 SUBACK 后显示已连接；停用会停止客户端。断开后退避重连，状态与错误在 API 中保留。测试连接不会发送设备命令。
+
+`connected` 表示 Broker 链路，`intake_healthy` 表示后端接收存储是否正常，两者分别报告。落盘失败时状态为 `storage_error`，不会增加成功接收数；`last_durable_at` 仅在实际提交成功后更新。恢复后须有下一条成功保存的消息才恢复接入健康。按共享契约拒绝 retained 回放的遥测，隔离记录不更新当前值或触发实时告警。
 
 电脑没有现成 MQTT Broker 时，可在另一终端运行显式隔离的本地实验源：
 
@@ -93,7 +101,7 @@ SQLite 事务先保存原始消息、接入 sidecar、身份与接收路径，�
 
 ## 视觉基线
 
-支持实际 PNG/JPEG 解码、12 MiB 与 12M 像素限制、EXIF 转向、去元数据、UUID 文件存储、ROI 范围检查。比较帧须站点、相机、来源、用途和尺寸一致。分析长边最多 1024 像素，光流统计换算回原图像素/帧对。
+支持实际 PNG/JPEG 解码、12 MiB 与 12M 像素限制、EXIF 转向、去元数据、UUID 文件存储、ROI 范围检查。比较帧须站点、设备、相机、来源、用途和尺寸一致；历史两张均没有设备 ID 的站点级证据仍可比较。分析长边最多 1024 像素，光流统计换算回原图像素/帧对。
 
 输出图像质量、变化面积比、SSIM、光流中位数/P95 和变化叠加图。模糊/曝光阈值只是可解释的技术启发式，不是地灾阈值。`vision_score=null`、`model_version=null`、`fusion_eligible=false`，不会把图片差异直接解释为灾害概率或取消传感器高危状态。
 
@@ -113,4 +121,6 @@ npm run build
 
 测试覆盖存储、协议校验、去重/冲突/补传、真实本地 MQTT Broker、图像处理及 API。只验证此平台的相关软件，不替代正式数据、硬件、云或地质灾害效果验证。
 
-本次本地软件验证：73 项后端测试、9 项平台页面联调通过，前端 TypeScript 检查与生产构建通过。验证包含本地 Broker 的真实 MQTT 握手和收发，不包含 ESP32 真板、Atlas 或云端验证。
+2026-10-16 接入版本的软件验证：73 项后端测试、9 项平台页面联调通过，前端 TypeScript 检查与生产构建通过。验证包含本地 Broker 的真实 MQTT 握手和收发，不包含 ESP32 真板、Atlas 或云端验证。
+
+2026-10-18 本轮相关 Python 验证合计 117 项通过：API / 接入 / 配置 / 真实本机 MQTT 共 67 项、视觉 32 项、启动与配置 18 项。新增回归覆盖 retained 重放隔离及下一条实时接收、存储失败恢复、时区、错误参数、跨设备证据与稳定分页，以及首次安装失败重试和源码更新后的页面重建。前端专项验证见 [应用 README](../apps/geohazard-demo/README.md)。
