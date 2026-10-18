@@ -1,0 +1,8 @@
+{
+  "build": "FAIL",
+  "target": "esp32s3",
+  "idf": "ESP-IDF v5.5.3",
+  "exit_code": 2,
+  "reason": "idf.py build failed: 2",
+  "completed_at": "2026-09-28T22:17:12.4692516+08:00"
+}

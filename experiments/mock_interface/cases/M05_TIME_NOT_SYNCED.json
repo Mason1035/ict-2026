@@ -1,0 +1,142 @@
+{
+  "source": "MOCK",
+  "case_id": "M05_TIME_NOT_SYNCED",
+  "purpose": "验证无可信 UTC 时仍可存在合法 Telemetry；区分消息时间、逐路采样时刻与 UTC。",
+  "scenario": "人工模拟未同步 UTC：timestamp_ms=null、time_synced=false、uptime_ms=3500；各传感器采样时刻不同。",
+  "messages": [
+    {
+      "source": "MOCK",
+      "sampling_snapshot": {
+        "imu": [
+          {
+            "acceleration_mps2": [
+              0.02,
+              -0.01,
+              9.8
+            ],
+            "angular_rate_dps": [
+              0,
+              0,
+              0
+            ],
+            "acquired_uptime_us": 3480000,
+            "validity": "Valid"
+          },
+          {
+            "acceleration_mps2": [
+              0,
+              0.01,
+              9.81
+            ],
+            "angular_rate_dps": [
+              0,
+              0,
+              0
+            ],
+            "acquired_uptime_us": 3481000,
+            "validity": "Valid"
+          }
+        ],
+        "soil": [
+          {
+            "raw": 12000,
+            "acquired_uptime_us": 3400000,
+            "validity": "Valid"
+          },
+          {
+            "raw": 13000,
+            "acquired_uptime_us": 3410000,
+            "validity": "Valid"
+          },
+          {
+            "raw": 14000,
+            "acquired_uptime_us": 3420000,
+            "validity": "Valid"
+          }
+        ]
+      },
+      "payload": {
+        "schema": "zhifang.telemetry.v2",
+        "site_id": "MOCK-SITE-01",
+        "device_id": "NODE-01",
+        "boot_id": 1,
+        "seq": 6,
+        "timestamp_ms": null,
+        "uptime_ms": 3500,
+        "time_synced": false,
+        "imu": [
+          {
+            "id": "top",
+            "ax": 0.02,
+            "ay": -0.01,
+            "az": 9.8,
+            "gx": 0,
+            "gy": 0,
+            "gz": 0,
+            "tilt_deg": null,
+            "tilt_rate_dps": null,
+            "vibration_rms": null,
+            "valid": true
+          },
+          {
+            "id": "toe",
+            "ax": 0,
+            "ay": 0.01,
+            "az": 9.81,
+            "gx": 0,
+            "gy": 0,
+            "gz": 0,
+            "tilt_deg": null,
+            "tilt_rate_dps": null,
+            "vibration_rms": null,
+            "valid": true
+          }
+        ],
+        "soil": {
+          "top_raw": 12000,
+          "middle_raw": 13000,
+          "toe_raw": 14000,
+          "top_pct": null,
+          "middle_pct": null,
+          "toe_pct": null,
+          "avg_pct": null,
+          "growth_pct_min": null
+        },
+        "experiment": {
+          "run_id": null,
+          "rain_level": null
+        },
+        "risk": {
+          "sensor_score": null,
+          "level": null,
+          "reason_mask": null
+        },
+        "system": {
+          "wifi_up": false,
+          "mqtt_up": false,
+          "lora_ready": false,
+          "sd_ok": false,
+          "edge_online": false,
+          "sensor_degraded": true
+        }
+      }
+    }
+  ],
+  "expected_behavior": {
+    "source_preserved": "MOCK",
+    "interface_gaps": [
+      "G04"
+    ],
+    "notes": [
+      "按当前协议定义，timestamp_ms=null 且 time_synced=false 本身不应成为拒绝原因；其余来源、结构和身份检查通过后，预期允许进入后续流程。",
+      "uptime_ms 是 ESP32 本次启动后的消息级单调毫秒；acquired_uptime_us 是各传感器自身采样微秒；timestamp_ms 是可信 UTC Unix 毫秒。",
+      "不得用电脑当前时间、服务器接收时间或 uptime 补造 timestamp_ms；保持 null 和 time_synced=false。",
+      "采样时刻不晚于消息时刻但并不相等；G04 仍开放，消息 uptime 不能证明同时采样或代替各路时刻。"
+    ]
+  },
+  "pass_criteria": [
+    "未来执行时，应有证据确认校验器未仅因 timestamp_ms=null 且 time_synced=false 拒绝消息，且后续交接保留 null/false；本轮未执行 Validator。",
+    "没有使用电脑或接收时间补 UTC，也没有把采样微秒当 UTC 或消息毫秒；G04 明确保留。",
+    "仅为未来验收条件；未实现校验/接入时记 NOT_IMPLEMENTED，不填写实际 PASS。"
+  ]
+}

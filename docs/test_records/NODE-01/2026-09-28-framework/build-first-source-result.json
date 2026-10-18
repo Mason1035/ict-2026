@@ -1,0 +1,8 @@
+﻿{
+    "build":  "FAIL",
+    "target":  "esp32s3",
+    "idf":  "ESP-IDF v5.5.3",
+    "exit_code":  null,
+    "reason":  "ninja failed with exit code 1, output of the command is in the C:\\Users\\LQY\\Documents\\GitHub\\ict-2026\\firmware\\node01\\build\\log\\idf_py_stderr_output_41212 and C:\\Users\\LQY\\Documents\\GitHub\\ict-2026\\firmware\\node01\\build\\log\\idf_py_stdout_output_41212",
+    "completed_at":  "2026-09-28T22:19:58.3152049+08:00"
+}

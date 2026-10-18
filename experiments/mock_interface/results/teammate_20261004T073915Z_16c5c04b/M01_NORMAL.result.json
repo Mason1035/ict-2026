@@ -1,0 +1,959 @@
+{
+  "case_id": "M01_NORMAL",
+  "source": "MOCK",
+  "input_file": "C:\\Users\\LQY\\Documents\\GitHub\\ict-2026\\experiments\\mock_interface\\cases\\M01_NORMAL.json",
+  "input_sha256": "2ff9215cfe0f1f33df77e510b275c7eb7f621e04a987ffda966426850762121a",
+  "execution_time": "2026-10-04T07:39:15.469777+00:00",
+  "scope": "LOCAL_TEST_ONLY_MOCK_RUNNER",
+  "integration_mode": "TEAMMATE_BOUNDARY_V0.1",
+  "expected": {
+    "message_count": 1,
+    "accepted_message_count": 1,
+    "rejected_message_count": 0,
+    "risk_handoff_call_count": 1,
+    "edge_handoff_call_count": 1,
+    "zhang_real_function_call_count": 4,
+    "he_real_function_call_count": 1
+  },
+  "actual": {
+    "message_count": 1,
+    "accepted_message_count": 1,
+    "rejected_message_count": 0,
+    "risk_handoff_call_count": 1,
+    "edge_handoff_call_count": 1,
+    "zhang_real_function_call_count": 4,
+    "he_real_function_call_count": 1
+  },
+  "messages": [
+    {
+      "message_index": 0,
+      "source": "MOCK",
+      "original_message": {
+        "source": "MOCK",
+        "sampling_snapshot": {
+          "imu": [
+            {
+              "acceleration_mps2": [
+                0.02,
+                -0.01,
+                9.8
+              ],
+              "angular_rate_dps": [
+                0,
+                0,
+                0
+              ],
+              "acquired_uptime_us": 980000,
+              "validity": "Valid"
+            },
+            {
+              "acceleration_mps2": [
+                0,
+                0.01,
+                9.81
+              ],
+              "angular_rate_dps": [
+                0,
+                0,
+                0
+              ],
+              "acquired_uptime_us": 981000,
+              "validity": "Valid"
+            }
+          ],
+          "soil": [
+            {
+              "raw": 12000,
+              "acquired_uptime_us": 900000,
+              "validity": "Valid"
+            },
+            {
+              "raw": 13000,
+              "acquired_uptime_us": 910000,
+              "validity": "Valid"
+            },
+            {
+              "raw": 14000,
+              "acquired_uptime_us": 920000,
+              "validity": "Valid"
+            }
+          ]
+        },
+        "payload": {
+          "schema": "zhifang.telemetry.v2",
+          "site_id": "MOCK-SITE-01",
+          "device_id": "NODE-01",
+          "boot_id": 1,
+          "seq": 1,
+          "timestamp_ms": null,
+          "uptime_ms": 1000,
+          "time_synced": false,
+          "imu": [
+            {
+              "id": "top",
+              "ax": 0.02,
+              "ay": -0.01,
+              "az": 9.8,
+              "gx": 0,
+              "gy": 0,
+              "gz": 0,
+              "tilt_deg": null,
+              "tilt_rate_dps": null,
+              "vibration_rms": null,
+              "valid": true
+            },
+            {
+              "id": "toe",
+              "ax": 0,
+              "ay": 0.01,
+              "az": 9.81,
+              "gx": 0,
+              "gy": 0,
+              "gz": 0,
+              "tilt_deg": null,
+              "tilt_rate_dps": null,
+              "vibration_rms": null,
+              "valid": true
+            }
+          ],
+          "soil": {
+            "top_raw": 12000,
+            "middle_raw": 13000,
+            "toe_raw": 14000,
+            "top_pct": null,
+            "middle_pct": null,
+            "toe_pct": null,
+            "avg_pct": null,
+            "growth_pct_min": null
+          },
+          "experiment": {
+            "run_id": null,
+            "rain_level": null
+          },
+          "risk": {
+            "sensor_score": null,
+            "level": null,
+            "reason_mask": null
+          },
+          "system": {
+            "wifi_up": false,
+            "mqtt_up": false,
+            "lora_ready": false,
+            "sd_ok": false,
+            "edge_online": false,
+            "sensor_degraded": true
+          }
+        }
+      },
+      "validator_result": {
+        "status": "ACCEPT",
+        "errors": [],
+        "scope": "TEST_ONLY / MOCK_ONLY / NOT_PRODUCTION_VALIDATOR"
+      },
+      "snapshot_check": {
+        "status": "PASS",
+        "errors": [],
+        "scope": "TEST_ONLY_MAPPING_NOT_PRODUCTION_VALIDITY"
+      },
+      "risk_handoff_result": {
+        "status": "ACCEPTED",
+        "scope": "TEST_ONLY_PROJECTION_NOT_FORMAL_RISK_INPUT",
+        "source": "MOCK",
+        "payload_sha256": "45f8c734ad12e85b1189882ce49d5987b0a51236e95005c500b8cb5eaf064e03",
+        "projection": {
+          "identity": {
+            "device_id": "NODE-01",
+            "boot_id": 1,
+            "seq": 1
+          },
+          "time": {
+            "uptime_ms": 1000,
+            "timestamp_ms": null,
+            "time_synced": false
+          },
+          "imu": [
+            {
+              "id": "top",
+              "ax": 0.02,
+              "ay": -0.01,
+              "az": 9.8,
+              "gx": 0,
+              "gy": 0,
+              "gz": 0,
+              "tilt_deg": null,
+              "tilt_rate_dps": null,
+              "vibration_rms": null,
+              "valid": true
+            },
+            {
+              "id": "toe",
+              "ax": 0,
+              "ay": 0.01,
+              "az": 9.81,
+              "gx": 0,
+              "gy": 0,
+              "gz": 0,
+              "tilt_deg": null,
+              "tilt_rate_dps": null,
+              "vibration_rms": null,
+              "valid": true
+            }
+          ],
+          "soil": {
+            "top_raw": 12000,
+            "middle_raw": 13000,
+            "toe_raw": 14000,
+            "top_pct": null,
+            "middle_pct": null,
+            "toe_pct": null,
+            "avg_pct": null,
+            "growth_pct_min": null
+          },
+          "risk": {
+            "sensor_score": null,
+            "level": null,
+            "reason_mask": null
+          },
+          "system": {
+            "wifi_up": false,
+            "mqtt_up": false,
+            "lora_ready": false,
+            "sd_ok": false,
+            "edge_online": false,
+            "sensor_degraded": true
+          }
+        },
+        "test_only_sidecar": {
+          "scope": "TEST_ONLY_NOT_PRODUCTION_INTERFACE",
+          "sampling_snapshot": {
+            "imu": [
+              {
+                "acceleration_mps2": [
+                  0.02,
+                  -0.01,
+                  9.8
+                ],
+                "angular_rate_dps": [
+                  0,
+                  0,
+                  0
+                ],
+                "acquired_uptime_us": 980000,
+                "validity": "Valid"
+              },
+              {
+                "acceleration_mps2": [
+                  0,
+                  0.01,
+                  9.81
+                ],
+                "angular_rate_dps": [
+                  0,
+                  0,
+                  0
+                ],
+                "acquired_uptime_us": 981000,
+                "validity": "Valid"
+              }
+            ],
+            "soil": [
+              {
+                "raw": 12000,
+                "acquired_uptime_us": 900000,
+                "validity": "Valid"
+              },
+              {
+                "raw": 13000,
+                "acquired_uptime_us": 910000,
+                "validity": "Valid"
+              },
+              {
+                "raw": 14000,
+                "acquired_uptime_us": 920000,
+                "validity": "Valid"
+              }
+            ]
+          }
+        },
+        "risk_execution": {
+          "status": "BLOCKED",
+          "integration": "NOT_INTEGRATED",
+          "reason": "No reviewed v2 adapter/calibrated formal Risk entry integrated; no scoring performed."
+        },
+        "open_interface_gaps": [
+          "G01",
+          "G02",
+          "G03",
+          "G04",
+          "G05",
+          "G06",
+          "G07",
+          "G08",
+          "G09"
+        ],
+        "teammate_integration": {
+          "scope": "TEST_ONLY / INTEGRATION_ADAPTER",
+          "integration_target": "张鹏飞",
+          "source_branch": "origin/张鹏飞",
+          "source_commit": "4d635759f4b9e222609938ef5e6d829463d40024",
+          "payload_sha256": "45f8c734ad12e85b1189882ce49d5987b0a51236e95005c500b8cb5eaf064e03",
+          "real_code_called": true,
+          "reach_status": "REAL_CODE_REACHED",
+          "calls": [
+            {
+              "integration_target": "张鹏飞",
+              "source_branch": "origin/张鹏飞",
+              "source_commit": "4d635759f4b9e222609938ef5e6d829463d40024",
+              "source_module": "algorithm/B_revised/candidate_features/reference.py",
+              "source_function": "relative_wetness_index",
+              "source_sha256": "cf7a707c11f429e01f734eaa0dcf4cf04fa7edcb095e28e9bb44fbdc01871022",
+              "source_git_blob": "72f0eb1201504ef95cfb535c641ed3dee8ff4bd4",
+              "source_line": 62,
+              "arguments": {
+                "args": [
+                  12000,
+                  null,
+                  null
+                ],
+                "kwargs": {}
+              },
+              "real_code_called": true,
+              "call_status": "RETURNED",
+              "returned": null,
+              "reach_status": "REAL_CODE_REACHED",
+              "channel": "top",
+              "parameter_source": "raw from unchanged v2; dry_raw/wet_raw unavailable (None)"
+            },
+            {
+              "integration_target": "张鹏飞",
+              "source_branch": "origin/张鹏飞",
+              "source_commit": "4d635759f4b9e222609938ef5e6d829463d40024",
+              "source_module": "algorithm/B_revised/candidate_features/reference.py",
+              "source_function": "relative_wetness_index",
+              "source_sha256": "cf7a707c11f429e01f734eaa0dcf4cf04fa7edcb095e28e9bb44fbdc01871022",
+              "source_git_blob": "72f0eb1201504ef95cfb535c641ed3dee8ff4bd4",
+              "source_line": 62,
+              "arguments": {
+                "args": [
+                  13000,
+                  null,
+                  null
+                ],
+                "kwargs": {}
+              },
+              "real_code_called": true,
+              "call_status": "RETURNED",
+              "returned": null,
+              "reach_status": "REAL_CODE_REACHED",
+              "channel": "middle",
+              "parameter_source": "raw from unchanged v2; dry_raw/wet_raw unavailable (None)"
+            },
+            {
+              "integration_target": "张鹏飞",
+              "source_branch": "origin/张鹏飞",
+              "source_commit": "4d635759f4b9e222609938ef5e6d829463d40024",
+              "source_module": "algorithm/B_revised/candidate_features/reference.py",
+              "source_function": "relative_wetness_index",
+              "source_sha256": "cf7a707c11f429e01f734eaa0dcf4cf04fa7edcb095e28e9bb44fbdc01871022",
+              "source_git_blob": "72f0eb1201504ef95cfb535c641ed3dee8ff4bd4",
+              "source_line": 62,
+              "arguments": {
+                "args": [
+                  14000,
+                  null,
+                  null
+                ],
+                "kwargs": {}
+              },
+              "real_code_called": true,
+              "call_status": "RETURNED",
+              "returned": null,
+              "reach_status": "REAL_CODE_REACHED",
+              "channel": "toe",
+              "parameter_source": "raw from unchanged v2; dry_raw/wet_raw unavailable (None)"
+            },
+            {
+              "integration_target": "张鹏飞",
+              "source_branch": "origin/张鹏飞",
+              "source_commit": "4d635759f4b9e222609938ef5e6d829463d40024",
+              "source_module": "algorithm/B_revised/candidate_features/reference.py",
+              "source_function": "dual_imu_tilt_difference_deg",
+              "source_sha256": "cf7a707c11f429e01f734eaa0dcf4cf04fa7edcb095e28e9bb44fbdc01871022",
+              "source_git_blob": "72f0eb1201504ef95cfb535c641ed3dee8ff4bd4",
+              "source_line": 83,
+              "arguments": {
+                "args": [
+                  null,
+                  null
+                ],
+                "kwargs": {}
+              },
+              "real_code_called": true,
+              "call_status": "RETURNED",
+              "returned": null,
+              "reach_status": "REAL_CODE_REACHED",
+              "parameter_source": "existing v2 tilt_deg fields; no baseline, filter or angle invented"
+            }
+          ],
+          "adapter_status": "REAL_CODE_REACHED",
+          "execution_status": "RISK_EXECUTION_BLOCKED",
+          "formal_risk_executed": false,
+          "risk_score_produced": false,
+          "risk_fields_preserved": {
+            "sensor_score": null,
+            "level": null,
+            "reason_mask": null
+          },
+          "blocked_reason": [
+            "No reviewed per-probe dry/wet calibration; pass None, never guessed constants.",
+            "No calibrated tilt/baseline, dynamic-acceleration/window or contribution mapping.",
+            "No integrated formal Missing Policy / invalid-input policy or reason_mask table."
+          ],
+          "boundary_scope": "REAL_CANDIDATE_FUNCTIONS_WITH_MISSING_PARAMETERS_NOT_FORMAL_SCORING"
+        }
+      },
+      "edge_handoff_result": {
+        "status": "ACCEPTED",
+        "scope": "TEST_ONLY / NOT_PRODUCTION_EDGE_INTAKE",
+        "source": "MOCK",
+        "payload_sha256": "45f8c734ad12e85b1189882ce49d5987b0a51236e95005c500b8cb5eaf064e03",
+        "payload": {
+          "schema": "zhifang.telemetry.v2",
+          "site_id": "MOCK-SITE-01",
+          "device_id": "NODE-01",
+          "boot_id": 1,
+          "seq": 1,
+          "timestamp_ms": null,
+          "uptime_ms": 1000,
+          "time_synced": false,
+          "imu": [
+            {
+              "id": "top",
+              "ax": 0.02,
+              "ay": -0.01,
+              "az": 9.8,
+              "gx": 0,
+              "gy": 0,
+              "gz": 0,
+              "tilt_deg": null,
+              "tilt_rate_dps": null,
+              "vibration_rms": null,
+              "valid": true
+            },
+            {
+              "id": "toe",
+              "ax": 0,
+              "ay": 0.01,
+              "az": 9.81,
+              "gx": 0,
+              "gy": 0,
+              "gz": 0,
+              "tilt_deg": null,
+              "tilt_rate_dps": null,
+              "vibration_rms": null,
+              "valid": true
+            }
+          ],
+          "soil": {
+            "top_raw": 12000,
+            "middle_raw": 13000,
+            "toe_raw": 14000,
+            "top_pct": null,
+            "middle_pct": null,
+            "toe_pct": null,
+            "avg_pct": null,
+            "growth_pct_min": null
+          },
+          "experiment": {
+            "run_id": null,
+            "rain_level": null
+          },
+          "risk": {
+            "sensor_score": null,
+            "level": null,
+            "reason_mask": null
+          },
+          "system": {
+            "wifi_up": false,
+            "mqtt_up": false,
+            "lora_ready": false,
+            "sd_ok": false,
+            "edge_online": false,
+            "sensor_degraded": true
+          }
+        },
+        "production_edge_intake": "NOT_IMPLEMENTED",
+        "teammate_integration": {
+          "scope": "TEST_ONLY / INTEGRATION_ADAPTER",
+          "integration_target": "何宇轩",
+          "source_branch": "origin/何宇轩",
+          "source_commit": "019a03a53336790a1439485754afdaaf3c34c9c1",
+          "payload_sha256": "45f8c734ad12e85b1189882ce49d5987b0a51236e95005c500b8cb5eaf064e03",
+          "real_code_called": true,
+          "reach_status": "REAL_CODE_REACHED",
+          "calls": [
+            {
+              "integration_target": "何宇轩",
+              "source_branch": "origin/何宇轩",
+              "source_commit": "019a03a53336790a1439485754afdaaf3c34c9c1",
+              "source_module": "ai_training/src/ai_training/adapters/real.py",
+              "source_function": "RealAdapter.to_dataset",
+              "source_sha256": "8c5edba0a5ed326497b776a55401cff17059e398b97bd4b87935af103f7873ab",
+              "source_git_blob": "c8ed9c346ffd3396a3b1c014168e10887c49120d",
+              "source_line": 7,
+              "arguments": {
+                "args": [],
+                "kwargs": {
+                  "artifact": {
+                    "schema": "zhifang.telemetry.v2",
+                    "site_id": "MOCK-SITE-01",
+                    "device_id": "NODE-01",
+                    "boot_id": 1,
+                    "seq": 1,
+                    "timestamp_ms": null,
+                    "uptime_ms": 1000,
+                    "time_synced": false,
+                    "imu": [
+                      {
+                        "id": "top",
+                        "ax": 0.02,
+                        "ay": -0.01,
+                        "az": 9.8,
+                        "gx": 0,
+                        "gy": 0,
+                        "gz": 0,
+                        "tilt_deg": null,
+                        "tilt_rate_dps": null,
+                        "vibration_rms": null,
+                        "valid": true
+                      },
+                      {
+                        "id": "toe",
+                        "ax": 0,
+                        "ay": 0.01,
+                        "az": 9.81,
+                        "gx": 0,
+                        "gy": 0,
+                        "gz": 0,
+                        "tilt_deg": null,
+                        "tilt_rate_dps": null,
+                        "vibration_rms": null,
+                        "valid": true
+                      }
+                    ],
+                    "soil": {
+                      "top_raw": 12000,
+                      "middle_raw": 13000,
+                      "toe_raw": 14000,
+                      "top_pct": null,
+                      "middle_pct": null,
+                      "toe_pct": null,
+                      "avg_pct": null,
+                      "growth_pct_min": null
+                    },
+                    "experiment": {
+                      "run_id": null,
+                      "rain_level": null
+                    },
+                    "risk": {
+                      "sensor_score": null,
+                      "level": null,
+                      "reason_mask": null
+                    },
+                    "system": {
+                      "wifi_up": false,
+                      "mqtt_up": false,
+                      "lora_ready": false,
+                      "sd_ok": false,
+                      "edge_online": false,
+                      "sensor_degraded": true
+                    }
+                  },
+                  "contract": null
+                }
+              },
+              "real_code_called": true,
+              "call_status": "EXPECTED_BLOCK",
+              "exception_type": "ContractNotReadyError",
+              "exception_message": "WAITING_FOR_A / WAITING_FOR_B: real handoff and mapping absent; provide CSV, Calibration Metadata, validity and B contract",
+              "reach_status": "REAL_CODE_REACHED"
+            }
+          ],
+          "adapter_status": "INTERFACE_MISMATCH",
+          "execution_status": "EDGE_INTAKE_NOT_IMPLEMENTED",
+          "edge_intake_exists": false,
+          "telemetry_accepted_by_teammate": false,
+          "boundary_scope": "NEGATIVE_CAPABILITY_PROBE_OF_TRAINING_ADAPTER_SKELETON",
+          "blocked_reason": [
+            "Existing RealAdapter expects an artifact/TrainingContract, not Telemetry v2.",
+            "Pinned RealAdapter.to_dataset always raises ContractNotReadyError.",
+            "No real Telemetry Validator / Edge Intake entry exists in this source version."
+          ]
+        }
+      },
+      "risk_handoff_called": true,
+      "edge_handoff_called": true,
+      "same_payload_object": true,
+      "checks": {
+        "teammate_boundary_evidence": true,
+        "shared_payload_unchanged": true,
+        "same_payload_object": true,
+        "risk_projection_preserved": true,
+        "sidecar_preserved": true,
+        "edge_payload_preserved": true,
+        "consumer_hashes_match": true,
+        "mock_source_retained": true,
+        "risk_null_preserved": true,
+        "validator_accepted": true,
+        "snapshot_mapping_checked": true,
+        "both_handoffs_called": true
+      },
+      "zhang_adapter_result": {
+        "scope": "TEST_ONLY / INTEGRATION_ADAPTER",
+        "integration_target": "张鹏飞",
+        "source_branch": "origin/张鹏飞",
+        "source_commit": "4d635759f4b9e222609938ef5e6d829463d40024",
+        "payload_sha256": "45f8c734ad12e85b1189882ce49d5987b0a51236e95005c500b8cb5eaf064e03",
+        "real_code_called": true,
+        "reach_status": "REAL_CODE_REACHED",
+        "calls": [
+          {
+            "integration_target": "张鹏飞",
+            "source_branch": "origin/张鹏飞",
+            "source_commit": "4d635759f4b9e222609938ef5e6d829463d40024",
+            "source_module": "algorithm/B_revised/candidate_features/reference.py",
+            "source_function": "relative_wetness_index",
+            "source_sha256": "cf7a707c11f429e01f734eaa0dcf4cf04fa7edcb095e28e9bb44fbdc01871022",
+            "source_git_blob": "72f0eb1201504ef95cfb535c641ed3dee8ff4bd4",
+            "source_line": 62,
+            "arguments": {
+              "args": [
+                12000,
+                null,
+                null
+              ],
+              "kwargs": {}
+            },
+            "real_code_called": true,
+            "call_status": "RETURNED",
+            "returned": null,
+            "reach_status": "REAL_CODE_REACHED",
+            "channel": "top",
+            "parameter_source": "raw from unchanged v2; dry_raw/wet_raw unavailable (None)"
+          },
+          {
+            "integration_target": "张鹏飞",
+            "source_branch": "origin/张鹏飞",
+            "source_commit": "4d635759f4b9e222609938ef5e6d829463d40024",
+            "source_module": "algorithm/B_revised/candidate_features/reference.py",
+            "source_function": "relative_wetness_index",
+            "source_sha256": "cf7a707c11f429e01f734eaa0dcf4cf04fa7edcb095e28e9bb44fbdc01871022",
+            "source_git_blob": "72f0eb1201504ef95cfb535c641ed3dee8ff4bd4",
+            "source_line": 62,
+            "arguments": {
+              "args": [
+                13000,
+                null,
+                null
+              ],
+              "kwargs": {}
+            },
+            "real_code_called": true,
+            "call_status": "RETURNED",
+            "returned": null,
+            "reach_status": "REAL_CODE_REACHED",
+            "channel": "middle",
+            "parameter_source": "raw from unchanged v2; dry_raw/wet_raw unavailable (None)"
+          },
+          {
+            "integration_target": "张鹏飞",
+            "source_branch": "origin/张鹏飞",
+            "source_commit": "4d635759f4b9e222609938ef5e6d829463d40024",
+            "source_module": "algorithm/B_revised/candidate_features/reference.py",
+            "source_function": "relative_wetness_index",
+            "source_sha256": "cf7a707c11f429e01f734eaa0dcf4cf04fa7edcb095e28e9bb44fbdc01871022",
+            "source_git_blob": "72f0eb1201504ef95cfb535c641ed3dee8ff4bd4",
+            "source_line": 62,
+            "arguments": {
+              "args": [
+                14000,
+                null,
+                null
+              ],
+              "kwargs": {}
+            },
+            "real_code_called": true,
+            "call_status": "RETURNED",
+            "returned": null,
+            "reach_status": "REAL_CODE_REACHED",
+            "channel": "toe",
+            "parameter_source": "raw from unchanged v2; dry_raw/wet_raw unavailable (None)"
+          },
+          {
+            "integration_target": "张鹏飞",
+            "source_branch": "origin/张鹏飞",
+            "source_commit": "4d635759f4b9e222609938ef5e6d829463d40024",
+            "source_module": "algorithm/B_revised/candidate_features/reference.py",
+            "source_function": "dual_imu_tilt_difference_deg",
+            "source_sha256": "cf7a707c11f429e01f734eaa0dcf4cf04fa7edcb095e28e9bb44fbdc01871022",
+            "source_git_blob": "72f0eb1201504ef95cfb535c641ed3dee8ff4bd4",
+            "source_line": 83,
+            "arguments": {
+              "args": [
+                null,
+                null
+              ],
+              "kwargs": {}
+            },
+            "real_code_called": true,
+            "call_status": "RETURNED",
+            "returned": null,
+            "reach_status": "REAL_CODE_REACHED",
+            "parameter_source": "existing v2 tilt_deg fields; no baseline, filter or angle invented"
+          }
+        ],
+        "adapter_status": "REAL_CODE_REACHED",
+        "execution_status": "RISK_EXECUTION_BLOCKED",
+        "formal_risk_executed": false,
+        "risk_score_produced": false,
+        "risk_fields_preserved": {
+          "sensor_score": null,
+          "level": null,
+          "reason_mask": null
+        },
+        "blocked_reason": [
+          "No reviewed per-probe dry/wet calibration; pass None, never guessed constants.",
+          "No calibrated tilt/baseline, dynamic-acceleration/window or contribution mapping.",
+          "No integrated formal Missing Policy / invalid-input policy or reason_mask table."
+        ],
+        "boundary_scope": "REAL_CANDIDATE_FUNCTIONS_WITH_MISSING_PARAMETERS_NOT_FORMAL_SCORING"
+      },
+      "he_adapter_result": {
+        "scope": "TEST_ONLY / INTEGRATION_ADAPTER",
+        "integration_target": "何宇轩",
+        "source_branch": "origin/何宇轩",
+        "source_commit": "019a03a53336790a1439485754afdaaf3c34c9c1",
+        "payload_sha256": "45f8c734ad12e85b1189882ce49d5987b0a51236e95005c500b8cb5eaf064e03",
+        "real_code_called": true,
+        "reach_status": "REAL_CODE_REACHED",
+        "calls": [
+          {
+            "integration_target": "何宇轩",
+            "source_branch": "origin/何宇轩",
+            "source_commit": "019a03a53336790a1439485754afdaaf3c34c9c1",
+            "source_module": "ai_training/src/ai_training/adapters/real.py",
+            "source_function": "RealAdapter.to_dataset",
+            "source_sha256": "8c5edba0a5ed326497b776a55401cff17059e398b97bd4b87935af103f7873ab",
+            "source_git_blob": "c8ed9c346ffd3396a3b1c014168e10887c49120d",
+            "source_line": 7,
+            "arguments": {
+              "args": [],
+              "kwargs": {
+                "artifact": {
+                  "schema": "zhifang.telemetry.v2",
+                  "site_id": "MOCK-SITE-01",
+                  "device_id": "NODE-01",
+                  "boot_id": 1,
+                  "seq": 1,
+                  "timestamp_ms": null,
+                  "uptime_ms": 1000,
+                  "time_synced": false,
+                  "imu": [
+                    {
+                      "id": "top",
+                      "ax": 0.02,
+                      "ay": -0.01,
+                      "az": 9.8,
+                      "gx": 0,
+                      "gy": 0,
+                      "gz": 0,
+                      "tilt_deg": null,
+                      "tilt_rate_dps": null,
+                      "vibration_rms": null,
+                      "valid": true
+                    },
+                    {
+                      "id": "toe",
+                      "ax": 0,
+                      "ay": 0.01,
+                      "az": 9.81,
+                      "gx": 0,
+                      "gy": 0,
+                      "gz": 0,
+                      "tilt_deg": null,
+                      "tilt_rate_dps": null,
+                      "vibration_rms": null,
+                      "valid": true
+                    }
+                  ],
+                  "soil": {
+                    "top_raw": 12000,
+                    "middle_raw": 13000,
+                    "toe_raw": 14000,
+                    "top_pct": null,
+                    "middle_pct": null,
+                    "toe_pct": null,
+                    "avg_pct": null,
+                    "growth_pct_min": null
+                  },
+                  "experiment": {
+                    "run_id": null,
+                    "rain_level": null
+                  },
+                  "risk": {
+                    "sensor_score": null,
+                    "level": null,
+                    "reason_mask": null
+                  },
+                  "system": {
+                    "wifi_up": false,
+                    "mqtt_up": false,
+                    "lora_ready": false,
+                    "sd_ok": false,
+                    "edge_online": false,
+                    "sensor_degraded": true
+                  }
+                },
+                "contract": null
+              }
+            },
+            "real_code_called": true,
+            "call_status": "EXPECTED_BLOCK",
+            "exception_type": "ContractNotReadyError",
+            "exception_message": "WAITING_FOR_A / WAITING_FOR_B: real handoff and mapping absent; provide CSV, Calibration Metadata, validity and B contract",
+            "reach_status": "REAL_CODE_REACHED"
+          }
+        ],
+        "adapter_status": "INTERFACE_MISMATCH",
+        "execution_status": "EDGE_INTAKE_NOT_IMPLEMENTED",
+        "edge_intake_exists": false,
+        "telemetry_accepted_by_teammate": false,
+        "boundary_scope": "NEGATIVE_CAPABILITY_PROBE_OF_TRAINING_ADAPTER_SKELETON",
+        "blocked_reason": [
+          "Existing RealAdapter expects an artifact/TrainingContract, not Telemetry v2.",
+          "Pinned RealAdapter.to_dataset always raises ContractNotReadyError.",
+          "No real Telemetry Validator / Edge Intake entry exists in this source version."
+        ]
+      },
+      "source_check": "ACCEPT",
+      "expected": {
+        "validator": "ACCEPT",
+        "handoffs": "preserve inputs",
+        "risk": "null"
+      },
+      "local_status": "PASS"
+    }
+  ],
+  "overall_status": "LOCAL_RUNNER_PASS",
+  "validator_expectations": "VALIDATOR_PASS",
+  "handoff_expectations": "HANDOFF_PASS",
+  "formal_risk_execution": "BLOCKED / NOT_INTEGRATED",
+  "production_validator": "NOT_IMPLEMENTED",
+  "production_edge_intake": "NOT_IMPLEMENTED",
+  "three_person_integration": "BLOCKED / NOT_INTEGRATED",
+  "open_interface_gaps": [
+    "G01",
+    "G02",
+    "G03",
+    "G04",
+    "G05",
+    "G06",
+    "G07",
+    "G08",
+    "G09"
+  ],
+  "notes": [
+    "PASS labels cover only actually executed local checks; no formal Risk algorithm called.",
+    "M08 rejections are validator observations; fixture expected_behavior is not used as actual counts.",
+    "TEST_ONLY sidecar does not solve G02/G03/G04; no gap is closed.",
+    "Local Mock Runner success is not THREE_PERSON_INTEGRATION_PASS."
+  ],
+  "execution": {
+    "runner_version": "0.2.0",
+    "git_commit": "d0c9edb3baa747700ba1e7a0a901a3fcb64bab00",
+    "git_branch": "李青原",
+    "git_status_before_run": "M experiments/mock_interface/runner/README.md\n M experiments/mock_interface/runner/run_mock_integration.py\n?? experiments/mock_interface/runner/TEAMMATE_INTEGRATION.md\n?? experiments/mock_interface/runner/he_adapter.py\n?? experiments/mock_interface/runner/teammate_source.py\n?? experiments/mock_interface/runner/teammate_sources.json\n?? experiments/mock_interface/runner/test_teammate_integration.py\n?? experiments/mock_interface/runner/zhang_adapter.py",
+    "runner_source_sha256": {
+      "edge_handoff.py": "5898c10a9dc345a86946ea09d2adf3c6d8b7ae651bda9a09cd07ca88288a02a7",
+      "he_adapter.py": "1a054f821d0c2e29d6d869bcad84b0ce5c0652e443c5023f5748f2f81bc29c93",
+      "mock_loader.py": "c70c6b4649f02fbef3f0414183f8f08ef6a278433555ccfa414313ff45c2eda2",
+      "mock_v2_validator.py": "f0c6ca2cc5feb607c92f398efacbdcd43e7f64d59c4db0ecd81247f2ea393064",
+      "README.md": "2ba1482cd556301a9383f4b20c606abe23e92c90926d5c4af0761444e445cbe2",
+      "risk_handoff.py": "df2d9295c4adede546c610e11720e0f4b96f400d46fca238a19e053049ddef6f",
+      "run_mock_integration.py": "7e0010b1cd6ec750d71351ea9329ba97a24da135d33d25db4a4377b4b634786b",
+      "TEAMMATE_INTEGRATION.md": "8996457c7892a640cec43b04c74fed98e1bbc83880d6f0905d80b19a3a0daed8",
+      "teammate_source.py": "3cdd332e313f177eb0e24afa6d7196512682c98fd27dd1ba954c2ad98a1dd1fa",
+      "teammate_sources.json": "21508a827a7db872b3502fd45e1b2b5e0a2468205bd75e89363c06b907c1ac40",
+      "test_runner.py": "e53438301c79d1490b85bb8d0cf93eb5786da6b295efb641e14bd23380e0677f",
+      "test_teammate_integration.py": "d3b65b2cec443574abc3de20dcbd0425f25020e20d8c6f296dffef56c7b27cd5",
+      "zhang_adapter.py": "5f3f8bc3177837ab2b8cc9b2da945de4b0a6d1e91c0a253b082d7a16cac50446"
+    },
+    "python_version": "3.12.14",
+    "python_executable": "C:\\Users\\LQY\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+    "teammate_sources": {
+      "zhang": {
+        "integration_target": "张鹏飞",
+        "source_branch": "origin/张鹏飞",
+        "source_commit": "4d635759f4b9e222609938ef5e6d829463d40024",
+        "modules": [
+          {
+            "name": "candidate_features",
+            "path": "algorithm/B_revised/candidate_features/__init__.py",
+            "package": true,
+            "sha256": "f8d37fa13ad1fb7c4bcd6e81bb922323f199c5e177307260bdfced9a0f3c1a31",
+            "git_blob": "cb7ad13eedf63db48b012c427d25406f80af85f7"
+          },
+          {
+            "name": "candidate_features.reference",
+            "path": "algorithm/B_revised/candidate_features/reference.py",
+            "package": false,
+            "sha256": "cf7a707c11f429e01f734eaa0dcf4cf04fa7edcb095e28e9bb44fbdc01871022",
+            "git_blob": "72f0eb1201504ef95cfb535c641ed3dee8ff4bd4"
+          }
+        ]
+      },
+      "he": {
+        "integration_target": "何宇轩",
+        "source_branch": "origin/何宇轩",
+        "source_commit": "019a03a53336790a1439485754afdaaf3c34c9c1",
+        "modules": [
+          {
+            "name": "ai_training",
+            "path": "ai_training/src/ai_training/__init__.py",
+            "package": true,
+            "sha256": "448761409de9c93e448055a7c0fda7547693fd8da5d01c8f707d62324c4cd9b2",
+            "git_blob": "2b8679ca53a22d77853ff89d425d023daa510d53"
+          },
+          {
+            "name": "ai_training.errors",
+            "path": "ai_training/src/ai_training/errors.py",
+            "package": false,
+            "sha256": "4724795bece32989d345a3c0c6d832490166d4a6053ed44c072320d2a9cf76ab",
+            "git_blob": "43834598f3bbf7c0147efeb88414d4af8110888e"
+          },
+          {
+            "name": "ai_training.adapters",
+            "path": "ai_training/src/ai_training/adapters/__init__.py",
+            "package": true,
+            "sha256": "efd3102a5d2425bd937b9394d333fd05d722de84305e1451508cf44fe9c8c47e",
+            "git_blob": "f6a6e1e20b21c24c6a9fe8b0369871aa5efde330"
+          },
+          {
+            "name": "ai_training.adapters.real",
+            "path": "ai_training/src/ai_training/adapters/real.py",
+            "package": false,
+            "sha256": "8c5edba0a5ed326497b776a55401cff17059e398b97bd4b87935af103f7873ab",
+            "git_blob": "c8ed9c346ffd3396a3b1c014168e10887c49120d"
+          }
+        ]
+      }
+    },
+    "teammate_version_policy": "Pinned Git objects; no fetch/merge; source SHA-256 and blob ID checked before import."
+  },
+  "invocation": [
+    "C:\\Users\\LQY\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+    "C:\\Users\\LQY\\Documents\\GitHub\\ict-2026\\experiments\\mock_interface\\runner\\run_mock_integration.py",
+    "--teammates"
+  ],
+  "original_input_evidence": "inputs/M01_NORMAL.json"
+}

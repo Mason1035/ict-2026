@@ -1,0 +1,264 @@
+{
+  "source": "MOCK",
+  "case_id": "M06_REBOOT_IDENTITY",
+  "purpose": "验证同一设备重启后 boot_id 改变时，相同 seq 不构成重复身份。",
+  "scenario": "两条人工消息依次属于 boot_id=1 和 boot_id=2，seq 均为 1；uptime 从 5000 重置为 1000，仅跨 boot 重置。",
+  "messages": [
+    {
+      "source": "MOCK",
+      "sampling_snapshot": {
+        "imu": [
+          {
+            "acceleration_mps2": [
+              0.02,
+              -0.01,
+              9.8
+            ],
+            "angular_rate_dps": [
+              0,
+              0,
+              0
+            ],
+            "acquired_uptime_us": 4980000,
+            "validity": "Valid"
+          },
+          {
+            "acceleration_mps2": [
+              0,
+              0.01,
+              9.81
+            ],
+            "angular_rate_dps": [
+              0,
+              0,
+              0
+            ],
+            "acquired_uptime_us": 4981000,
+            "validity": "Valid"
+          }
+        ],
+        "soil": [
+          {
+            "raw": 12000,
+            "acquired_uptime_us": 4900000,
+            "validity": "Valid"
+          },
+          {
+            "raw": 13000,
+            "acquired_uptime_us": 4910000,
+            "validity": "Valid"
+          },
+          {
+            "raw": 14000,
+            "acquired_uptime_us": 4920000,
+            "validity": "Valid"
+          }
+        ]
+      },
+      "payload": {
+        "schema": "zhifang.telemetry.v2",
+        "site_id": "MOCK-SITE-01",
+        "device_id": "NODE-01",
+        "boot_id": 1,
+        "seq": 1,
+        "timestamp_ms": null,
+        "uptime_ms": 5000,
+        "time_synced": false,
+        "imu": [
+          {
+            "id": "top",
+            "ax": 0.02,
+            "ay": -0.01,
+            "az": 9.8,
+            "gx": 0,
+            "gy": 0,
+            "gz": 0,
+            "tilt_deg": null,
+            "tilt_rate_dps": null,
+            "vibration_rms": null,
+            "valid": true
+          },
+          {
+            "id": "toe",
+            "ax": 0,
+            "ay": 0.01,
+            "az": 9.81,
+            "gx": 0,
+            "gy": 0,
+            "gz": 0,
+            "tilt_deg": null,
+            "tilt_rate_dps": null,
+            "vibration_rms": null,
+            "valid": true
+          }
+        ],
+        "soil": {
+          "top_raw": 12000,
+          "middle_raw": 13000,
+          "toe_raw": 14000,
+          "top_pct": null,
+          "middle_pct": null,
+          "toe_pct": null,
+          "avg_pct": null,
+          "growth_pct_min": null
+        },
+        "experiment": {
+          "run_id": null,
+          "rain_level": null
+        },
+        "risk": {
+          "sensor_score": null,
+          "level": null,
+          "reason_mask": null
+        },
+        "system": {
+          "wifi_up": false,
+          "mqtt_up": false,
+          "lora_ready": false,
+          "sd_ok": false,
+          "edge_online": false,
+          "sensor_degraded": true
+        }
+      }
+    },
+    {
+      "source": "MOCK",
+      "sampling_snapshot": {
+        "imu": [
+          {
+            "acceleration_mps2": [
+              0.02,
+              -0.01,
+              9.8
+            ],
+            "angular_rate_dps": [
+              0,
+              0,
+              0
+            ],
+            "acquired_uptime_us": 980000,
+            "validity": "Valid"
+          },
+          {
+            "acceleration_mps2": [
+              0,
+              0.01,
+              9.81
+            ],
+            "angular_rate_dps": [
+              0,
+              0,
+              0
+            ],
+            "acquired_uptime_us": 981000,
+            "validity": "Valid"
+          }
+        ],
+        "soil": [
+          {
+            "raw": 12000,
+            "acquired_uptime_us": 900000,
+            "validity": "Valid"
+          },
+          {
+            "raw": 13000,
+            "acquired_uptime_us": 910000,
+            "validity": "Valid"
+          },
+          {
+            "raw": 14000,
+            "acquired_uptime_us": 920000,
+            "validity": "Valid"
+          }
+        ]
+      },
+      "payload": {
+        "schema": "zhifang.telemetry.v2",
+        "site_id": "MOCK-SITE-01",
+        "device_id": "NODE-01",
+        "boot_id": 2,
+        "seq": 1,
+        "timestamp_ms": null,
+        "uptime_ms": 1000,
+        "time_synced": false,
+        "imu": [
+          {
+            "id": "top",
+            "ax": 0.02,
+            "ay": -0.01,
+            "az": 9.8,
+            "gx": 0,
+            "gy": 0,
+            "gz": 0,
+            "tilt_deg": null,
+            "tilt_rate_dps": null,
+            "vibration_rms": null,
+            "valid": true
+          },
+          {
+            "id": "toe",
+            "ax": 0,
+            "ay": 0.01,
+            "az": 9.81,
+            "gx": 0,
+            "gy": 0,
+            "gz": 0,
+            "tilt_deg": null,
+            "tilt_rate_dps": null,
+            "vibration_rms": null,
+            "valid": true
+          }
+        ],
+        "soil": {
+          "top_raw": 12000,
+          "middle_raw": 13000,
+          "toe_raw": 14000,
+          "top_pct": null,
+          "middle_pct": null,
+          "toe_pct": null,
+          "avg_pct": null,
+          "growth_pct_min": null
+        },
+        "experiment": {
+          "run_id": null,
+          "rain_level": null
+        },
+        "risk": {
+          "sensor_score": null,
+          "level": null,
+          "reason_mask": null
+        },
+        "system": {
+          "wifi_up": false,
+          "mqtt_up": false,
+          "lora_ready": false,
+          "sd_ok": false,
+          "edge_online": false,
+          "sensor_degraded": true
+        }
+      }
+    }
+  ],
+  "expected_behavior": {
+    "source_preserved": "MOCK",
+    "interface_gaps": [
+      "G06",
+      "G08"
+    ],
+    "normal_processing_count": 2,
+    "duplicate_count": 0,
+    "conflict_count": 0,
+    "notes": [
+      "(NODE-01,1,1) 与 (NODE-01,2,1) 是两个不同 identity，第二条不属于 DUPLICATE_MESSAGE 或 MESSAGE_CONFLICT。",
+      "去重必须使用完整三元组，不能仅用 device_id+seq；同 boot 新原始消息递增 seq，重试/补传/转发仍保留原身份。",
+      "boot_id/seq/uptime 均人工指定，计数只是预期；不证明真实 ESP32 重启、跨启动 boot 唯一性、持久身份策略或自动 seq 分配。G06=NOT_IMPLEMENTED。",
+      "本用例在独立 Mock 去重上下文中执行，不与 M01 或其他用例的人工身份串扰。",
+      "G08=NOT_IMPLEMENTED：完整三元身份的去重/冲突门禁与统计尚未实现；normal_processing_count=2、duplicate_count=0、conflict_count=0 仅为 Expected Behavior，不是实际结果。"
+    ]
+  },
+  "pass_criteria": [
+    "未来完整身份去重证据表明两条各首次处理一次，第二个 boot 的 seq=1 不被误判重复或冲突。",
+    "允许跨 boot uptime 重置；不能要求不同 boot 的 seq/uptime 全局递增。",
+    "本用例通过与否不能替代 IdentityAllocator 的真实实现及硬件重启验证，G06/G08 保持开放；本轮无实际 PASS。"
+  ]
+}

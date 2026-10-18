@@ -1,0 +1,144 @@
+{
+  "source": "MOCK",
+  "case_id": "M01_NORMAL",
+  "purpose": "验证双 IMU、三 Soil 的正常结构交接；NORMAL 仅为用例名，不是风险等级。",
+  "scenario": "人工指定结构有效的 Mock 原始输入；未校准特征、百分比和 Risk 均为空。",
+  "messages": [
+    {
+      "source": "MOCK",
+      "sampling_snapshot": {
+        "imu": [
+          {
+            "acceleration_mps2": [
+              0.02,
+              -0.01,
+              9.8
+            ],
+            "angular_rate_dps": [
+              0,
+              0,
+              0
+            ],
+            "acquired_uptime_us": 980000,
+            "validity": "Valid"
+          },
+          {
+            "acceleration_mps2": [
+              0,
+              0.01,
+              9.81
+            ],
+            "angular_rate_dps": [
+              0,
+              0,
+              0
+            ],
+            "acquired_uptime_us": 981000,
+            "validity": "Valid"
+          }
+        ],
+        "soil": [
+          {
+            "raw": 12000,
+            "acquired_uptime_us": 900000,
+            "validity": "Valid"
+          },
+          {
+            "raw": 13000,
+            "acquired_uptime_us": 910000,
+            "validity": "Valid"
+          },
+          {
+            "raw": 14000,
+            "acquired_uptime_us": 920000,
+            "validity": "Valid"
+          }
+        ]
+      },
+      "payload": {
+        "schema": "zhifang.telemetry.v2",
+        "site_id": "MOCK-SITE-01",
+        "device_id": "NODE-01",
+        "boot_id": 1,
+        "seq": 1,
+        "timestamp_ms": null,
+        "uptime_ms": 1000,
+        "time_synced": false,
+        "imu": [
+          {
+            "id": "top",
+            "ax": 0.02,
+            "ay": -0.01,
+            "az": 9.8,
+            "gx": 0,
+            "gy": 0,
+            "gz": 0,
+            "tilt_deg": null,
+            "tilt_rate_dps": null,
+            "vibration_rms": null,
+            "valid": true
+          },
+          {
+            "id": "toe",
+            "ax": 0,
+            "ay": 0.01,
+            "az": 9.81,
+            "gx": 0,
+            "gy": 0,
+            "gz": 0,
+            "tilt_deg": null,
+            "tilt_rate_dps": null,
+            "vibration_rms": null,
+            "valid": true
+          }
+        ],
+        "soil": {
+          "top_raw": 12000,
+          "middle_raw": 13000,
+          "toe_raw": 14000,
+          "top_pct": null,
+          "middle_pct": null,
+          "toe_pct": null,
+          "avg_pct": null,
+          "growth_pct_min": null
+        },
+        "experiment": {
+          "run_id": null,
+          "rain_level": null
+        },
+        "risk": {
+          "sensor_score": null,
+          "level": null,
+          "reason_mask": null
+        },
+        "system": {
+          "wifi_up": false,
+          "mqtt_up": false,
+          "lora_ready": false,
+          "sd_ok": false,
+          "edge_online": false,
+          "sensor_degraded": true
+        }
+      }
+    }
+  ],
+  "expected_behavior": {
+    "source_preserved": "MOCK",
+    "normal_processing_count": 1,
+    "risk_output": {
+      "sensor_score": null,
+      "level": null,
+      "reason_mask": null
+    },
+    "notes": [
+      "原始数据按现有字段、单位和位置传递；不代表实测。",
+      "time_synced=false，timestamp_ms=null；System 沿用 C++ 默认未就绪状态。",
+      "Feature/百分比保持 null，不能据用例名填入 NORMAL。"
+    ]
+  },
+  "pass_criteria": [
+    "未来实际交接证据显示结构/映射一致且首次输入只处理一次。",
+    "来源始终为 MOCK；未知 UTC、特征和 Risk 不补零、不伪造正常。",
+    "执行器或 adapter 未实现时记录未实现/阻塞，不填写实际 PASS。"
+  ]
+}

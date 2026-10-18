@@ -1,0 +1,11 @@
+﻿{
+    "build":  "PASS",
+    "target":  "esp32s3",
+    "idf":  "ESP-IDF v5.5.3",
+    "exit_code":  0,
+    "reason":  null,
+    "bin_sha256":  "1BB7E286AA42D04CEC8734224EECD9033CF3E81D9033B36790DE2439632B179F",
+    "bin_bytes":  181632,
+    "configuration_check":  "PASS (not hardware validation)",
+    "completed_at":  "2026-09-28T22:24:12.1265710+08:00"
+}

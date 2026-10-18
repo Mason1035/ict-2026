@@ -1,0 +1,148 @@
+{
+  "scope": "TEST_ONLY / MOCK_ONLY",
+  "execution_time": "2026-10-04T07:39:15.496316+00:00",
+  "execution": {
+    "runner_version": "0.2.0",
+    "git_commit": "d0c9edb3baa747700ba1e7a0a901a3fcb64bab00",
+    "git_branch": "李青原",
+    "git_status_before_run": "M experiments/mock_interface/runner/README.md\n M experiments/mock_interface/runner/run_mock_integration.py\n?? experiments/mock_interface/runner/TEAMMATE_INTEGRATION.md\n?? experiments/mock_interface/runner/he_adapter.py\n?? experiments/mock_interface/runner/teammate_source.py\n?? experiments/mock_interface/runner/teammate_sources.json\n?? experiments/mock_interface/runner/test_teammate_integration.py\n?? experiments/mock_interface/runner/zhang_adapter.py",
+    "runner_source_sha256": {
+      "edge_handoff.py": "5898c10a9dc345a86946ea09d2adf3c6d8b7ae651bda9a09cd07ca88288a02a7",
+      "he_adapter.py": "1a054f821d0c2e29d6d869bcad84b0ce5c0652e443c5023f5748f2f81bc29c93",
+      "mock_loader.py": "c70c6b4649f02fbef3f0414183f8f08ef6a278433555ccfa414313ff45c2eda2",
+      "mock_v2_validator.py": "f0c6ca2cc5feb607c92f398efacbdcd43e7f64d59c4db0ecd81247f2ea393064",
+      "README.md": "2ba1482cd556301a9383f4b20c606abe23e92c90926d5c4af0761444e445cbe2",
+      "risk_handoff.py": "df2d9295c4adede546c610e11720e0f4b96f400d46fca238a19e053049ddef6f",
+      "run_mock_integration.py": "7e0010b1cd6ec750d71351ea9329ba97a24da135d33d25db4a4377b4b634786b",
+      "TEAMMATE_INTEGRATION.md": "8996457c7892a640cec43b04c74fed98e1bbc83880d6f0905d80b19a3a0daed8",
+      "teammate_source.py": "3cdd332e313f177eb0e24afa6d7196512682c98fd27dd1ba954c2ad98a1dd1fa",
+      "teammate_sources.json": "21508a827a7db872b3502fd45e1b2b5e0a2468205bd75e89363c06b907c1ac40",
+      "test_runner.py": "e53438301c79d1490b85bb8d0cf93eb5786da6b295efb641e14bd23380e0677f",
+      "test_teammate_integration.py": "d3b65b2cec443574abc3de20dcbd0425f25020e20d8c6f296dffef56c7b27cd5",
+      "zhang_adapter.py": "5f3f8bc3177837ab2b8cc9b2da945de4b0a6d1e91c0a253b082d7a16cac50446"
+    },
+    "python_version": "3.12.14",
+    "python_executable": "C:\\Users\\LQY\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+    "teammate_sources": {
+      "zhang": {
+        "integration_target": "张鹏飞",
+        "source_branch": "origin/张鹏飞",
+        "source_commit": "4d635759f4b9e222609938ef5e6d829463d40024",
+        "modules": [
+          {
+            "name": "candidate_features",
+            "path": "algorithm/B_revised/candidate_features/__init__.py",
+            "package": true,
+            "sha256": "f8d37fa13ad1fb7c4bcd6e81bb922323f199c5e177307260bdfced9a0f3c1a31",
+            "git_blob": "cb7ad13eedf63db48b012c427d25406f80af85f7"
+          },
+          {
+            "name": "candidate_features.reference",
+            "path": "algorithm/B_revised/candidate_features/reference.py",
+            "package": false,
+            "sha256": "cf7a707c11f429e01f734eaa0dcf4cf04fa7edcb095e28e9bb44fbdc01871022",
+            "git_blob": "72f0eb1201504ef95cfb535c641ed3dee8ff4bd4"
+          }
+        ]
+      },
+      "he": {
+        "integration_target": "何宇轩",
+        "source_branch": "origin/何宇轩",
+        "source_commit": "019a03a53336790a1439485754afdaaf3c34c9c1",
+        "modules": [
+          {
+            "name": "ai_training",
+            "path": "ai_training/src/ai_training/__init__.py",
+            "package": true,
+            "sha256": "448761409de9c93e448055a7c0fda7547693fd8da5d01c8f707d62324c4cd9b2",
+            "git_blob": "2b8679ca53a22d77853ff89d425d023daa510d53"
+          },
+          {
+            "name": "ai_training.errors",
+            "path": "ai_training/src/ai_training/errors.py",
+            "package": false,
+            "sha256": "4724795bece32989d345a3c0c6d832490166d4a6053ed44c072320d2a9cf76ab",
+            "git_blob": "43834598f3bbf7c0147efeb88414d4af8110888e"
+          },
+          {
+            "name": "ai_training.adapters",
+            "path": "ai_training/src/ai_training/adapters/__init__.py",
+            "package": true,
+            "sha256": "efd3102a5d2425bd937b9394d333fd05d722de84305e1451508cf44fe9c8c47e",
+            "git_blob": "f6a6e1e20b21c24c6a9fe8b0369871aa5efde330"
+          },
+          {
+            "name": "ai_training.adapters.real",
+            "path": "ai_training/src/ai_training/adapters/real.py",
+            "package": false,
+            "sha256": "8c5edba0a5ed326497b776a55401cff17059e398b97bd4b87935af103f7873ab",
+            "git_blob": "c8ed9c346ffd3396a3b1c014168e10887c49120d"
+          }
+        ]
+      }
+    },
+    "teammate_version_policy": "Pinned Git objects; no fetch/merge; source SHA-256 and blob ID checked before import."
+  },
+  "integration_mode": "TEAMMATE_BOUNDARY_V0.1",
+  "cases": [
+    {
+      "case_id": "M01_NORMAL",
+      "overall_status": "LOCAL_RUNNER_PASS",
+      "actual": {
+        "message_count": 1,
+        "accepted_message_count": 1,
+        "rejected_message_count": 0,
+        "risk_handoff_call_count": 1,
+        "edge_handoff_call_count": 1,
+        "zhang_real_function_call_count": 4,
+        "he_real_function_call_count": 1
+      },
+      "report": "M01_NORMAL.result.json"
+    },
+    {
+      "case_id": "M02_MISSING_SENSOR",
+      "overall_status": "LOCAL_RUNNER_PASS",
+      "actual": {
+        "message_count": 1,
+        "accepted_message_count": 1,
+        "rejected_message_count": 0,
+        "risk_handoff_call_count": 1,
+        "edge_handoff_call_count": 1,
+        "zhang_real_function_call_count": 4,
+        "he_real_function_call_count": 1
+      },
+      "report": "M02_MISSING_SENSOR.result.json"
+    },
+    {
+      "case_id": "M07_RISK_NOT_CALIBRATED",
+      "overall_status": "LOCAL_RUNNER_PASS",
+      "actual": {
+        "message_count": 1,
+        "accepted_message_count": 1,
+        "rejected_message_count": 0,
+        "risk_handoff_call_count": 1,
+        "edge_handoff_call_count": 1,
+        "zhang_real_function_call_count": 4,
+        "he_real_function_call_count": 1
+      },
+      "report": "M07_RISK_NOT_CALIBRATED.result.json"
+    },
+    {
+      "case_id": "M08_INVALID_SCHEMA",
+      "overall_status": "LOCAL_RUNNER_PASS",
+      "actual": {
+        "message_count": 4,
+        "accepted_message_count": 0,
+        "rejected_message_count": 4,
+        "risk_handoff_call_count": 0,
+        "edge_handoff_call_count": 0,
+        "zhang_real_function_call_count": 0,
+        "he_real_function_call_count": 0
+      },
+      "report": "M08_INVALID_SCHEMA.result.json"
+    }
+  ],
+  "overall_status": "LOCAL_RUNNER_PASS",
+  "three_person_integration": "BLOCKED / NOT_INTEGRATED",
+  "notes": "本轮 Local Mock Runner 的通过不等于完整三人 Mock Integration PASS。"
+}
