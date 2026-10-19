@@ -1,5 +1,21 @@
 # Changelog
 
+## [multimodal-0.1.0] - 2026-10-19
+
+- 新增独立PUBLIC_DATA_RESEARCH入口：LISA TDR/Smartstone数值MAT reader、NumPy土壤/运动下一观测预测器、
+  train-only标准化、实验组拆分与加权、persistence基线、JSON模型恢复、显式探索性Test释放及防覆盖CLI。
+- 两个公开实测辅助模型已实际拟合，权重/配置/指标/来源保存于`pretrained/public_sensor_v1`。
+  LISA中心实验47的混合尺度序列被隔离；未除100、clip或改写原文件。
+  Smartstone四颗石子归同一实验，没有伪造独立Validation/Test。
+- 新增规则证据融合，检查同run/clock、未来数据、各通道采样年龄及缺失；不平均分数或输出风险等级。
+- 旧20列CSV、Telemetry、正式Trainer门禁及后台风险引擎未改；没有本地CSV，未训练最终滑移分类/本地阈值。
+- 新增相关测试 **68 passed**。修改前全AI基线为 **109 passed, 5 failed**；
+  5项原有失败均来自B历史fixture完整性不匹配，未更改历史数据或降低校验。
+  修改后全AI为 **177 passed, 5 failed**，无新增失败。实际环境Python 3.11.9、NumPy 2.4.3。
+- 实际下载9个小型来源文件并核对reader数值与训练输入一致；已保存JSON模型重新加载后，
+  土壤856窗和运动1,969窗的预测形状/有限性检查通过。
+- 原骨架版本仍0.1.1；新研究支线单独版本化，不修改下方历史记录。
+
 只记录本次开始的实际开发，不补造历史。未来每次 meaningful change 必须更新 README 当前状态，
 并在此记录 schema、接口、seed/hash、泄漏规则、checkpoint、artifact、测试及缺陷修复的真实变化。
 

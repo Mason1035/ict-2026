@@ -1,5 +1,11 @@
 # AI Training Framework V0.1 Skeleton
 
+**2026-10-19：新增[土壤＋运动双模型与规则融合](MULTIMODAL.md)研究入口。**
+`scripts/train_multimodal.py`可用真实公开传感器数据拟合两个轻量预测器，并保存可加载JSON模型。
+本项目尚无自采CSV，融合阈值与本地滑移分类未训练。此入口独立于下述正式契约骨架，
+不会把公开数据、无标签序列或规则摘要冒充正式灾害模型。
+本次功能与实际评价见 [MULTIMODAL.md](MULTIMODAL.md) 和 [预训练产物](pretrained/public_sensor_v1/README.md)。
+
 当前版本 **0.1.1**；状态 **PRE_B_TRAINING_CONTRACT**。
 新增 B_revised 的 **READY_FOR_TEST_ONLY_INTEGRATION** 旁路；正式训练状态仍为
 **NOT_READY_FOR_FORMAL_TRAINING**。项目总状态见 [PROJECT_STATUS_AND_READINESS](../PROJECT_STATUS_AND_READINESS.md)。

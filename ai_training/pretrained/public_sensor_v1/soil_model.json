@@ -1,0 +1,48 @@
+{
+  "schema": "zhifang.public-sensor-forecaster.v1",
+  "purpose": "PUBLIC_DATA_RESEARCH",
+  "task": "next_recorded_observation_regression",
+  "modality": "soil",
+  "history_length": 4,
+  "channels": 1,
+  "channel_names": [
+    "vwc"
+  ],
+  "units": [
+    "1"
+  ],
+  "time_unit": "source_relative_time",
+  "alpha": 1.0,
+  "mean": [
+    0.24667114832038772,
+    0.010301631295954041,
+    0.005762389195236457,
+    0.0071468524005445675
+  ],
+  "scale": [
+    0.07903754431411308,
+    0.017942336418336872,
+    0.02471086519882567,
+    0.02580746646987906
+  ],
+  "delta_mean": [
+    0.0039904518498447075
+  ],
+  "coefficients": [
+    [
+      -0.0005069534340911043
+    ],
+    [
+      -0.0008235274276147634
+    ],
+    [
+      0.0023562844678652662
+    ],
+    [
+      -0.000788820567676319
+    ]
+  ],
+  "class_labels": null,
+  "alarm_thresholds": null,
+  "deployment_ready": false
+}

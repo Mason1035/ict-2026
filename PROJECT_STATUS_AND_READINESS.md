@@ -1,5 +1,13 @@
 # PROJECT-WIDE ADAPTATION AND READINESS REPORT
 
+## 2026-10-19 当前进度增量：土壤与运动双分支研究
+
+已新增公开真实传感器reader、两个NumPy下一观测预测模型、分组评价、JSON权重加载及规则证据融合。
+详见 [ai_training/MULTIMODAL.md](ai_training/MULTIMODAL.md)。LISA采用日期/明确连续试验分组；
+Smartstone四颗石子同属一个实验，仅拟合，不提供独立Validation/Test。
+无自采CSV；未训练NORMAL/RAIN/SLIP分类、未标定本地阈值、未接入生产风险引擎或Atlas。
+保留原20列CSV和正式契约门禁。下方历史记录不变，其“未训练”描述限定历史时点及正式项目模型。
+
 ## 2026-10-18 当前进度增量：本地多模态平台
 
 已新增并接通 [FastAPI / SQLite / MQTT / OpenCV 平台](platform_backend/README.md) 与 [Vue 指挥中心](apps/geohazard-demo/README.md)。本轮后端版本 0.2.1、前端包版本 1.1.0；模块独立版本化。配置、原始遥测、接收记录、图像、分析、告警和历史可在本机保存，页面默认读取后端。
