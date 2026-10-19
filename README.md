@@ -1,6 +1,8 @@
 # 智哨防灾：开发仓库
 
 当前已有本地多模态监测平台、MQTT 遥测接入、图像/OpenCV 基线、合成模拟与训练基础设施骨架。平台支持配置、遥测、告警和视觉证据持久化；正式模型训练及真实设备、Atlas、云端的完整联调仍待完成。
+2026-10-19 新增[土壤模型＋运动模型＋规则融合研究入口](ai_training/MULTIMODAL.md)：
+已用公开实测序列拟合两个辅助预测模型；尚无自采CSV，未训练本地滑移分类或标定告警阈值。
 项目名称：**智哨防灾——基于昇腾与边缘计算的地质灾害多模态早期预警系统**。
 
 最高依据：[00_TEAM_SHARED_CONTRACT.pdf](docs/00_TEAM_SHARED_CONTRACT.pdf)。
@@ -14,7 +16,7 @@
 | [physics_sim/](physics_sim/README.md) | C 何宇轩 | 0.1.1 合成观测生成器；第一阶段软件已验证，PRE_B / TODO_CALIBRATION |
 | [team_handoffs/B_revised/](team_handoffs/B_revised/README.md) | B 张鹏飞 | B-adaptation-0.1；DEMO_ONLY Risk、TEST_ONLY fixture、DRAFT 正式训练契约 |
 | `team_handoffs/B_original/` | B | 原始交付归档，保留，不作为新正式契约入口 |
-| [ai_training/](ai_training/README.md) | C 何宇轩 | 0.1.1 SKELETON；B fixture 只读接入与 toy Trainer 自检；正式训练拒绝 |
+| [ai_training/](ai_training/README.md) | C 何宇轩 | 0.1.1 正式骨架；另增 multimodal 0.1.0 公开实测双分支研究模型与规则融合，待本地适配 |
 | [edge_intake/](edge_intake/README.md) | C 何宇轩 | 0.1.0；已验证 v2 对象的内存接收边界，Mock 四例通过；生产下游未实现 |
 | [platform_backend/](platform_backend/README.md) | C 何宇轩 | 0.2.1 本地软件平台；FastAPI、SQLite、MQTT 接收、图像/OpenCV、历史与告警 API；真实 Atlas/云与正式融合未接入 |
 | [apps/geohazard-demo/](apps/geohazard-demo/README.md) | C 何宇轩 | 1.1.0 后端平台页面与独立本地演示；来源与未知值明确区分 |

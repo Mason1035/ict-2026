@@ -1,7 +1,7 @@
 {
   "status_schema_version": "zhifang.repository-status.v1",
-  "as_of": "2026-10-18",
-  "scope": "Local multimodal platform update; A/B firmware and formal training assessments retain their explicitly dated historical snapshots",
+  "as_of": "2026-10-19",
+  "scope": "Local platform historical scope retained; added independent public-data soil/motion research training and rule evidence fusion",
   "ssot": "docs/00_TEAM_SHARED_CONTRACT.pdf",
   "report": "PROJECT_STATUS_AND_READINESS.md",
   "project_status": "BLOCKED",
@@ -31,7 +31,8 @@
     "formal_feature_version": null,
     "calibration_version": null,
     "platform_backend_version": "0.2.1",
-    "web_app_version": "1.1.0"
+    "web_app_version": "1.1.0",
+    "multimodal_research_version": "0.1.0"
   },
   "hardware": {
     "owner": "A",
@@ -377,5 +378,19 @@
       "real_hardware": "NOT_RUN",
       "test_services_left_running": false
     }
+  },
+  "public_sensor_research": {
+    "status": "PUBLIC_SENSOR_MODELS_TRAINED",
+    "implementation": "ai_training/src/ai_training/multimodal",
+    "documentation": "ai_training/MULTIMODAL.md",
+    "artifacts": "ai_training/pretrained/public_sensor_v1",
+    "soil_task": "next recorded VWC observation regression",
+    "motion_task": "next recorded six-axis native observation regression",
+    "local_experiment_data_supplied": false,
+    "formal_project_model_trained": false,
+    "fusion_status": "WAITING_FOR_LOCAL_CALIBRATION_AND_PAIRED_RUNS",
+    "production_risk_engine_replaced": false,
+    "independent_motion_test_available": false,
+    "deployment_ready": false
   }
 }

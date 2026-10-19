@@ -1,0 +1,2414 @@
+{
+  "schema": "zhifang.multimodal-research-run.v1",
+  "status": "PUBLIC_SENSOR_MODELS_TRAINED",
+  "created_at": "2026-10-19T13:08:38.459575+00:00",
+  "software": {
+    "numpy": "2.4.3"
+  },
+  "purpose": "PUBLIC_DATA_RESEARCH",
+  "models": {
+    "soil": {
+      "modality": "soil",
+      "task": "next_recorded_observation_regression",
+      "target_note": "next observed sample; variable native interval, not a fixed seconds-ahead forecast",
+      "evaluation_scope": "GROUPED_PUBLIC_SOURCE_HOLDOUT_NOT_LOCAL_HARDWARE_VALIDATION",
+      "selected_alpha": 1.0,
+      "selection": "validation only",
+      "units": [
+        "1"
+      ],
+      "time_unit": "source_relative_time",
+      "metrics": {
+        "train_descriptive": {
+          "windows": 608,
+          "groups": 25,
+          "mae_per_channel": [
+            0.014037735005541445
+          ],
+          "rmse_per_channel": [
+            0.026113336645573717
+          ],
+          "persistence_mae_per_channel": [
+            0.014057733031276064
+          ],
+          "persistence_rmse_per_channel": [
+            0.02680332719692795
+          ]
+        },
+        "validation": {
+          "windows": 104,
+          "groups": 5,
+          "mae_per_channel": [
+            0.01117139272267423
+          ],
+          "rmse_per_channel": [
+            0.017979557553500905
+          ],
+          "persistence_mae_per_channel": [
+            0.011710184552289818
+          ],
+          "persistence_rmse_per_channel": [
+            0.020029028830645734
+          ]
+        },
+        "test": {
+          "windows": 144,
+          "groups": 6,
+          "mae_per_channel": [
+            0.01152380547411678
+          ],
+          "rmse_per_channel": [
+            0.016924857453055477
+          ],
+          "persistence_mae_per_channel": [
+            0.011736159673659671
+          ],
+          "persistence_rmse_per_channel": [
+            0.018137904671118595
+          ]
+        }
+      },
+      "test_status": "EXPLORATORY_EVALUATION_FOR_THIS_RUN",
+      "input_series": 68,
+      "usable_series": 44,
+      "excluded_short_series": 24,
+      "window_counts": {
+        "train": 608,
+        "validation": 104,
+        "test": 144
+      },
+      "split_groups": {
+        "train": [
+          "LISA:dates:2017-05-22",
+          "LISA:dates:2017-05-26",
+          "LISA:dates:2017-06-06",
+          "LISA:dates:2017-06-30",
+          "LISA:dates:2017-07-05",
+          "LISA:dates:2018-05-08",
+          "LISA:dates:2018-10-25",
+          "LISA:dates:2018-11-12",
+          "LISA:dates:2018-11-16",
+          "LISA:dates:2019-06-21",
+          "LISA:dates:2019-10-25",
+          "LISA:dates:2019-11-21",
+          "LISA:dates:2021-06-07",
+          "LISA:dates:2021-10-13",
+          "LISA:dates:2021-10-21",
+          "LISA:dates:2021-10-27",
+          "LISA:dates:2021-10-28",
+          "LISA:dates:2022-10-28",
+          "LISA:dates:2022-11-03",
+          "LISA:dates:2022-11-08",
+          "LISA:dates:2022-11-17",
+          "LISA:dates:2023-11-03",
+          "LISA:dates:2023-11-07",
+          "LISA:dates:2023-11-09",
+          "LISA:dates:2023-11-24"
+        ],
+        "validation": [
+          "LISA:dates:2017-05-08",
+          "LISA:dates:2018-05-11",
+          "LISA:dates:2018-07-24",
+          "LISA:dates:2018-11-29",
+          "LISA:dates:2019-11-28"
+        ],
+        "test": [
+          "LISA:dates:2019-04-24",
+          "LISA:dates:2019-05-07",
+          "LISA:dates:2021-10-20",
+          "LISA:dates:2022-10-20",
+          "LISA:dates:2023-10-26",
+          "LISA:dates:2023-11-10"
+        ]
+      },
+      "source_run_ids": [
+        "LISA:1",
+        "LISA:10",
+        "LISA:11",
+        "LISA:12",
+        "LISA:14",
+        "LISA:15",
+        "LISA:16",
+        "LISA:17",
+        "LISA:18",
+        "LISA:19",
+        "LISA:2",
+        "LISA:20",
+        "LISA:21",
+        "LISA:22",
+        "LISA:23",
+        "LISA:24",
+        "LISA:25",
+        "LISA:26",
+        "LISA:27",
+        "LISA:28",
+        "LISA:29",
+        "LISA:3",
+        "LISA:30",
+        "LISA:31",
+        "LISA:32",
+        "LISA:33",
+        "LISA:34",
+        "LISA:35",
+        "LISA:36",
+        "LISA:38",
+        "LISA:4",
+        "LISA:40",
+        "LISA:42",
+        "LISA:43",
+        "LISA:44",
+        "LISA:45",
+        "LISA:46",
+        "LISA:48",
+        "LISA:49",
+        "LISA:5",
+        "LISA:50",
+        "LISA:51",
+        "LISA:52",
+        "LISA:53",
+        "LISA:54",
+        "LISA:56",
+        "LISA:57",
+        "LISA:6",
+        "LISA:7",
+        "LISA:8",
+        "LISA:9"
+      ],
+      "source_provenance": [
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:1",
+          "group_id": "LISA:dates:2021-10-13",
+          "source_file": "TDR_centre_slope_measurements.csv",
+          "channel_names": [
+            "vwc_centre_slope"
+          ],
+          "source_records": 17,
+          "retained_records": 17,
+          "source_record_ranges_in_time_order": [
+            [
+              551,
+              567
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:2",
+          "group_id": "LISA:dates:2019-04-24",
+          "source_file": "TDR_centre_slope_measurements.csv",
+          "channel_names": [
+            "vwc_centre_slope"
+          ],
+          "source_records": 27,
+          "retained_records": 26,
+          "source_record_ranges_in_time_order": [
+            [
+              31,
+              35
+            ],
+            [
+              37,
+              57
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 1,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:3",
+          "group_id": "LISA:dates:2021-10-21",
+          "source_file": "TDR_centre_slope_measurements.csv",
+          "channel_names": [
+            "vwc_centre_slope"
+          ],
+          "source_records": 30,
+          "retained_records": 30,
+          "source_record_ranges_in_time_order": [
+            [
+              1,
+              30
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:4",
+          "group_id": "LISA:dates:2022-10-20",
+          "source_file": "TDR_centre_slope_measurements.csv",
+          "channel_names": [
+            "vwc_centre_slope"
+          ],
+          "source_records": 20,
+          "retained_records": 20,
+          "source_record_ranges_in_time_order": [
+            [
+              194,
+              213
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:5",
+          "group_id": "LISA:dates:2022-10-28",
+          "source_file": "TDR_centre_slope_measurements.csv",
+          "channel_names": [
+            "vwc_centre_slope"
+          ],
+          "source_records": 35,
+          "retained_records": 35,
+          "source_record_ranges_in_time_order": [
+            [
+              214,
+              248
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:6",
+          "group_id": "LISA:dates:2022-11-03",
+          "source_file": "TDR_centre_slope_measurements.csv",
+          "channel_names": [
+            "vwc_centre_slope"
+          ],
+          "source_records": 7,
+          "retained_records": 7,
+          "source_record_ranges_in_time_order": [
+            [
+              249,
+              255
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:7",
+          "group_id": "LISA:dates:2022-11-08",
+          "source_file": "TDR_centre_slope_measurements.csv",
+          "channel_names": [
+            "vwc_centre_slope"
+          ],
+          "source_records": 40,
+          "retained_records": 40,
+          "source_record_ranges_in_time_order": [
+            [
+              256,
+              295
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:8",
+          "group_id": "LISA:dates:2019-05-07",
+          "source_file": "TDR_centre_slope_measurements.csv",
+          "channel_names": [
+            "vwc_centre_slope"
+          ],
+          "source_records": 47,
+          "retained_records": 46,
+          "source_record_ranges_in_time_order": [
+            [
+              58,
+              103
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 1,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:9",
+          "group_id": "LISA:dates:2023-10-26",
+          "source_file": "TDR_centre_slope_measurements.csv",
+          "channel_names": [
+            "vwc_centre_slope"
+          ],
+          "source_records": 28,
+          "retained_records": 28,
+          "source_record_ranges_in_time_order": [
+            [
+              132,
+              159
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:10",
+          "group_id": "LISA:dates:2019-05-07",
+          "source_file": "TDR_centre_slope_measurements.csv",
+          "channel_names": [
+            "vwc_centre_slope"
+          ],
+          "source_records": 27,
+          "retained_records": 27,
+          "source_record_ranges_in_time_order": [
+            [
+              105,
+              131
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:11",
+          "group_id": "LISA:dates:2021-06-07",
+          "source_file": "TDR_centre_slope_measurements.csv",
+          "channel_names": [
+            "vwc_centre_slope"
+          ],
+          "source_records": 5,
+          "retained_records": 5,
+          "source_record_ranges_in_time_order": [
+            [
+              160,
+              164
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:12",
+          "group_id": "LISA:dates:2019-06-21",
+          "source_file": "TDR_centre_slope_measurements.csv",
+          "channel_names": [
+            "vwc_centre_slope"
+          ],
+          "source_records": 44,
+          "retained_records": 44,
+          "source_record_ranges_in_time_order": [
+            [
+              989,
+              990
+            ],
+            [
+              999,
+              1004
+            ],
+            [
+              991,
+              991
+            ],
+            [
+              1005,
+              1010
+            ],
+            [
+              992,
+              992
+            ],
+            [
+              1011,
+              1016
+            ],
+            [
+              993,
+              993
+            ],
+            [
+              1017,
+              1019
+            ],
+            [
+              994,
+              994
+            ],
+            [
+              1020,
+              1021
+            ],
+            [
+              995,
+              998
+            ],
+            [
+              1022,
+              1032
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:14",
+          "group_id": "LISA:dates:2021-06-07",
+          "source_file": "TDR_centre_slope_measurements.csv",
+          "channel_names": [
+            "vwc_centre_slope"
+          ],
+          "source_records": 5,
+          "retained_records": 5,
+          "source_record_ranges_in_time_order": [
+            [
+              439,
+              443
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:15",
+          "group_id": "LISA:dates:2021-06-07",
+          "source_file": "TDR_centre_slope_measurements.csv",
+          "channel_names": [
+            "vwc_centre_slope"
+          ],
+          "source_records": 4,
+          "retained_records": 4,
+          "source_record_ranges_in_time_order": [
+            [
+              444,
+              447
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:16",
+          "group_id": "LISA:dates:2021-06-07",
+          "source_file": "TDR_centre_slope_measurements.csv",
+          "channel_names": [
+            "vwc_centre_slope"
+          ],
+          "source_records": 2,
+          "retained_records": 2,
+          "source_record_ranges_in_time_order": [
+            [
+              448,
+              449
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:17",
+          "group_id": "LISA:dates:2021-06-08",
+          "source_file": "TDR_centre_slope_measurements.csv",
+          "channel_names": [
+            "vwc_centre_slope"
+          ],
+          "source_records": 3,
+          "retained_records": 3,
+          "source_record_ranges_in_time_order": [
+            [
+              450,
+              452
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:18",
+          "group_id": "LISA:dates:2021-06-09+2021-06-10",
+          "source_file": "TDR_centre_slope_measurements.csv",
+          "channel_names": [
+            "vwc_centre_slope"
+          ],
+          "source_records": 4,
+          "retained_records": 4,
+          "source_record_ranges_in_time_order": [
+            [
+              453,
+              456
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:19",
+          "group_id": "LISA:dates:2021-06-09+2021-06-10",
+          "source_file": "TDR_centre_slope_measurements.csv",
+          "channel_names": [
+            "vwc_centre_slope"
+          ],
+          "source_records": 2,
+          "retained_records": 2,
+          "source_record_ranges_in_time_order": [
+            [
+              165,
+              166
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:20",
+          "group_id": "LISA:dates:2021-06-09+2021-06-10",
+          "source_file": "TDR_centre_slope_measurements.csv",
+          "channel_names": [
+            "vwc_centre_slope"
+          ],
+          "source_records": 2,
+          "retained_records": 2,
+          "source_record_ranges_in_time_order": [
+            [
+              457,
+              458
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:21",
+          "group_id": "LISA:dates:2021-06-09+2021-06-10",
+          "source_file": "TDR_centre_slope_measurements.csv",
+          "channel_names": [
+            "vwc_centre_slope"
+          ],
+          "source_records": 1,
+          "retained_records": 1,
+          "source_record_ranges_in_time_order": [
+            [
+              167,
+              167
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:22",
+          "group_id": "LISA:dates:2021-06-09+2021-06-10",
+          "source_file": "TDR_centre_slope_measurements.csv",
+          "channel_names": [
+            "vwc_centre_slope"
+          ],
+          "source_records": 4,
+          "retained_records": 4,
+          "source_record_ranges_in_time_order": [
+            [
+              459,
+              462
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:23",
+          "group_id": "LISA:dates:2023-11-03",
+          "source_file": "TDR_centre_slope_measurements.csv",
+          "channel_names": [
+            "vwc_centre_slope"
+          ],
+          "source_records": 24,
+          "retained_records": 24,
+          "source_record_ranges_in_time_order": [
+            [
+              832,
+              855
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:24",
+          "group_id": "LISA:dates:2023-11-07",
+          "source_file": "TDR_centre_slope_measurements.csv",
+          "channel_names": [
+            "vwc_centre_slope"
+          ],
+          "source_records": 26,
+          "retained_records": 26,
+          "source_record_ranges_in_time_order": [
+            [
+              168,
+              193
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:25",
+          "group_id": "LISA:dates:2023-11-09",
+          "source_file": "TDR_centre_slope_measurements.csv",
+          "channel_names": [
+            "vwc_centre_slope"
+          ],
+          "source_records": 22,
+          "retained_records": 22,
+          "source_record_ranges_in_time_order": [
+            [
+              296,
+              317
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:26",
+          "group_id": "LISA:dates:2023-11-10",
+          "source_file": "TDR_centre_slope_measurements.csv",
+          "channel_names": [
+            "vwc_centre_slope"
+          ],
+          "source_records": 15,
+          "retained_records": 15,
+          "source_record_ranges_in_time_order": [
+            [
+              856,
+              870
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:27",
+          "group_id": "LISA:dates:2022-11-17",
+          "source_file": "TDR_centre_slope_measurements.csv",
+          "channel_names": [
+            "vwc_centre_slope"
+          ],
+          "source_records": 31,
+          "retained_records": 31,
+          "source_record_ranges_in_time_order": [
+            [
+              1033,
+              1063
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:28",
+          "group_id": "LISA:dates:2021-10-20",
+          "source_file": "TDR_centre_slope_measurements.csv",
+          "channel_names": [
+            "vwc_centre_slope"
+          ],
+          "source_records": 10,
+          "retained_records": 10,
+          "source_record_ranges_in_time_order": [
+            [
+              568,
+              577
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:29",
+          "group_id": "LISA:dates:2021-10-27",
+          "source_file": "TDR_centre_slope_measurements.csv",
+          "channel_names": [
+            "vwc_centre_slope"
+          ],
+          "source_records": 20,
+          "retained_records": 20,
+          "source_record_ranges_in_time_order": [
+            [
+              578,
+              597
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:30",
+          "group_id": "LISA:dates:2021-10-28",
+          "source_file": "TDR_centre_slope_measurements.csv",
+          "channel_names": [
+            "vwc_centre_slope"
+          ],
+          "source_records": 35,
+          "retained_records": 35,
+          "source_record_ranges_in_time_order": [
+            [
+              775,
+              809
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:31",
+          "group_id": "LISA:dates:2018-10-25",
+          "source_file": "TDR_centre_slope_measurements.csv",
+          "channel_names": [
+            "vwc_centre_slope"
+          ],
+          "source_records": 22,
+          "retained_records": 22,
+          "source_record_ranges_in_time_order": [
+            [
+              675,
+              696
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:32",
+          "group_id": "LISA:dates:2018-11-12",
+          "source_file": "TDR_centre_slope_measurements.csv",
+          "channel_names": [
+            "vwc_centre_slope"
+          ],
+          "source_records": 24,
+          "retained_records": 24,
+          "source_record_ranges_in_time_order": [
+            [
+              697,
+              720
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:33",
+          "group_id": "LISA:dates:2018-11-12",
+          "source_file": "TDR_centre_slope_measurements.csv",
+          "channel_names": [
+            "vwc_centre_slope"
+          ],
+          "source_records": 22,
+          "retained_records": 22,
+          "source_record_ranges_in_time_order": [
+            [
+              721,
+              742
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:34",
+          "group_id": "LISA:dates:2018-11-16",
+          "source_file": "TDR_centre_slope_measurements.csv",
+          "channel_names": [
+            "vwc_centre_slope"
+          ],
+          "source_records": 29,
+          "retained_records": 29,
+          "source_record_ranges_in_time_order": [
+            [
+              318,
+              346
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:35",
+          "group_id": "LISA:dates:2018-11-29",
+          "source_file": "TDR_centre_slope_measurements.csv",
+          "channel_names": [
+            "vwc_centre_slope"
+          ],
+          "source_records": 32,
+          "retained_records": 32,
+          "source_record_ranges_in_time_order": [
+            [
+              743,
+              774
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:36",
+          "group_id": "LISA:dates:2019-10-25",
+          "source_file": "TDR_centre_slope_measurements.csv",
+          "channel_names": [
+            "vwc_centre_slope"
+          ],
+          "source_records": 22,
+          "retained_records": 21,
+          "source_record_ranges_in_time_order": [
+            [
+              811,
+              831
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 1,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:38",
+          "group_id": "LISA:dates:2019-11-21",
+          "source_file": "TDR_centre_slope_measurements.csv",
+          "channel_names": [
+            "vwc_centre_slope"
+          ],
+          "source_records": 18,
+          "retained_records": 12,
+          "source_record_ranges_in_time_order": [
+            [
+              347,
+              358
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 6
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:40",
+          "group_id": "LISA:dates:2019-11-28",
+          "source_file": "TDR_centre_slope_measurements.csv",
+          "channel_names": [
+            "vwc_centre_slope"
+          ],
+          "source_records": 6,
+          "retained_records": 6,
+          "source_record_ranges_in_time_order": [
+            [
+              669,
+              674
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:42",
+          "group_id": "LISA:dates:2018-05-08",
+          "source_file": "TDR_centre_slope_measurements.csv",
+          "channel_names": [
+            "vwc_centre_slope"
+          ],
+          "source_records": 38,
+          "retained_records": 37,
+          "source_record_ranges_in_time_order": [
+            [
+              365,
+              400
+            ],
+            [
+              402,
+              402
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 1
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:43",
+          "group_id": "LISA:dates:2017-05-22",
+          "source_file": "TDR_centre_slope_measurements.csv",
+          "channel_names": [
+            "vwc_centre_slope"
+          ],
+          "source_records": 15,
+          "retained_records": 15,
+          "source_record_ranges_in_time_order": [
+            [
+              598,
+              612
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:44",
+          "group_id": "LISA:dates:2017-06-06",
+          "source_file": "TDR_centre_slope_measurements.csv",
+          "channel_names": [
+            "vwc_centre_slope"
+          ],
+          "source_records": 56,
+          "retained_records": 56,
+          "source_record_ranges_in_time_order": [
+            [
+              613,
+              668
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:45",
+          "group_id": "LISA:dates:2017-05-22",
+          "source_file": "TDR_centre_slope_measurements.csv",
+          "channel_names": [
+            "vwc_centre_slope"
+          ],
+          "source_records": 20,
+          "retained_records": 20,
+          "source_record_ranges_in_time_order": [
+            [
+              463,
+              482
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:46",
+          "group_id": "LISA:dates:2017-05-08",
+          "source_file": "TDR_centre_slope_measurements.csv",
+          "channel_names": [
+            "vwc_centre_slope"
+          ],
+          "source_records": 26,
+          "retained_records": 26,
+          "source_record_ranges_in_time_order": [
+            [
+              871,
+              896
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:48",
+          "group_id": "LISA:dates:2017-05-26",
+          "source_file": "TDR_centre_slope_measurements.csv",
+          "channel_names": [
+            "vwc_centre_slope"
+          ],
+          "source_records": 35,
+          "retained_records": 35,
+          "source_record_ranges_in_time_order": [
+            [
+              922,
+              956
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:49",
+          "group_id": "LISA:dates:2017-05-26",
+          "source_file": "TDR_centre_slope_measurements.csv",
+          "channel_names": [
+            "vwc_centre_slope"
+          ],
+          "source_records": 32,
+          "retained_records": 32,
+          "source_record_ranges_in_time_order": [
+            [
+              957,
+              988
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:50",
+          "group_id": "LISA:dates:2017-06-30",
+          "source_file": "TDR_centre_slope_measurements.csv",
+          "channel_names": [
+            "vwc_centre_slope"
+          ],
+          "source_records": 11,
+          "retained_records": 11,
+          "source_record_ranges_in_time_order": [
+            [
+              897,
+              907
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:51",
+          "group_id": "LISA:dates:2017-07-05",
+          "source_file": "TDR_centre_slope_measurements.csv",
+          "channel_names": [
+            "vwc_centre_slope"
+          ],
+          "source_records": 14,
+          "retained_records": 14,
+          "source_record_ranges_in_time_order": [
+            [
+              908,
+              921
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:52",
+          "group_id": "LISA:dates:2018-05-11",
+          "source_file": "TDR_centre_slope_measurements.csv",
+          "channel_names": [
+            "vwc_centre_slope"
+          ],
+          "source_records": 14,
+          "retained_records": 14,
+          "source_record_ranges_in_time_order": [
+            [
+              483,
+              496
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:53",
+          "group_id": "LISA:dates:2018-05-11",
+          "source_file": "TDR_centre_slope_measurements.csv",
+          "channel_names": [
+            "vwc_centre_slope"
+          ],
+          "source_records": 32,
+          "retained_records": 32,
+          "source_record_ranges_in_time_order": [
+            [
+              497,
+              528
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:54",
+          "group_id": "LISA:dates:2023-11-24",
+          "source_file": "TDR_centre_slope_measurements.csv",
+          "channel_names": [
+            "vwc_centre_slope"
+          ],
+          "source_records": 32,
+          "retained_records": 32,
+          "source_record_ranges_in_time_order": [
+            [
+              1064,
+              1095
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:56",
+          "group_id": "LISA:dates:2018-07-24",
+          "source_file": "TDR_centre_slope_measurements.csv",
+          "channel_names": [
+            "vwc_centre_slope"
+          ],
+          "source_records": 11,
+          "retained_records": 11,
+          "source_record_ranges_in_time_order": [
+            [
+              529,
+              539
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:57",
+          "group_id": "LISA:dates:2018-07-24",
+          "source_file": "TDR_centre_slope_measurements.csv",
+          "channel_names": [
+            "vwc_centre_slope"
+          ],
+          "source_records": 11,
+          "retained_records": 11,
+          "source_record_ranges_in_time_order": [
+            [
+              540,
+              550
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:14",
+          "group_id": "LISA:dates:2021-06-07",
+          "source_file": "TDR_downslope_measurements.csv",
+          "channel_names": [
+            "vwc_downslope"
+          ],
+          "source_records": 4,
+          "retained_records": 4,
+          "source_record_ranges_in_time_order": [
+            [
+              3,
+              6
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:15",
+          "group_id": "LISA:dates:2021-06-07",
+          "source_file": "TDR_downslope_measurements.csv",
+          "channel_names": [
+            "vwc_downslope"
+          ],
+          "source_records": 4,
+          "retained_records": 4,
+          "source_record_ranges_in_time_order": [
+            [
+              7,
+              10
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:16",
+          "group_id": "LISA:dates:2021-06-07",
+          "source_file": "TDR_downslope_measurements.csv",
+          "channel_names": [
+            "vwc_downslope"
+          ],
+          "source_records": 2,
+          "retained_records": 2,
+          "source_record_ranges_in_time_order": [
+            [
+              11,
+              12
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:17",
+          "group_id": "LISA:dates:2021-06-08",
+          "source_file": "TDR_downslope_measurements.csv",
+          "channel_names": [
+            "vwc_downslope"
+          ],
+          "source_records": 3,
+          "retained_records": 3,
+          "source_record_ranges_in_time_order": [
+            [
+              13,
+              15
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:18",
+          "group_id": "LISA:dates:2021-06-09+2021-06-10",
+          "source_file": "TDR_downslope_measurements.csv",
+          "channel_names": [
+            "vwc_downslope"
+          ],
+          "source_records": 4,
+          "retained_records": 3,
+          "source_record_ranges_in_time_order": [
+            [
+              16,
+              18
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 1,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:19",
+          "group_id": "LISA:dates:2021-06-09+2021-06-10",
+          "source_file": "TDR_downslope_measurements.csv",
+          "channel_names": [
+            "vwc_downslope"
+          ],
+          "source_records": 2,
+          "retained_records": 2,
+          "source_record_ranges_in_time_order": [
+            [
+              1,
+              2
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:20",
+          "group_id": "LISA:dates:2021-06-09+2021-06-10",
+          "source_file": "TDR_downslope_measurements.csv",
+          "channel_names": [
+            "vwc_downslope"
+          ],
+          "source_records": 3,
+          "retained_records": 3,
+          "source_record_ranges_in_time_order": [
+            [
+              20,
+              22
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:22",
+          "group_id": "LISA:dates:2021-06-09+2021-06-10",
+          "source_file": "TDR_downslope_measurements.csv",
+          "channel_names": [
+            "vwc_downslope"
+          ],
+          "source_records": 4,
+          "retained_records": 4,
+          "source_record_ranges_in_time_order": [
+            [
+              23,
+              26
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:14",
+          "group_id": "LISA:dates:2021-06-07",
+          "source_file": "TDR_upslope_measurements.csv",
+          "channel_names": [
+            "vwc_upslope"
+          ],
+          "source_records": 5,
+          "retained_records": 5,
+          "source_record_ranges_in_time_order": [
+            [
+              7,
+              11
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:15",
+          "group_id": "LISA:dates:2021-06-07",
+          "source_file": "TDR_upslope_measurements.csv",
+          "channel_names": [
+            "vwc_upslope"
+          ],
+          "source_records": 4,
+          "retained_records": 4,
+          "source_record_ranges_in_time_order": [
+            [
+              12,
+              15
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:16",
+          "group_id": "LISA:dates:2021-06-07",
+          "source_file": "TDR_upslope_measurements.csv",
+          "channel_names": [
+            "vwc_upslope"
+          ],
+          "source_records": 2,
+          "retained_records": 2,
+          "source_record_ranges_in_time_order": [
+            [
+              16,
+              17
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:17",
+          "group_id": "LISA:dates:2021-06-08",
+          "source_file": "TDR_upslope_measurements.csv",
+          "channel_names": [
+            "vwc_upslope"
+          ],
+          "source_records": 3,
+          "retained_records": 3,
+          "source_record_ranges_in_time_order": [
+            [
+              18,
+              20
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:18",
+          "group_id": "LISA:dates:2021-06-09+2021-06-10",
+          "source_file": "TDR_upslope_measurements.csv",
+          "channel_names": [
+            "vwc_upslope"
+          ],
+          "source_records": 4,
+          "retained_records": 4,
+          "source_record_ranges_in_time_order": [
+            [
+              21,
+              24
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:19",
+          "group_id": "LISA:dates:2021-06-09+2021-06-10",
+          "source_file": "TDR_upslope_measurements.csv",
+          "channel_names": [
+            "vwc_upslope"
+          ],
+          "source_records": 2,
+          "retained_records": 2,
+          "source_record_ranges_in_time_order": [
+            [
+              1,
+              2
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:20",
+          "group_id": "LISA:dates:2021-06-09+2021-06-10",
+          "source_file": "TDR_upslope_measurements.csv",
+          "channel_names": [
+            "vwc_upslope"
+          ],
+          "source_records": 3,
+          "retained_records": 3,
+          "source_record_ranges_in_time_order": [
+            [
+              3,
+              5
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:21",
+          "group_id": "LISA:dates:2021-06-09+2021-06-10",
+          "source_file": "TDR_upslope_measurements.csv",
+          "channel_names": [
+            "vwc_upslope"
+          ],
+          "source_records": 1,
+          "retained_records": 1,
+          "source_record_ranges_in_time_order": [
+            [
+              6,
+              6
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "LISA",
+          "run_id": "LISA:22",
+          "group_id": "LISA:dates:2021-06-09+2021-06-10",
+          "source_file": "TDR_upslope_measurements.csv",
+          "channel_names": [
+            "vwc_upslope"
+          ],
+          "source_records": 4,
+          "retained_records": 4,
+          "source_record_ranges_in_time_order": [
+            [
+              25,
+              28
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "invalid_value_range": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        }
+      ],
+      "local_hardware_validated": false,
+      "disaster_classification_metrics": null,
+      "source_table_audits": {
+        "LISA:TDR_centre_slope_measurements.csv": {
+          "doi": "10.7910/DVN/0H4AVF",
+          "url": "https://doi.org/10.7910/DVN/0H4AVF",
+          "license": "CC-BY-4.0",
+          "dataset_role": "PUBLIC_EXTERNAL_RESEARCH",
+          "source_type": "REAL",
+          "ordering_policy": "stable source-time sort; keep first duplicate observation",
+          "grouping_policy": "same experiment date; merge documented related experiments 18-22",
+          "grouping_limit": "other cross-date physical lineage is not guaranteed independent",
+          "source_time_unit_confirmed": false,
+          "table_exclusions": {
+            "malformed_record": 0,
+            "unknown_experiment": 0,
+            "invalid_value_range": 36,
+            "unit_ambiguity_records": 36
+          },
+          "quarantined_sequences": [
+            {
+              "experiment_id": "47",
+              "channel_name": "vwc_centre_slope",
+              "reason": "unit_ambiguity: VWC fraction outside physical [0,1]",
+              "source_records": 36,
+              "invalid_value_range": 36,
+              "out_of_range_records": [
+                {
+                  "source_record_index": 403,
+                  "measurement_id": "1280",
+                  "source_time": 0.0,
+                  "source_value": 10.3
+                },
+                {
+                  "source_record_index": 404,
+                  "measurement_id": "1281",
+                  "source_time": 1.0,
+                  "source_value": 10.34
+                },
+                {
+                  "source_record_index": 405,
+                  "measurement_id": "1282",
+                  "source_time": 2.0,
+                  "source_value": 10.92
+                },
+                {
+                  "source_record_index": 406,
+                  "measurement_id": "1283",
+                  "source_time": 3.0,
+                  "source_value": 11.41
+                },
+                {
+                  "source_record_index": 407,
+                  "measurement_id": "1284",
+                  "source_time": 4.0,
+                  "source_value": 10.84
+                },
+                {
+                  "source_record_index": 408,
+                  "measurement_id": "1285",
+                  "source_time": 5.0,
+                  "source_value": 11.24
+                },
+                {
+                  "source_record_index": 409,
+                  "measurement_id": "1286",
+                  "source_time": 6.0,
+                  "source_value": 11.55
+                },
+                {
+                  "source_record_index": 410,
+                  "measurement_id": "1287",
+                  "source_time": 7.0,
+                  "source_value": 11.11
+                },
+                {
+                  "source_record_index": 411,
+                  "measurement_id": "1288",
+                  "source_time": 8.0,
+                  "source_value": 11.34
+                },
+                {
+                  "source_record_index": 412,
+                  "measurement_id": "1289",
+                  "source_time": 9.0,
+                  "source_value": 11.12
+                },
+                {
+                  "source_record_index": 413,
+                  "measurement_id": "1290",
+                  "source_time": 10.0,
+                  "source_value": 10.55
+                },
+                {
+                  "source_record_index": 414,
+                  "measurement_id": "1291",
+                  "source_time": 11.0,
+                  "source_value": 11.07
+                },
+                {
+                  "source_record_index": 415,
+                  "measurement_id": "1292",
+                  "source_time": 12.0,
+                  "source_value": 11.16
+                },
+                {
+                  "source_record_index": 416,
+                  "measurement_id": "1293",
+                  "source_time": 13.0,
+                  "source_value": 11.39
+                },
+                {
+                  "source_record_index": 417,
+                  "measurement_id": "1294",
+                  "source_time": 14.0,
+                  "source_value": 12.18
+                },
+                {
+                  "source_record_index": 418,
+                  "measurement_id": "1295",
+                  "source_time": 15.0,
+                  "source_value": 15.85
+                },
+                {
+                  "source_record_index": 419,
+                  "measurement_id": "1296",
+                  "source_time": 16.0,
+                  "source_value": 21.22
+                },
+                {
+                  "source_record_index": 420,
+                  "measurement_id": "1297",
+                  "source_time": 17.0,
+                  "source_value": 22.83
+                },
+                {
+                  "source_record_index": 421,
+                  "measurement_id": "1298",
+                  "source_time": 18.0,
+                  "source_value": 24.13
+                },
+                {
+                  "source_record_index": 422,
+                  "measurement_id": "1299",
+                  "source_time": 19.0,
+                  "source_value": 25.69
+                },
+                {
+                  "source_record_index": 423,
+                  "measurement_id": "1300",
+                  "source_time": 20.0,
+                  "source_value": 26.27
+                },
+                {
+                  "source_record_index": 424,
+                  "measurement_id": "1301",
+                  "source_time": 21.0,
+                  "source_value": 27.25
+                },
+                {
+                  "source_record_index": 425,
+                  "measurement_id": "1302",
+                  "source_time": 22.0,
+                  "source_value": 27.71
+                },
+                {
+                  "source_record_index": 426,
+                  "measurement_id": "1303",
+                  "source_time": 23.0,
+                  "source_value": 28.48
+                },
+                {
+                  "source_record_index": 427,
+                  "measurement_id": "1304",
+                  "source_time": 24.0,
+                  "source_value": 29.4
+                },
+                {
+                  "source_record_index": 428,
+                  "measurement_id": "1305",
+                  "source_time": 25.0,
+                  "source_value": 29.72
+                },
+                {
+                  "source_record_index": 429,
+                  "measurement_id": "1306",
+                  "source_time": 26.0,
+                  "source_value": 30.18
+                },
+                {
+                  "source_record_index": 430,
+                  "measurement_id": "1307",
+                  "source_time": 27.0,
+                  "source_value": 30.39
+                },
+                {
+                  "source_record_index": 431,
+                  "measurement_id": "1308",
+                  "source_time": 28.0,
+                  "source_value": 30.8
+                },
+                {
+                  "source_record_index": 432,
+                  "measurement_id": "1309",
+                  "source_time": 29.0,
+                  "source_value": 31.59
+                },
+                {
+                  "source_record_index": 433,
+                  "measurement_id": "1310",
+                  "source_time": 30.0,
+                  "source_value": 31.86
+                },
+                {
+                  "source_record_index": 434,
+                  "measurement_id": "1311",
+                  "source_time": 31.0,
+                  "source_value": 31.93
+                },
+                {
+                  "source_record_index": 435,
+                  "measurement_id": "1312",
+                  "source_time": 32.0,
+                  "source_value": 31.54
+                },
+                {
+                  "source_record_index": 436,
+                  "measurement_id": "1313",
+                  "source_time": 33.0,
+                  "source_value": 32.29
+                },
+                {
+                  "source_record_index": 437,
+                  "measurement_id": "1314",
+                  "source_time": 34.0,
+                  "source_value": 32.44
+                },
+                {
+                  "source_record_index": 438,
+                  "measurement_id": "1315",
+                  "source_time": 35.0,
+                  "source_value": 33.49
+                }
+              ]
+            }
+          ],
+          "missing_source_tables": []
+        },
+        "LISA:TDR_downslope_measurements.csv": {
+          "doi": "10.7910/DVN/0H4AVF",
+          "url": "https://doi.org/10.7910/DVN/0H4AVF",
+          "license": "CC-BY-4.0",
+          "dataset_role": "PUBLIC_EXTERNAL_RESEARCH",
+          "source_type": "REAL",
+          "ordering_policy": "stable source-time sort; keep first duplicate observation",
+          "grouping_policy": "same experiment date; merge documented related experiments 18-22",
+          "grouping_limit": "other cross-date physical lineage is not guaranteed independent",
+          "source_time_unit_confirmed": false,
+          "table_exclusions": {
+            "malformed_record": 0,
+            "unknown_experiment": 0,
+            "invalid_value_range": 0,
+            "unit_ambiguity_records": 0
+          },
+          "quarantined_sequences": [],
+          "missing_source_tables": []
+        },
+        "LISA:TDR_upslope_measurements.csv": {
+          "doi": "10.7910/DVN/0H4AVF",
+          "url": "https://doi.org/10.7910/DVN/0H4AVF",
+          "license": "CC-BY-4.0",
+          "dataset_role": "PUBLIC_EXTERNAL_RESEARCH",
+          "source_type": "REAL",
+          "ordering_policy": "stable source-time sort; keep first duplicate observation",
+          "grouping_policy": "same experiment date; merge documented related experiments 18-22",
+          "grouping_limit": "other cross-date physical lineage is not guaranteed independent",
+          "source_time_unit_confirmed": false,
+          "table_exclusions": {
+            "malformed_record": 0,
+            "unknown_experiment": 0,
+            "invalid_value_range": 0,
+            "unit_ambiguity_records": 0
+          },
+          "quarantined_sequences": [],
+          "missing_source_tables": []
+        }
+      }
+    },
+    "motion": {
+      "modality": "motion",
+      "task": "next_recorded_observation_regression",
+      "target_note": "next observed sample; variable native interval, not a fixed seconds-ahead forecast",
+      "evaluation_scope": "TRAIN_FIT_ONLY_NO_INDEPENDENT_HOLDOUT",
+      "selected_alpha": 0.1,
+      "selection": "fixed before fit; no validation available",
+      "units": [
+        "source_native_acc",
+        "source_native_acc",
+        "source_native_acc",
+        "source_native_gyr",
+        "source_native_gyr",
+        "source_native_gyr"
+      ],
+      "time_unit": "source_native_timecode",
+      "metrics": {
+        "train_descriptive": {
+          "windows": 1969,
+          "groups": 1,
+          "mae_per_channel": [
+            0.11881447269924059,
+            0.1241086183233388,
+            0.146302911607828,
+            17.121333570455587,
+            17.475436784481868,
+            11.209393917138971
+          ],
+          "rmse_per_channel": [
+            0.25289410099393655,
+            0.27953549783481185,
+            0.30855321791608487,
+            36.995473738616475,
+            42.710698125397556,
+            26.346239364485175
+          ],
+          "persistence_mae_per_channel": [
+            0.1315927566526473,
+            0.13151871280714858,
+            0.16571111875911454,
+            18.076216353478912,
+            19.46664296597259,
+            12.447272727272775
+          ],
+          "persistence_rmse_per_channel": [
+            0.3186138761261056,
+            0.36115179886596155,
+            0.4226107502603462,
+            46.445042497834926,
+            52.51183620088351,
+            33.53190845465663
+          ]
+        },
+        "validation": null,
+        "test": null
+      },
+      "test_status": "UNAVAILABLE_ONLY_ONE_EXPERIMENT",
+      "input_series": 4,
+      "usable_series": 4,
+      "excluded_short_series": 0,
+      "window_counts": {
+        "train": 1969
+      },
+      "split_groups": {
+        "train": [
+          "SMARTSTONE:4316597:single_experiment"
+        ],
+        "validation": [],
+        "test": []
+      },
+      "source_run_ids": [
+        "SMARTSTONE:ProbeData_1",
+        "SMARTSTONE:ProbeData_2",
+        "SMARTSTONE:ProbeData_3",
+        "SMARTSTONE:ProbeData_4"
+      ],
+      "source_provenance": [
+        {
+          "source_id": "SMARTSTONE",
+          "run_id": "SMARTSTONE:ProbeData_1",
+          "group_id": "SMARTSTONE:4316597:single_experiment",
+          "source_file": "ProbeData_1.mat",
+          "channel_names": [
+            "acc_x",
+            "acc_y",
+            "acc_z",
+            "gyr_x",
+            "gyr_y",
+            "gyr_z"
+          ],
+          "source_records": 500,
+          "retained_records": 500,
+          "source_record_ranges_in_time_order": [
+            [
+              1,
+              500
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "SMARTSTONE",
+          "run_id": "SMARTSTONE:ProbeData_2",
+          "group_id": "SMARTSTONE:4316597:single_experiment",
+          "source_file": "ProbeData_2.mat",
+          "channel_names": [
+            "acc_x",
+            "acc_y",
+            "acc_z",
+            "gyr_x",
+            "gyr_y",
+            "gyr_z"
+          ],
+          "source_records": 500,
+          "retained_records": 500,
+          "source_record_ranges_in_time_order": [
+            [
+              1,
+              500
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "SMARTSTONE",
+          "run_id": "SMARTSTONE:ProbeData_3",
+          "group_id": "SMARTSTONE:4316597:single_experiment",
+          "source_file": "ProbeData_3.mat",
+          "channel_names": [
+            "acc_x",
+            "acc_y",
+            "acc_z",
+            "gyr_x",
+            "gyr_y",
+            "gyr_z"
+          ],
+          "source_records": 500,
+          "retained_records": 500,
+          "source_record_ranges_in_time_order": [
+            [
+              1,
+              500
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        },
+        {
+          "source_id": "SMARTSTONE",
+          "run_id": "SMARTSTONE:ProbeData_4",
+          "group_id": "SMARTSTONE:4316597:single_experiment",
+          "source_file": "ProbeData_4.mat",
+          "channel_names": [
+            "acc_x",
+            "acc_y",
+            "acc_z",
+            "gyr_x",
+            "gyr_y",
+            "gyr_z"
+          ],
+          "source_records": 501,
+          "retained_records": 501,
+          "source_record_ranges_in_time_order": [
+            [
+              1,
+              501
+            ]
+          ],
+          "exclusions": {
+            "invalid_time": 0,
+            "invalid_value": 0,
+            "duplicate_time": 0
+          },
+          "label_status": "NOT_PROVIDED"
+        }
+      ],
+      "local_hardware_validated": false,
+      "disaster_classification_metrics": null,
+      "source_table_audits": {
+        "SMARTSTONE:ProbeData_1.mat": {
+          "doi": "10.5281/zenodo.4316597",
+          "url": "https://doi.org/10.5281/zenodo.4316597",
+          "license": "CC-BY-4.0",
+          "dataset_role": "PUBLIC_EXTERNAL_RESEARCH",
+          "source_type": "REAL",
+          "ordering_policy": "stable source-time sort; keep first duplicate observation",
+          "grouping_policy": "all stones share one physical landslide experiment",
+          "native_units_confirmed": false,
+          "timecode_is_utc": false,
+          "cross_probe_sync_confirmed": false
+        },
+        "SMARTSTONE:ProbeData_2.mat": {
+          "doi": "10.5281/zenodo.4316597",
+          "url": "https://doi.org/10.5281/zenodo.4316597",
+          "license": "CC-BY-4.0",
+          "dataset_role": "PUBLIC_EXTERNAL_RESEARCH",
+          "source_type": "REAL",
+          "ordering_policy": "stable source-time sort; keep first duplicate observation",
+          "grouping_policy": "all stones share one physical landslide experiment",
+          "native_units_confirmed": false,
+          "timecode_is_utc": false,
+          "cross_probe_sync_confirmed": false
+        },
+        "SMARTSTONE:ProbeData_3.mat": {
+          "doi": "10.5281/zenodo.4316597",
+          "url": "https://doi.org/10.5281/zenodo.4316597",
+          "license": "CC-BY-4.0",
+          "dataset_role": "PUBLIC_EXTERNAL_RESEARCH",
+          "source_type": "REAL",
+          "ordering_policy": "stable source-time sort; keep first duplicate observation",
+          "grouping_policy": "all stones share one physical landslide experiment",
+          "native_units_confirmed": false,
+          "timecode_is_utc": false,
+          "cross_probe_sync_confirmed": false
+        },
+        "SMARTSTONE:ProbeData_4.mat": {
+          "doi": "10.5281/zenodo.4316597",
+          "url": "https://doi.org/10.5281/zenodo.4316597",
+          "license": "CC-BY-4.0",
+          "dataset_role": "PUBLIC_EXTERNAL_RESEARCH",
+          "source_type": "REAL",
+          "ordering_policy": "stable source-time sort; keep first duplicate observation",
+          "grouping_policy": "all stones share one physical landslide experiment",
+          "native_units_confirmed": false,
+          "timecode_is_utc": false,
+          "cross_probe_sync_confirmed": false
+        }
+      }
+    }
+  },
+  "fusion": {
+    "implementation": "ai_training.multimodal.fusion.fuse",
+    "status": "WAITING_FOR_LOCAL_CALIBRATION_AND_PAIRED_RUNS",
+    "trained_fusion_model": false,
+    "thresholds": null
+  },
+  "project_class_labels": null,
+  "production_model_replaced": false,
+  "deployment_ready": false,
+  "onnx_export": "NOT_RUN",
+  "limitations": [
+    "No local experimental CSV supplied.",
+    "Forecast regressors are not NORMAL/RAIN/SLIP classifiers or calibrated risk probabilities.",
+    "Native ADC, relative wetness and VWC are not interchangeable.",
+    "LISA date/continuation groups are conservative source groups, not proof of fully independent soil specimens.",
+    "Public holdout results are exploratory and were inspected during implementation; they are not a locked confirmatory local test.",
+    "Smartstone is one experiment: no independent validation/test or accuracy claim.",
+    "No fitted threshold or cross-source paired sensor sample was invented."
+  ]
+}
