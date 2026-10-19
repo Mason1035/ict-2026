@@ -59,7 +59,16 @@ python -m pytest -c ai_training/pyproject.toml \
 实际已拟合的两个模型位于 [pretrained/public_sensor_v1](pretrained/public_sensor_v1/README.md)：
 `soil_model.json`、`motion_model.json`、配置、分组清单、训练报告。JSON包含标准化参数和权重，无pickle反序列化。
 `RidgeForecaster.load`恢复模型；预测要求显式提供训练时的channel_names、units、time_unit，顺序或单位不匹配即拒绝。
-不能把ADS1115 raw或仅有干湿两点校准的相对指数直接送入VWC模型。硬件适配层目前未实现。
+不能把ADS1115 raw或仅有干湿两点校准的相对指数直接送入VWC模型。ADC到VWC的硬件标定适配层目前未实现。
+
+### 开发板上的基线推理
+
+已提供[土壤基线 C99 / ESP32-S3 推理组件](embedded/soil_baseline/README.md)。
+JSON中的标准化折入float32参数，开发板编译 `soil_baseline.h`，无需Python或机器学习运行时。
+最近4次同一路VWC观测预测下一次观测；5个参数共20字节，无动态内存分配。
+接口提供逐样本缓冲、预热、无效/越界检查；上中下传感器须独立缓冲。
+已用主机编译C99/C++17并对照Python；交叉编译、烧录、传感器标定与本地预测效果尚未验证。
+该组件是可集成的预测算术，不会自行产出滑坡概率、Risk等级或控制报警。
 
 报告同时提供保持上一观测不变的persistence基线。模型误差小于自身训练误差或优于训练基线，
 都不证明对新实验有效；未优于留出基线时也如实保存，不能宣称迁移已经改善本项目效果。
