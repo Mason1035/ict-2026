@@ -58,3 +58,9 @@ npm test
 OpenCV 图像变化是技术观测，尚未校准为灾害评分；视觉分数保留 null，融合保持 sensor_only / unavailable。真实 Atlas、UVC 持续采集、视频流、UAV、IoTDA、正式模型和完整融合仍需后续接入。原共享契约与团队职责保持不变。
 
 2026-10-18 本轮验证：2 项完整响应超时/取消 HTTP 测试、7 项定向页面回归、TypeScript 检查和生产构建通过。页面回归覆盖分页、切设备/后端、视觉参数变更、固定样例设备、接入存储异常和重置确认；不等于真板或正式灾害模型验证。
+
+## TinyQuake 实验（1.2.0）
+
+左侧“TinyQuake 实验”使用独立实验流和后端 API，显示 P/S/Noise 分数、参考/实采来源、质量、推理耗时和历史。模型输出全部 TEST_ONLY，不参与正式风险评分。接入方法见 [ESP32 指南](../../docs/model_evaluation/TINYQUAKE_ESP32_GUIDE.md)。
+
+`npm run test:tinyquake` 使用临时后端数据库执行六项浏览器检查，需后端虚拟环境和 Chrome（可用 `PLATFORM_PYTHON` / `BROWSER_EXECUTABLE` 指定）。2026-10-20 六项通过；同轮原平台七项回归与两项 HTTP 检查、TypeScript / 生产构建通过。

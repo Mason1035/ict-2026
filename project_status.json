@@ -1,7 +1,7 @@
 {
   "status_schema_version": "zhifang.repository-status.v1",
-  "as_of": "2026-10-19",
-  "scope": "Local platform historical scope retained; added independent public-data soil/motion research training and rule evidence fusion",
+  "as_of": "2026-10-20",
+  "scope": "Local platform historical scope retained; added independent public-data soil/motion research training and rule evidence fusion; added isolated pretrained TinyQuake evaluation and ESP32 reference/platform integration",
   "ssot": "docs/00_TEAM_SHARED_CONTRACT.pdf",
   "report": "PROJECT_STATUS_AND_READINESS.md",
   "project_status": "BLOCKED",
@@ -30,8 +30,8 @@
     "formal_dataset_version": null,
     "formal_feature_version": null,
     "calibration_version": null,
-    "platform_backend_version": "0.2.1",
-    "web_app_version": "1.1.0",
+    "platform_backend_version": "0.3.0",
+    "web_app_version": "1.2.0",
     "multimodal_research_version": "0.1.0"
   },
   "hardware": {
@@ -352,16 +352,16 @@
     "automatically_started": false
   },
   "local_platform": {
-    "as_of": "2026-10-18",
+    "as_of": "2026-10-20",
     "status": "LOCAL_SOFTWARE_INTEGRATED",
-    "backend_version": "0.2.1",
-    "web_version": "1.1.0",
+    "backend_version": "0.3.0",
+    "web_version": "1.2.0",
     "storage": "SQLITE_WAL",
     "telemetry_schema": "zhifang.telemetry.v2",
     "mqtt": "IMPLEMENTED",
     "http_device_ingress": "TEST_ONLY",
     "node_cleanup_authorized": false,
-    "esp32_flashable_firmware": "NOT_INCLUDED_IN_PLATFORM",
+    "esp32_flashable_firmware": "ISOLATED_TINYQUAKE_REFERENCE_IMAGE_ONLY",
     "esp32_hardware_integration": "NOT_VERIFIED",
     "atlas": "NOT_CONNECTED",
     "cloud": "NOT_CONNECTED",
@@ -369,14 +369,15 @@
     "full_risk_fusion": "NOT_IMPLEMENTED",
     "instructions": "platform_backend/README.md",
     "verification": {
-      "as_of": "2026-10-18",
-      "python_tests_passed": 117,
+      "as_of": "2026-10-20",
+      "python_tests_passed": 139,
       "frontend_http_tests_passed": 2,
       "frontend_browser_regressions_passed": 7,
       "typescript": "PASS",
       "production_build": "PASS",
       "real_hardware": "NOT_RUN",
-      "test_services_left_running": false
+      "test_services_left_running": false,
+      "tinyquake_browser_checks_passed": 6
     }
   },
   "public_sensor_research": {
@@ -392,5 +393,29 @@
     "production_risk_engine_replaced": false,
     "independent_motion_test_available": false,
     "deployment_ready": false
+  },
+  "tinyquake_experiment": {
+    "as_of": "2026-10-20",
+    "status": "EXPERIMENTAL",
+    "model": "CNN/models/model_17_16_32_32.tflite",
+    "model_sha256": "0e1eb00a920ae3daaec7cf142ef8a54373fe1b93b472350e7048b8ae0c1ff1f1",
+    "model_retrained": false,
+    "desktop_reference_windows": 17427,
+    "desktop_argmax_accuracy": 0.938199345842658,
+    "reference_accuracy_applies_to_local_imu": false,
+    "serial_build": "PASS",
+    "mqtt_enabled_build": "PASS",
+    "esp_idf": "5.5.1",
+    "esp_tflite_micro": "1.4.1",
+    "esp_nn": "1.4.1",
+    "flash_and_boot": "NOT_RUN",
+    "board_reference_parity": "NOT_RUN",
+    "arena_used_bytes": null,
+    "board_inference_latency_us": null,
+    "real_icm_input": "NOT_CONNECTED",
+    "scope": "TEST_ONLY",
+    "risk_eligible": false,
+    "production_firmware_modified": false,
+    "documentation": "docs/team_handoffs/TINYQUAKE_PROGRESS_2026-10-20.md"
   }
 }

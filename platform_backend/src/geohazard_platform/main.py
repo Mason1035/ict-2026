@@ -24,7 +24,7 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 from starlette.concurrency import run_in_threadpool
 
-from . import __version__
+from . import __version__, tinyquake
 from .settings import Settings, REPO_ROOT
 from .database import Database, utc_now
 from .telemetry import IngestionError, ingest_telemetry, validate_telemetry
@@ -144,7 +144,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     async def authorize(request: Request):
         if settings.api_token:
             expected = f"Bearer {settings.api_token}"
-            if not secrets.compare_digest(request.headers.get("authorization", ""), expected):
+            if not secrets.compare_digest(request.headers.get("authorization", "").encode("utf-8"), expected.encode("utf-8")):
                 raise HTTPException(401, "需要有效的后端 API Token", headers={"WWW-Authenticate": "Bearer"})
 
     for exception_type in (IngestionError, ConnectorError, VisionError):
@@ -412,6 +412,22 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 "demo":app.state.demo.state(),"connectors":connector_list()["items"],
                 "vision":{"evidence":evidence,"results":results,"latest_result":results[0] if results else None,
                           "evidence_next_cursor":evidence_page["next_cursor"],"results_next_cursor":results_page["next_cursor"]}}
+
+    @api.get("/tinyquake/results")
+    def tinyquake_results(site_id:str|None=None,device_id:str|None=None,sensor_id:str|None=None,
+                          source:Literal["REAL","MOCK"]|None=None,limit:int=Query(50,ge=1,le=200),cursor:str|None=None):
+        return tinyquake.listing(db,site_id=site_id,device_id=device_id,sensor_id=sensor_id,source=source,limit=limit,cursor=cursor)
+
+    @api.get("/tinyquake/streams")
+    def tinyquake_streams():
+        return tinyquake.streams(db)
+
+    @api.post("/tinyquake/test",status_code=201)
+    def tinyquake_test(body:TestInjection):
+        require_demo()
+        if body.payload.get("input_source") != "REFERENCE" or not str(body.payload.get("device_id", "")).startswith("MOCK-"):
+            raise HTTPException(422,"HTTP 测试只接受 MOCK- 设备的参考波形结果；实际板卡请走 MQTT")
+        return tinyquake.ingest(db,body.payload,source="MOCK")
 
     @api.get("/risk-results")
     def risk_results(site_id:str=SITE,device_id:str=DEVICE,source:Literal["REAL","MOCK"]="MOCK"):

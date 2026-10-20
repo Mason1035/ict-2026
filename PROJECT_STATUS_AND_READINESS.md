@@ -1,5 +1,17 @@
 # PROJECT-WIDE ADAPTATION AND READINESS REPORT
 
+## 2026-10-20 当前进度增量：TinyQuake 独立实验
+
+交付见 [队友进度交接](docs/team_handoffs/TINYQUAKE_PROGRESS_2026-10-20.md)、[科学评估](docs/model_evaluation/TINYQUAKE_EVALUATION.md) 与 [ESP32 接入指南](docs/model_evaluation/TINYQUAKE_ESP32_GUIDE.md)。基于最新 main（0093f57）保留 NODE-01 框架和公开数据土壤/运动研究工作。
+
+- 官方 CNN17 未重训、未转换：40 Hz、80×3 float32，P/S/Noise；桌面 17427 个有效官方参考窗 argmax 93.8199%，不是本地 MEMS 或灾害预测性能。
+- 独立 `firmware/tinyquake_esp32s3` 的串口/MQTT 启用配置已实际交叉编译，提供备用 N8R8 板参考镜像；未改 `firmware/node01`，未刷机。
+- 后端 0.3.0 / 页面 1.2.0 新增独立结果协议、MQTT、SQLite、历史与实验页；USB 桥仅读取实际串口行，实际 USB 硬件链路未运行。
+- 同步后验证：139 项后端测试、2 项 HTTP、7 项原平台浏览器回归、6 项 TinyQuake 浏览器检查、TypeScript 与构建通过。
+- 推荐仍为 **EXPERIMENTAL**；实板参考一致性、arena、时延、真实 ICM 驱动及完整信号适配均待验证。实验输出 TEST_ONLY / risk_eligible=false，不写正式风险或告警。
+
+正式 model_version、calibration_version 不因外部预训练实验模型而升级；真实数据、正式契约、Atlas/云和现场验证保持原边界。以下历史条目按其日期解释。
+
 ## 2026-10-19 当前进度增量：土壤与运动双分支研究
 
 已新增公开真实传感器reader、两个NumPy下一观测预测模型、分组评价、JSON权重加载及规则证据融合。

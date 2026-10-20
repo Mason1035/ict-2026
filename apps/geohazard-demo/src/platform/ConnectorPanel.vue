@@ -7,7 +7,7 @@ const props = defineProps<{ connectors: Connector[]; statuses: MqttStatus[]; con
 const emit = defineEmits<{ refresh: [] }>();
 const items = ref<Connector[]>([]);
 watch(() => props.connectors, (value) => { items.value = value; }, { immediate: true });
-const defaults = () => ({ name: "", source: "REAL" as "REAL" | "MOCK", enabled: false, host: "127.0.0.1", port: 1883, topic: "zhifang/v2/{SITE}/+/telemetry", site_id: "SITE01", username: "", password: "", tls: false, client_id: "" });
+const defaults = () => ({ name: "", source: "REAL" as "REAL" | "MOCK", enabled: false, payload_format: "telemetry_v2" as "telemetry_v2" | "tinyquake_v1", host: "127.0.0.1", port: 1883, topic: "zhifang/v2/{SITE}/+/telemetry", site_id: "SITE01", username: "", password: "", tls: false, client_id: "" });
 const form = reactive(defaults());
 const editing = ref<string | null>(null);
 const showForm = ref(false);
@@ -22,10 +22,11 @@ function open(item?: Connector) {
   if (item) Object.assign(form, { name: item.name, source: item.source, enabled: item.enabled, ...item.config, password: "" });
   error.value = ""; notice.value = ""; showForm.value = true;
 }
+function formatChanged() { form.topic = form.payload_format === "tinyquake_v1" ? "zhifang/experimental/tinyquake/v1/{SITE}/+/+/result" : "zhifang/v2/{SITE}/+/telemetry"; if (form.payload_format === "tinyquake_v1") form.source = "MOCK"; }
 async function reload() { items.value = (await api.get<Items<Connector>>("/connectors")).items; emit("refresh"); }
 async function save() {
   busy.value = true; error.value = ""; notice.value = "";
-  const config: ConnectorWrite["config"] = { host: form.host.trim(), port: Number(form.port), topic: form.topic.trim().replaceAll("{SITE}", form.site_id.trim()), site_id: form.site_id.trim(), username: form.username, tls: form.tls };
+  const config: ConnectorWrite["config"] = { payload_format: form.payload_format, host: form.host.trim(), port: Number(form.port), topic: form.topic.trim().replaceAll("{SITE}", form.site_id.trim()), site_id: form.site_id.trim(), username: form.username, tls: form.tls };
   if (form.password || !editing.value) config.password = form.password;
   if (form.client_id) config.client_id = form.client_id;
   const body: ConnectorWrite = { name: form.name.trim(), kind: "mqtt", source: form.source, enabled: form.enabled, config };
@@ -72,6 +73,7 @@ function status(item: Connector) {
       <div class="form-grid">
         <label>名称<input v-model="form.name" required maxlength="120" placeholder="现场 Atlas 网关" /></label>
         <label>数据来源<select v-model="form.source" aria-label="数据来源"><option value="REAL">REAL · 真实设备</option><option value="MOCK">MOCK · 测试数据</option></select></label>
+        <label>消息格式<select v-model="form.payload_format" aria-label="消息格式" @change="formatChanged"><option value="telemetry_v2">标准 v2 遥测</option><option value="tinyquake_v1">TinyQuake 实验结果</option></select></label>
         <label>Broker 地址<input v-model="form.host" required placeholder="127.0.0.1" /></label>
         <label>端口<input v-model.number="form.port" type="number" required min="1" max="65535" /></label>
         <label>站点 ID<input v-model="form.site_id" required pattern="[A-Za-z0-9_-]+" /></label>
@@ -85,7 +87,7 @@ function status(item: Connector) {
     </form>
     <div v-if="!items.length && !showForm" class="platform-empty"><PlugZap :size="30" /><h3>接入第一路设备数据</h3><p>配置 Broker、站点和 Topic。未接入硬件时，可使用后端演示数据验证平台流程。</p></div>
     <div v-for="item in items" :key="item.id" class="connector-row">
-      <div class="connector-icon"><Radio :size="20" /></div><div class="connector-main"><div><strong>{{ item.name }}</strong><span :class="['source-badge', item.source.toLowerCase()]">{{ item.source }}</span><span :class="['connection-pill', { online: status(item).online }]">{{ status(item).label }}</span></div><p>{{ item.config.host }}:{{ item.config.port }} <span>· {{ item.config.tls ? 'TLS' : 'TCP' }} · {{ item.config.site_id }}</span></p><code>{{ item.config.topic }}</code><small>{{ status(item).detail }}</small><p v-if="testResult?.id === item.id" :class="testResult.success ? 'inline-success' : 'inline-error'" role="status">连通性测试：{{ testResult.text }}</p></div>
+      <div class="connector-icon"><Radio :size="20" /></div><div class="connector-main"><div><strong>{{ item.name }}</strong><span v-if="item.config.payload_format === 'tinyquake_v1'" class="source-badge">TinyQuake · TEST_ONLY</span><span :class="['source-badge', item.source.toLowerCase()]">{{ item.source }}</span><span :class="['connection-pill', { online: status(item).online }]">{{ status(item).label }}</span></div><p>{{ item.config.host }}:{{ item.config.port }} <span>· {{ item.config.tls ? 'TLS' : 'TCP' }} · {{ item.config.site_id }}</span></p><code>{{ item.config.topic }}</code><small>{{ status(item).detail }}</small><p v-if="testResult?.id === item.id" :class="testResult.success ? 'inline-success' : 'inline-error'" role="status">连通性测试：{{ testResult.text }}</p></div>
       <div class="connector-actions"><button class="secondary-button" :disabled="busy || !connected" @click="test(item)"><PlugZap :size="14" />测试连接</button><button class="icon-button" :disabled="busy || !connected" aria-label="编辑连接器" @click="open(item)"><Pencil :size="16" /></button><button class="icon-button danger-button" :disabled="busy || !connected" aria-label="删除连接器" @click="remove(item)"><Trash2 :size="16" /></button></div>
     </div>
   </section>

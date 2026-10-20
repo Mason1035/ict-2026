@@ -12,6 +12,7 @@ import os
 import sqlite3
 from threading import RLock
 from typing import Iterator
+from uuid import uuid4
 
 
 def utc_now() -> str:
@@ -40,6 +41,15 @@ class Database:
             connection.execute("PRAGMA journal_mode=WAL")
             connection.execute("PRAGMA synchronous=FULL")
             connection.executescript("""
+                CREATE TABLE IF NOT EXISTS tinyquake_results (
+                    id TEXT PRIMARY KEY, site_id TEXT NOT NULL, device_id TEXT NOT NULL,
+                    sensor_id TEXT NOT NULL, boot_id INTEGER NOT NULL, seq INTEGER NOT NULL,
+                    source TEXT NOT NULL, input_source TEXT NOT NULL, received_at TEXT NOT NULL,
+                    payload_json TEXT NOT NULL, connector_id TEXT,
+                    UNIQUE(site_id,device_id,sensor_id,boot_id,seq)
+                );
+                CREATE INDEX IF NOT EXISTS tinyquake_stream_time ON tinyquake_results
+                    (site_id,device_id,sensor_id,source,received_at DESC,id DESC);
                 CREATE TABLE IF NOT EXISTS telemetry (
                     id TEXT PRIMARY KEY, site_id TEXT NOT NULL, device_id TEXT NOT NULL,
                     boot_id INTEGER NOT NULL, seq INTEGER NOT NULL,
@@ -104,13 +114,30 @@ class Database:
             if self._connection is None:
                 self.initialize()
             assert self._connection is not None
-            try:
-                yield self._connection
-            except BaseException:
-                self._connection.rollback()
-                raise
+            connection = self._connection
+            # SQLite's writer reservation protects read/modify/write sequences
+            # across Database instances and processes, beyond the Python lock.
+            nested = connection.in_transaction
+            savepoint = "nested_" + uuid4().hex if nested else None
+            if savepoint:
+                connection.execute(f"SAVEPOINT {savepoint}")
             else:
-                self._connection.commit()
+                connection.execute("BEGIN IMMEDIATE")
+            try:
+                yield connection
+                if savepoint:
+                    connection.execute(f"RELEASE SAVEPOINT {savepoint}")
+                else:
+                    connection.commit()
+            except BaseException:
+                if savepoint:
+                    connection.execute(f"ROLLBACK TO SAVEPOINT {savepoint}")
+                    connection.execute(f"RELEASE SAVEPOINT {savepoint}")
+                else:
+                    # Commit itself can fail (disk/full, deferred constraints).
+                    # Never leave that request's changes for a later commit.
+                    connection.rollback()
+                raise
 
     def close(self) -> None:
         with self._lock:
