@@ -14,6 +14,7 @@ from urllib.parse import urlsplit
 from uuid import uuid4
 
 from .database import Database, utc_now
+from . import tinyquake
 from .telemetry import IngestionError, ingest_telemetry, quarantine_message
 
 
@@ -75,7 +76,7 @@ def _validate(data: dict[str, Any], old: dict[str, Any] | None = None) -> tuple[
             raise ConnectorError(422, "reserved HTTP adapter does not accept credentials")
         config = {"url": config["url"], "timeout_seconds": 5}
     else:
-        keys = {"host", "port", "site_id", "topic", "client_id", "username", "tls", "ca_cert_path", "qos", "keepalive", "password_configured"}
+        keys = {"host", "port", "site_id", "topic", "client_id", "username", "tls", "ca_cert_path", "qos", "keepalive", "password_configured", "payload_format"}
         if set(config) - keys:
             raise ConnectorError(422, "unsupported MQTT setting; TLS certificate verification cannot be disabled")
         config.pop("password_configured", None)
@@ -88,10 +89,26 @@ def _validate(data: dict[str, Any], old: dict[str, Any] | None = None) -> tuple[
         site = config.get("site_id", "")
         if not isinstance(site, str) or not site.strip() or len(site) > 128 or any(c in site for c in "/+#\x00"):
             raise ConnectorError(422, "site_id must be one nonempty MQTT segment")
-        topic = config.get("topic", f"zhifang/v2/{site}/+/telemetry")
+        payload_format = config.get("payload_format", "telemetry_v2")
+        if not isinstance(payload_format, str) or payload_format not in {"telemetry_v2", "tinyquake_v1"}:
+            raise ConnectorError(422, "payload_format must be telemetry_v2 or tinyquake_v1")
+        experimental = payload_format == "tinyquake_v1"
+        default_topic = f"zhifang/experimental/tinyquake/v1/{site}/+/+/result" if experimental else f"zhifang/v2/{site}/+/telemetry"
+        topic = config.get("topic", default_topic)
         parts = topic.split("/") if isinstance(topic, str) else []
-        if len(parts) != 5 or parts[:3] != ["zhifang", "v2", site] or parts[4] != "telemetry" or not parts[3] or "#" in topic or ("+" in parts[3] and parts[3] != "+") or "\x00" in topic:
-            raise ConnectorError(422, "MQTT whitelist must be zhifang/v2/{site_id}/+/telemetry or one explicit device topic")
+        prefix = ["zhifang", "experimental", "tinyquake", "v1", site] if experimental else ["zhifang", "v2", site]
+        suffix = "result" if experimental else "telemetry"
+        identities = parts[len(prefix):-1]
+        expected_len = 8 if experimental else 5
+        if (len(parts) != expected_len or parts[:len(prefix)] != prefix or parts[-1:] != [suffix]
+            or not identities or any(not part.strip() or len(part) > 128 or "#" in part or ("+" in part and part != "+") or "\x00" in part for part in identities)):
+            raise ConnectorError(422, "MQTT Topic must match the selected format and site whitelist: " + default_topic)
+        try:
+            encoded_topic = topic.encode("utf-8")
+        except UnicodeEncodeError as exc:
+            raise ConnectorError(422, "MQTT topic must contain valid UTF-8 characters") from exc
+        if len(encoded_topic) > 65535:
+            raise ConnectorError(422, "MQTT topic exceeds the 65535 byte protocol limit")
         tls = config.get("tls", False)
         if type(tls) is not bool:
             raise ConnectorError(422, "tls must be a boolean; certificate verification is always required")
@@ -113,7 +130,7 @@ def _validate(data: dict[str, Any], old: dict[str, Any] | None = None) -> tuple[
         keepalive = config.get("keepalive", 30)
         if type(keepalive) is not int or not 5 <= keepalive <= 300:
             raise ConnectorError(422, "keepalive must be an integer 5..300 seconds")
-        config = {"host": host, "port": port, "site_id": site, "topic": topic, "client_id": client_id, "username": username, "tls": tls, "ca_cert_path": ca_path, "qos": qos, "keepalive": keepalive}
+        config = {"host": host, "port": port, "site_id": site, "topic": topic, "client_id": client_id, "username": username, "tls": tls, "ca_cert_path": ca_path, "qos": qos, "keepalive": keepalive, "payload_format": payload_format}
     return {"name": name.strip(), "kind": kind, "enabled": enabled, "source": source, "config": config}, password_changed, password
 
 
@@ -208,7 +225,10 @@ class _MQTTSession:
             self.ready.set()
             return
         self._update(state="subscribing", connected=False, last_error=None)
-        result, _ = client.subscribe(self.item["config"]["topic"], qos=self.item["config"]["qos"])
+        try:
+            result, _ = client.subscribe(self.item["config"]["topic"], qos=self.item["config"]["qos"])
+        except Exception:
+            result = 1
         if result != 0:
             self._update(state="error", connected=False, last_error="MQTT subscription request failed")
             self.ready.set()
@@ -238,7 +258,7 @@ class _MQTTSession:
             self.state["messages_received"] += 1
         self._update(last_message_at=utc_now())
         source = self.item["source"]
-        scope = "TEST_ONLY" if source == "MOCK" else "OPERATIONAL"
+        scope = "TEST_ONLY" if source == "MOCK" or self.item["config"].get("payload_format") == "tinyquake_v1" else "OPERATIONAL"
         metadata = {"source": source, "scope": scope, "transport": "mqtt", "connector_id": self.item["id"], "topic": message.topic}
         try:
             if getattr(message, "retain", False):
@@ -258,12 +278,23 @@ class _MQTTSession:
             received_parts = message.topic.split("/")
             if len(received_parts) != len(whitelist) or any(expected != "+" and actual != expected for expected, actual in zip(whitelist, received_parts)):
                 raise ValueError("message is outside configured telemetry whitelist")
-            receipt = ingest_telemetry(self.db, payload, **metadata)
+            if self.item["config"].get("payload_format") == "tinyquake_v1":
+                receipt = tinyquake.ingest(self.db, payload, **metadata)
+            else:
+                receipt = ingest_telemetry(self.db, payload, **metadata)
             with self._lock:
                 self.state["messages_accepted"] += 1
                 self.state["duplicates"] += int(receipt["status"] == "duplicate")
             self._update(state="connected" if self.state["connected"] else self.state["state"], intake_healthy=True, last_durable_at=utc_now(), last_error=None)
         except IngestionError as exc:
+            if self.item["config"].get("payload_format") == "tinyquake_v1":
+                try:
+                    quarantine_message(self.db, message.payload, **metadata, reason=exc.detail["message"])
+                except Exception:
+                    with self._lock:
+                        self.state["messages_rejected"] += 1
+                    self._storage_failure()
+                    return
             with self._lock:
                 self.state["messages_rejected"] += 1
             self._update(last_error=exc.detail["message"])

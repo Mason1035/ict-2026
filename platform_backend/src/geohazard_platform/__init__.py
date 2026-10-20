@@ -9,4 +9,4 @@ _repository = str(Path(__file__).resolve().parents[3])
 if _repository not in sys.path:
     sys.path.insert(0, _repository)
 
-__version__ = "0.2.1"
+__version__ = "0.3.0"

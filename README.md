@@ -5,10 +5,12 @@
 已用公开实测序列拟合两个辅助预测模型；尚无自采CSV，未训练本地滑移分类或标定告警阈值。
 项目名称：**智哨防灾——基于昇腾与边缘计算的地质灾害多模态早期预警系统**。
 
+2026-10-20 新增 [TinyQuake / ESP32 进度交接](docs/team_handoffs/TINYQUAKE_PROGRESS_2026-10-20.md)：官方 CNN 桌面评估、独立参考固件及平台实验通道已交付；实板与双 IMU 验证待完成。[模型与烧录接入步骤](docs/model_evaluation/TINYQUAKE_ESP32_GUIDE.md)。
+
 最高依据：[00_TEAM_SHARED_CONTRACT.pdf](docs/00_TEAM_SHARED_CONTRACT.pdf)。
 个人文档、交付契约、README 或代码发生冲突时，以 00 为准；正式资料只读。
 
-本地多模态平台：[FastAPI 后端与运行说明](platform_backend/README.md)，从仓库根目录执行 `./scripts/run-platform.sh`，打开 `http://127.0.0.1:8000`。脚本自动准备依赖并在页面源码更新后重新构建。[Vue 指挥中心](apps/geohazard-demo/README.md) 默认读取后端，独立本地演示可从页脚进入。ESP32 的 MQTT 接收端已实现，可烧录固件和真板联调尚未包含，详见 [ESP32 接入状态](platform_backend/README.md#esp32-接入状态)。
+本地多模态平台：[FastAPI 后端与运行说明](platform_backend/README.md)，从仓库根目录执行 `./scripts/run-platform.sh`，打开 `http://127.0.0.1:8000`。脚本自动准备依赖并在页面源码更新后重新构建。[Vue 指挥中心](apps/geohazard-demo/README.md) 默认读取后端，独立本地演示可从页脚进入。ESP32 的 MQTT 接收端已实现，独立 TinyQuake 参考固件已通过构建，真板联调尚未执行，详见 [ESP32 接入状态](platform_backend/README.md#esp32-接入状态)。
 
 | 路径 | Owner | 当前用途和状态 |
 |---|---|---|
@@ -18,8 +20,8 @@
 | `team_handoffs/B_original/` | B | 原始交付归档，保留，不作为新正式契约入口 |
 | [ai_training/](ai_training/README.md) | C 何宇轩 | 0.1.1 正式骨架；另增 multimodal 0.1.0 公开实测双分支研究模型与规则融合，待本地适配 |
 | [edge_intake/](edge_intake/README.md) | C 何宇轩 | 0.1.0；已验证 v2 对象的内存接收边界，Mock 四例通过；生产下游未实现 |
-| [platform_backend/](platform_backend/README.md) | C 何宇轩 | 0.2.1 本地软件平台；FastAPI、SQLite、MQTT 接收、图像/OpenCV、历史与告警 API；真实 Atlas/云与正式融合未接入 |
-| [apps/geohazard-demo/](apps/geohazard-demo/README.md) | C 何宇轩 | 1.1.0 后端平台页面与独立本地演示；来源与未知值明确区分 |
+| [platform_backend/](platform_backend/README.md) | C 何宇轩 | 0.3.0 本地软件平台；FastAPI、SQLite、MQTT 接收、图像/OpenCV、历史与告警 API；真实 Atlas/云与正式融合未接入 |
+| [apps/geohazard-demo/](apps/geohazard-demo/README.md) | C 何宇轩 | 1.2.0 后端平台页面与独立本地演示；来源与未知值明确区分 |
 | `outputs/`、模块内 `outputs/` | 验证记录 | 历史/新软件验证产物；合成数据与测试 checkpoint 不等于真实数据/正式模型 |
 | `work/` | 本地环境 | 开发虚拟环境，不作为项目交付或真实实验数据 |
 

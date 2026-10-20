@@ -83,7 +83,7 @@ platform_backend/.venv/bin/python scripts/mqtt_demo.py
 
 ## ESP32 接入状态
 
-已实现 ESP32 可使用的 MQTT 平台接收端，链路为 `ESP32 → Wi-Fi → MQTT Broker → FastAPI → SQLite → 页面`。本次交付没有包含可烧录的 Arduino / PlatformIO 固件，尚未进行 ESP32 真板联调；`scripts/mqtt_demo.py` 是电脑端软件实验源。
+已实现 ESP32 可使用的 MQTT 平台接收端，链路为 `ESP32 → Wi-Fi → MQTT Broker → FastAPI → SQLite → 页面`。另有独立 [TinyQuake ESP-IDF 参考固件](../firmware/tinyquake_esp32s3/README.md) 通过构建，尚未进行 ESP32 真板联调；`scripts/mqtt_demo.py` 是电脑端软件实验源。
 
 后续 ESP32 固件应按现有 `zhifang.telemetry.v2` 完整 NODE 格式发布到 `zhifang/v2/{site_id}/{device_id}/telemetry`，Topic 与消息内的站点、设备身份必须一致。保留 `device_id + boot_id + seq`；未获得 UTC 时使用 `timestamp_ms=null`、`time_synced=false`。传感器缺测保持 null，振动原始单位为 m/s²；不能用零补齐缺测或把页面演示评分当作正式风险算法。详细接入约束见 [v2 接收边界](../docs/protocols/telemetry_v2_edge_intake.md)。
 
@@ -124,3 +124,13 @@ npm run build
 2026-10-16 接入版本的软件验证：73 项后端测试、9 项平台页面联调通过，前端 TypeScript 检查与生产构建通过。验证包含本地 Broker 的真实 MQTT 握手和收发，不包含 ESP32 真板、Atlas 或云端验证。
 
 2026-10-18 本轮相关 Python 验证合计 117 项通过：API / 接入 / 配置 / 真实本机 MQTT 共 67 项、视觉 32 项、启动与配置 18 项。新增回归覆盖 retained 重放隔离及下一条实时接收、存储失败恢复、时区、错误参数、跨设备证据与稳定分页，以及首次安装失败重试和源码更新后的页面重建。前端专项验证见 [应用 README](../apps/geohazard-demo/README.md)。
+
+## TinyQuake 实验接入（0.3.0）
+
+完整流程见 [ESP32 与平台接入指南](../docs/model_evaluation/TINYQUAKE_ESP32_GUIDE.md)。MQTT 连接配置 `payload_format=tinyquake_v1` 使用独立 Topic `zhifang/experimental/tinyquake/v1/{site}/{device}/{sensor}/result`；现有连接器缺少该字段时继续作为标准 `telemetry_v2` 处理。
+
+`GET /api/v1/tinyquake/streams` 返回各实验数据流最近接收记录；`GET /api/v1/tinyquake/results` 支持站点/设备/传感器/来源筛选及稳定游标。`POST /api/v1/tinyquake/test` 仅供启用演示时的 MOCK- 参考结果测试；真实设备进入 MQTT 接收端。接口继承既有 Bearer/loopback 边界。
+
+参考输入只允许 MOCK。真实传感器输入可使用 REAL，但所有 TinyQuake 数据仍为 TEST_ONLY、`risk_eligible=false`；实验表与 v2 遥测、告警隔离。没有进行物理传感器、地灾模型或板端可靠性验证。
+
+2026-10-20 同步到最新 main 后重新验证：139 项后端测试全部通过（含 22 项 TinyQuake 新测试）；前端 HTTP 2 项、原平台浏览器回归 7 项、TinyQuake 页面检查 6 项及生产构建通过。未执行 ESP32 刷机或实际 USB/Wi-Fi 板端收发。
