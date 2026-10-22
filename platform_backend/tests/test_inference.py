@@ -119,6 +119,28 @@ def test_worker_serializes_and_persists_only_research_results(service, monkeypat
     assert service.results(device_id='OTHER')['total'] == 0
 
 
+def test_slow_open_does_not_consume_inference_watchdog_budget(service, monkeypatch):
+    calls = fake_runtime(service, monkeypatch)
+    load = service._open
+    assert service._job_timeout == 10.0
+    monkeypatch.setattr(service, '_job_timeout', .1)
+
+    def slow_open():
+        time.sleep(.3)
+        load()
+
+    monkeypatch.setattr(service, '_open', slow_open)
+    for _ in range(4):
+        service.observe(observation())
+    wait_until(lambda: service._queue.unfinished_tasks == 0)
+    status = service.status()
+    assert len(calls) == 1
+    assert status['success_count'] == 1
+    assert status['failure_count'] == 0
+    assert status['state'] == 'connected'
+    assert service.results()['total'] == 1
+
+
 def test_three_execute_failures_latch_degraded(service, monkeypatch):
     calls = fake_runtime(service, monkeypatch, fail=True)
     for _ in range(8):

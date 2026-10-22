@@ -128,6 +128,7 @@ class InferenceService:
         self._queue = Queue(maxsize=64)
         self._stop = Event()
         self._thread = None
+        self._job_timeout = 10.0
         self._buffers = OrderedDict()
         self._models = {}
         self._acl = self._context = None
@@ -265,9 +266,6 @@ class InferenceService:
                         if future:
                             future.set_result({"available": False, **self.status()})
                         continue
-                    timer = Timer(10, self._timeout)
-                    timer.daemon = True
-                    timer.start()
                     try:
                         self._open()
                     except Exception as exc:
@@ -275,6 +273,9 @@ class InferenceService:
                             self._unavailable = True
                             self._reason = str(exc)
                         raise
+                    timer = Timer(self._job_timeout, self._timeout)
+                    timer.daemon = True
+                    timer.start()
                     if kind == "check":
                         result = self._check()
                     else:
