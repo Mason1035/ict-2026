@@ -1,7 +1,9 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { api, connectionSettings, errorMessage, isAborted } from "./api";
-import { deviceKey, type Dashboard, type Device, type Health, type Items, type TelemetryRow } from "./types";
+import { deviceKey, type InferenceResult, type Dashboard, type Device, type Health, type Items, type TelemetryRow } from "./types";
 export function usePlatform() {
+  const predictions = ref<InferenceResult[]>([]);
+  const predictionError = ref("");
   const dashboard = ref<Dashboard | null>(null);
   const health = ref<Health | null>(null);
   const devices = ref<Device[]>([]);
@@ -42,11 +44,16 @@ export function usePlatform() {
         selectedKey.value = device ? deviceKey(device) : "";
       }
       const query = new URLSearchParams(device ? { site_id: device.site_id, device_id: device.device_id, source: device.source } : { site_id: "DEMO", device_id: "DEMO-NODE-01", source: "MOCK" });
-      const [next, rows] = await Promise.all([
+      const [next, rows, inference] = await Promise.all([
         api.get<Dashboard>(`/dashboard?${query}`, signal),
         device ? api.get<Items<TelemetryRow>>(`/devices/${encodeURIComponent(device.device_id)}/telemetry?${query}&limit=100`, signal) : Promise.resolve({ items: [], next_cursor: null }),
+        api.get<Items<InferenceResult>>(`/inference/results?${query}&limit=6`, signal)
+          .then((page) => ({ items: page.items, error: "" }))
+          .catch((cause) => ({ items: [] as InferenceResult[], error: errorMessage(cause) })),
       ]);
       if (currentGeneration !== generation) return;
+      predictions.value = inference.items;
+      predictionError.value = inference.error;
       health.value = nextHealth;
       dashboard.value = next;
       if (loadedMore) {
@@ -66,6 +73,8 @@ export function usePlatform() {
       dashboard.value = null;
       history.value = [];
       health.value = null;
+      predictions.value = [];
+      predictionError.value = "";
     } finally {
       if (currentGeneration === generation) {
         refreshing = false;
@@ -73,9 +82,9 @@ export function usePlatform() {
       }
     }
   }
-  function reconnect() { stop(); loadedMore = false; historyCursor.value = null; dashboard.value = null; history.value = []; connection.value = "loading"; void refresh(); }
+  function reconnect() { stop(); loadedMore = false; historyCursor.value = null; dashboard.value = null; predictions.value = []; predictionError.value = ""; history.value = []; connection.value = "loading"; void refresh(); }
   function visibility() { if (document.hidden) stop(); else void refresh(); }
-  function select(key: string) { stop(); loadedMore = false; historyCursor.value = null; selectedKey.value = key; dashboard.value = null; history.value = []; void refresh(); }
+  function select(key: string) { stop(); loadedMore = false; historyCursor.value = null; selectedKey.value = key; dashboard.value = null; predictions.value = []; predictionError.value = ""; history.value = []; void refresh(); }
   async function moreHistory() {
     if (!historyCursor.value || !selected.value || historyLoading.value) return;
     const device = selected.value;
@@ -108,5 +117,5 @@ export function usePlatform() {
   watch(() => connectionSettings.revision, reconnect, { flush: "sync" });
   onMounted(() => { void refresh(); document.addEventListener("visibilitychange", visibility); });
   onBeforeUnmount(() => { disposed = true; stop(); document.removeEventListener("visibilitychange", visibility); });
-  return { dashboard, health, devices, selectedKey, selected, history, historyCursor, historyLoading, moreHistory, connection, error, actionError, updatedAt, busy, refresh, reconnect, select, action };
+  return { predictions, predictionError, dashboard, health, devices, selectedKey, selected, history, historyCursor, historyLoading, moreHistory, connection, error, actionError, updatedAt, busy, refresh, reconnect, select, action };
 }

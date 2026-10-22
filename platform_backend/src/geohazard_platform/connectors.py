@@ -183,7 +183,8 @@ def _code(value: Any) -> int:
 
 
 class _MQTTSession:
-    def __init__(self, db: Database, item: dict[str, Any], *, probe: bool = False):
+    def __init__(self, db: Database, item: dict[str, Any], *, probe: bool = False, ingest=ingest_telemetry):
+        self._ingest = ingest
         self.db, self.item, self.probe = db, item, probe
         self.ready = Event()
         self.stopped = False
@@ -281,7 +282,7 @@ class _MQTTSession:
             if self.item["config"].get("payload_format") == "tinyquake_v1":
                 receipt = tinyquake.ingest(self.db, payload, **metadata)
             else:
-                receipt = ingest_telemetry(self.db, payload, **metadata)
+                receipt = self._ingest(self.db, payload, **metadata)
             with self._lock:
                 self.state["messages_accepted"] += 1
                 self.state["duplicates"] += int(receipt["status"] == "duplicate")
@@ -346,7 +347,8 @@ test_connector.__test__ = False
 
 
 class MQTTManager:
-    def __init__(self, db: Database):
+    def __init__(self, db: Database, *, ingest=ingest_telemetry):
+        self._ingest = ingest
         self.db = db
         self._sessions: dict[str, _MQTTSession] = {}
         self._lock = RLock()
@@ -368,7 +370,7 @@ class MQTTManager:
                 return
             for identifier, item in items.items():
                 if item["enabled"] and item["kind"] == "mqtt" and identifier not in self._sessions:
-                    session = _MQTTSession(self.db, item)
+                    session = _MQTTSession(self.db, item, ingest=self._ingest)
                     self._sessions[identifier] = session
                     try:
                         session.start()

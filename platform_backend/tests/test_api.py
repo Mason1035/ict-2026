@@ -4,6 +4,7 @@ from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 import io
 import json
+import sys
 
 from fastapi.testclient import TestClient
 import numpy as np
@@ -59,13 +60,16 @@ def upload_image(client, changed=False, **metadata):
     return response.json()
 
 
-def test_backend_demo_scores_history_and_durable_restart(tmp_path):
+def test_backend_demo_scores_history_and_durable_restart(tmp_path, monkeypatch):
+    monkeypatch.setitem(sys.modules, "acl", None)
     with opened(tmp_path) as (client, _):
         health = client.get(API + "/health").json()
         assert health["storage"]["durable"]
         assert not health["storage"]["node_cleanup_authorized"]
         assert health["auth_mode"] == "local_loopback"
         assert health["capabilities"]["atlas_acl"] == "not_connected"
+        inference_status = client.get(API + "/inference/status").json()
+        assert inference_status["state"] == "not_connected" and inference_status["reason"]
         for scenario, expected in zip("ABCD", (18, 46, 72, 91)):
             response = client.post(API + "/demo/scenario", json={"scenario": scenario})
             assert response.status_code == 200
@@ -438,3 +442,72 @@ def test_vision_api_scopes_before_pagination_and_dashboard_uses_total_counts(tmp
         dashboard = client.get(API + "/dashboard", params={"device_id": "TARGET"}).json()
         assert dashboard["stats"]["alarm_count"] == 105
         assert len(dashboard["alarms"]) == 100
+
+
+def test_inference_unavailable_does_not_break_ingestion_or_risk(tmp_path, monkeypatch):
+    import time
+    monkeypatch.setitem(sys.modules, "acl", None)
+    with opened(tmp_path) as (client, app):
+        for seq in range(1, 6):
+            response = inject(client, payload(seq=seq, score=90, level="EMERGENCY"))
+            assert response.status_code == 201 and response.json()["durable"]
+        deadline = time.monotonic() + 3
+        while app.state.inference.status()["failure_count"] == 0:
+            assert time.monotonic() < deadline
+            time.sleep(.005)
+        assert client.get(API + "/health").json()["capabilities"]["atlas_acl"] == "not_connected"
+        assert "acl_import_failed" in client.get(API + "/inference/status").json()["reason"]
+        assert client.post(API + "/inference/self-check").json()["available"] is False
+        dashboard = client.get(API + "/dashboard", params={"device_id": "MOCK-API-01"}).json()
+        assert dashboard["latest"]["risk"]["final_score"] == 90
+
+
+def test_inference_results_shape_filtering_pagination_and_auth(tmp_path):
+    with opened(tmp_path, demo=False, token="inference-token") as (client, app):
+        assert client.get(API + "/inference/status").status_code == 401
+        assert client.get(API + "/inference/results").status_code == 401
+        assert client.post(API + "/inference/self-check").status_code == 401
+        client.headers["Authorization"] = "Bearer inference-token"
+        assert client.get(API + "/inference/results").json() == {"items": [], "next_cursor": None, "total": 0}
+        with app.state.db.connection() as c:
+            for index in range(4):
+                c.execute("""INSERT INTO inference_results
+                    (id,site_id,device_id,source,scope,model,window_start_at,window_end_at,
+                     predicted_delta,latency_ms,created_at,reason) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""",
+                    (str(index), "S", "D" if index < 3 else "OTHER", "MOCK", "TEST_ONLY", "soil",
+                     "2026-10-22T00:00:00.000Z", "2026-10-22T00:00:03.000Z", "[0.01]", .5,
+                     "2026-10-22T00:00:04.000Z", "Uncalibrated research; excluded from risk fusion"))
+        params = {"site_id": "S", "device_id": "D", "limit": 2}
+        page = client.get(API + "/inference/results", params=params).json()
+        assert page["total"] == 3 and len(page["items"]) == 2 and page["next_cursor"]
+        item = page["items"][0]
+        assert item["predicted_delta"] == [.01] and item["fusion_eligible"] is False
+        assert item["source"] == "MOCK" and item["scope"] == "TEST_ONLY"
+        assert item["calibration"] == "uncalibrated_research" and item["reason"]
+        second = client.get(API + "/inference/results", params={**params, "cursor": page["next_cursor"]}).json()
+        assert len(second["items"]) == 1 and second["next_cursor"] is None
+        assert len({item["id"] for item in page["items"] + second["items"]}) == 3
+        assert client.get(API + "/inference/results", params={"cursor": "broken"}).status_code == 422
+        assert client.get(API + "/inference/results", params={"limit": 0}).status_code == 422
+
+
+def test_common_ingestion_hook_observes_accepted_current_only_and_is_isolated(tmp_path, monkeypatch):
+    with opened(tmp_path) as (client, app):
+        observations = []
+        monkeypatch.setattr(app.state.inference, "observe", observations.append)
+        original = payload(seq=2)
+        assert inject(client, original).status_code == 201
+        assert len(observations) == 1
+        assert observations[0]["source"] == "MOCK" and observations[0]["scope"] == "TEST_ONLY"
+        assert inject(client, original).json()["status"] == "duplicate"
+        assert inject(client, payload(seq=1)).json()["is_backfill"]
+        assert len(observations) == 1
+        assert client.post(API + "/demo/step").status_code == 200
+        assert observations[-1]["device_id"] == DEVICE
+
+        def broken_observer(payload):
+            raise RuntimeError("inference adapter failure")
+
+        monkeypatch.setattr(app.state.inference, "observe", broken_observer)
+        response = inject(client, payload(seq=3))
+        assert response.status_code == 201 and response.json()["durable"]

@@ -41,6 +41,17 @@ class Database:
             connection.execute("PRAGMA journal_mode=WAL")
             connection.execute("PRAGMA synchronous=FULL")
             connection.executescript("""
+                CREATE TABLE IF NOT EXISTS inference_results (
+                    id TEXT PRIMARY KEY, site_id TEXT NOT NULL, device_id TEXT NOT NULL,
+                    source TEXT NOT NULL, scope TEXT NOT NULL, model TEXT NOT NULL,
+                    window_start_at TEXT NOT NULL, window_end_at TEXT NOT NULL,
+                    predicted_delta TEXT NOT NULL, latency_ms REAL NOT NULL, created_at TEXT NOT NULL,
+                    fusion_eligible INTEGER NOT NULL DEFAULT 0 CHECK(fusion_eligible=0),
+                    calibration TEXT NOT NULL DEFAULT 'uncalibrated_research'
+                        CHECK(calibration='uncalibrated_research'), reason TEXT NOT NULL
+                );
+                CREATE INDEX IF NOT EXISTS inference_device_time ON inference_results
+                    (site_id,device_id,created_at DESC,id DESC);
                 CREATE TABLE IF NOT EXISTS tinyquake_results (
                     id TEXT PRIMARY KEY, site_id TEXT NOT NULL, device_id TEXT NOT NULL,
                     sensor_id TEXT NOT NULL, boot_id INTEGER NOT NULL, seq INTEGER NOT NULL,
