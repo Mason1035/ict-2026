@@ -196,3 +196,8 @@
 .platform-shell .platform-sensor { border: 0; border-radius: 0; box-shadow: none; }
 .platform-shell .platform-sensor + .platform-sensor { border-left: 1px solid #edf0e9; }
 @media (max-width: 760px) { .platform-shell .platform-sensor:nth-child(odd) { border-left: 0; }.platform-shell .platform-sensor:nth-child(n+3) { border-top: 1px solid #edf0e9; }.platform-shell .platform-hero .terrain-viewport { min-height: 360px; flex: none; } }
+
+.acl-badge { padding: 5px 9px; border-radius: 12px; font-size: 12px; color: #68746d; background: #eef0ee; white-space: nowrap; }
+.acl-badge.connected { color: #26734f; background: #e4f3e9; }
+.acl-badge.degraded { color: #89620c; background: #fff1c8; }
+.inference-section { margin-top: 18px; }

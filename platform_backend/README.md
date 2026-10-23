@@ -105,7 +105,7 @@ SQLite 事务先保存原始消息、接入 sidecar、身份与接收路径，�
 
 输出图像质量、变化面积比、SSIM、光流中位数/P95 和变化叠加图。模糊/曝光阈值只是可解释的技术启发式，不是地灾阈值。`vision_score=null`、`model_version=null`、`fusion_eligible=false`，不会把图片差异直接解释为灾害概率或取消传感器高危状态。
 
-当前接入图片文件；USB UVC 持续采集代理、视频导入、UAV 地理映射、真实摄像头质量评估、校准视觉评分、完整风险融合、ONNX/OM/ACL 和 IoTDA 尚未接入。保留已有 B FeatureRiskRuntime 与上游契约，不通过填写 DRAFT 或修改权重绕过标定。
+当前接入图片文件；USB UVC 持续采集代理、视频导入、UAV 地理映射、真实摄像头质量评估、校准视觉评分、完整风险融合、IoTDA 尚未接入；Atlas OM/ACL 研究推理按下节独立呈现。保留已有 B FeatureRiskRuntime 与上游契约，不通过填写 DRAFT 或修改权重绕过标定。
 
 ## 本地访问与测试
 
@@ -134,3 +134,14 @@ npm run build
 参考输入只允许 MOCK。真实传感器输入可使用 REAL，但所有 TinyQuake 数据仍为 TEST_ONLY、`risk_eligible=false`；实验表与 v2 遥测、告警隔离。没有进行物理传感器、地灾模型或板端可靠性验证。
 
 2026-10-20 同步到最新 main 后重新验证：139 项后端测试全部通过（含 22 项 TinyQuake 新测试）；前端 HTTP 2 项、原平台浏览器回归 7 项、TinyQuake 页面检查 6 项及生产构建通过。未执行 ESP32 刷机或实际 USB/Wi-Fi 板端收发。
+
+
+## Atlas ACL 研究预测
+
+`GEOHAZARD_ACL=auto|on|off` 默认为 `auto`；`auto` 和 `on` 都在首次有效窗口或显式自检时懒加载 ACL，缺少 ACL、模型或运行环境不会阻止平台接入。`off` 完全禁用，状态为 `not_connected`、reason 为 `disabled`。`GEOHAZARD_ACL_MODEL_DIR` 默认指向仓库的 `experiments/atlas_public_sensor_v1`，包含两个 OM 和 `golden/*.npz`。
+
+`GET /api/v1/inference/status` 返回实际状态、模型加载情况、队列深度、成功/失败/丢弃计数及最近延迟。只有真实推理成功后才显示 `connected`；连续三次执行失败或十秒调用超时将熔断为 `degraded`，需重启进程。超时通过看门狗隔离，无法安全终止卡住的厂商调用；停止新调用并禁止迟到结果落盘，资源由原工作线程返回后释放。
+
+`GET /api/v1/inference/results?site_id=&device_id=&limit=6` 返回带 `items/total/next_cursor` 的结果，支持同一筛选条件的游标续页。页面总览独立显示所选设备的研究预测。soil 输入为四个 `avg_pct/100`，motion 输入为八个 valid 六轴样本，服务不重复特征工程。所有结果继承遥测 source/scope，固定为未校准、`fusion_eligible=false`，不影响风险、告警或 TinyQuake。
+
+`POST /api/v1/inference/self-check` 仅在调用时读取两份 golden 的首窗，执行实际 NPU 推理并报告最大绝对差；soil 要求 ≤5e-5，motion 要求尺度相对误差 ≤1e-3、相关性 ≥0.99999。自检失败后熔断，golden 输出不写遥测预测表。无 NPU 时返回 `available=false` 与原因。板上 CANN/systemd 环境及长期负载验收由部署阶段完成。

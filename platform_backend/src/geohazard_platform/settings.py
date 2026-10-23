@@ -18,6 +18,8 @@ class Settings:
     data_dir: Path = field(default_factory=lambda: Path(os.environ.get("GEOHAZARD_DATA_DIR", str(REPO_ROOT / "platform_backend" / "data"))))
     api_token: str = field(default_factory=lambda: os.environ.get("GEOHAZARD_API_TOKEN", ""))
     demo_enabled: bool = field(default_factory=lambda: os.environ.get("GEOHAZARD_DEMO", "1") == "1")
+    acl_mode: str = field(default_factory=lambda: os.environ.get("GEOHAZARD_ACL", "auto"))
+    acl_model_dir: Path = field(default_factory=lambda: Path(os.environ.get("GEOHAZARD_ACL_MODEL_DIR", str(REPO_ROOT / "experiments/atlas_public_sensor_v1"))))
     demo_interval: float = 2.0
     freshness_seconds: int = 30
     allowed_origins: tuple[str, ...] = field(default_factory=local_origins)

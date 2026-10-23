@@ -4,7 +4,7 @@ export type SensorKey = "moisture" | "tilt" | "vibration" | "rain" | "crack";
 export type Sensors = Record<SensorKey, number | null>;
 export interface Device { site_id: string; device_id: string; source: Source; scope: string; last_received_at: string | null; }
 export interface MqttStatus { id?: string; connector_id?: string; name?: string; status?: string; state?: string; connected?: boolean; last_error?: string | null; message?: string; received_count?: number; messages_received?: number; messages_accepted?: number; messages_rejected?: number; intake_healthy?: boolean; last_durable_at?: string | null; }
-export interface Health { status: string; version: string; storage: { durable: boolean }; demo: { running?: boolean; scenario?: string } | boolean; auth_mode: string; mqtt: MqttStatus[]; }
+export interface Health { capabilities: Record<string, string>; status: string; version: string; storage: { durable: boolean }; demo: { running?: boolean; scenario?: string } | boolean; auth_mode: string; mqtt: MqttStatus[]; }
 export interface Risk { sensor_score: number | null; vision_score: number | null; final_score: number | null; level: Level; mode: string; reason: string; }
 export interface Latest { id: string; received_at: string; source_time: number | null; age_seconds: number; stale: boolean; sensors: Sensors; risk: Risk; system: Record<string, boolean | null>; }
 export interface HistoryPoint extends Sensors { time: string; score: number | null; }
@@ -33,3 +33,5 @@ export function dateTime(value?: string | number | null) { if (!value) return "â
 export function deviceKey(device: Device) { return [device.site_id, device.device_id, device.source].join("|"); }
 
 export function normalizeLevel(value: string): Level { return ({ NORMAL: "low", WATCH: "moderate", WARNING: "high", EMERGENCY: "critical" } as Record<string, Level>)[value] || (value in levelNames ? value as Level : "unknown"); }
+
+export interface InferenceResult { id: string; site_id: string; device_id: string; source: Source; scope: string; model: string; window_start_at: string; window_end_at: string; predicted_delta: number[]; latency_ms: number; created_at: string; fusion_eligible: false; calibration: "uncalibrated_research"; reason: string; }

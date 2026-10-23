@@ -30,6 +30,7 @@ from .database import Database, utc_now
 from .telemetry import IngestionError, ingest_telemetry, validate_telemetry
 from .connectors import ConnectorError, MQTTManager, list_connectors, get_connector, save_connector, delete_connector, test_connector
 from .vision import VisionService, VisionError
+from .inference import InferenceService, InferenceError
 from .demo import BackendDemo, SITE, DEVICE
 from .dashboard import latest, history, normalize_time_filter
 
@@ -79,7 +80,16 @@ class AckInput(StrictModel):
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or Settings()
     db = Database(settings.database_path)
-    mqtt = MQTTManager(db)
+    inference = InferenceService(db, settings)
+
+    def ingest(db, payload, **metadata):
+        receipt = ingest_telemetry(db, payload, **metadata)
+        if receipt["status"] == "accepted" and receipt.get("is_current"):
+            with suppress(Exception):
+                inference.observe({**payload, "source": receipt["source"], "scope": receipt["scope"]})
+        return receipt
+
+    mqtt = MQTTManager(db, ingest=ingest)
     started = time.monotonic()
 
     @asynccontextmanager
@@ -88,7 +98,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         db.initialize()
         app.state.db = db
         app.state.vision = VisionService(db, settings.media_dir)
-        app.state.demo = BackendDemo(db, settings.demo_enabled)
+        app.state.demo = BackendDemo(db, settings.demo_enabled, ingest=ingest)
         app.state.settings = settings
         if settings.demo_enabled and latest(db, device_id=DEVICE) is None:
             app.state.demo.sample()
@@ -112,10 +122,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 with suppress(asyncio.CancelledError):
                     await worker
             await run_in_threadpool(mqtt.stop)
+            await run_in_threadpool(inference.close)
             db.close()
 
     app = FastAPI(title="智哨防灾 · 多模态平台 API", version=__version__, lifespan=lifespan,
                   description="Local software integration. MOCK and operational sources are isolated; OpenCV observations are uncalibrated.")
+    app.state.inference = inference
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=["127.0.0.1", "localhost", "[::1]"])
     app.add_middleware(CORSMiddleware, allow_origins=list(settings.allowed_origins),
                        allow_methods=["GET", "POST", "PUT", "DELETE"], allow_headers=["Authorization", "Content-Type"])
@@ -147,7 +159,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             if not secrets.compare_digest(request.headers.get("authorization", "").encode("utf-8"), expected.encode("utf-8")):
                 raise HTTPException(401, "需要有效的后端 API Token", headers={"WWW-Authenticate": "Bearer"})
 
-    for exception_type in (IngestionError, ConnectorError, VisionError):
+    for exception_type in (IngestionError, ConnectorError, VisionError, InferenceError):
         async def handle_service_error(request, exc):
             return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
         app.add_exception_handler(exception_type, handle_service_error)
@@ -189,7 +201,20 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 "auth_mode":"bearer" if settings.api_token else "local_loopback", "counts":counts,
                 "demo":app.state.demo.state(),"mqtt":mqtt.statuses(), "demo_error":getattr(app.state,"demo_error",None),
                 "capabilities":{"mqtt":"implemented", "http_device_ingress":"test_only", "lora_binary":"not_configured",
-                    "vision":"opencv_baseline", "vision_score":"uncalibrated", "atlas_acl":"not_connected", "cloud":"not_connected"}}
+                    "vision":"opencv_baseline", "vision_score":"uncalibrated", "atlas_acl":inference.status()["state"], "cloud":"not_connected"}}
+
+    @api.get("/inference/status")
+    def inference_status():
+        return inference.status()
+
+    @api.get("/inference/results")
+    def inference_results(site_id: str | None = None, device_id: str | None = None,
+                          limit: int = Query(100, ge=1, le=500), cursor: str | None = None):
+        return inference.results(site_id=site_id, device_id=device_id, limit=limit, cursor=cursor)
+
+    @api.post("/inference/self-check")
+    def inference_self_check():
+        return inference.self_check()
 
     @api.get("/sites")
     def sites():
@@ -229,7 +254,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             raise HTTPException(403,"测试注入已禁用")
         if not str(body.payload.get("device_id","")).startswith(("MOCK-","DEMO-")):
             raise HTTPException(422,"测试入口仅接受独立 MOCK-/DEMO- 设备 ID；不会改写原始身份")
-        return ingest_telemetry(db,body.payload,source="MOCK",scope="TEST_ONLY",transport="http_test",context=body.context)
+        return ingest(db,body.payload,source="MOCK",scope="TEST_ONLY",transport="http_test",context=body.context)
 
     @api.get("/connectors")
     def connector_list():

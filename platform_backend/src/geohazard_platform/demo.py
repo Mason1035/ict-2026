@@ -53,7 +53,8 @@ def fixture_payload(state: dict) -> dict:
 
 
 class BackendDemo:
-    def __init__(self, db: Database, enabled=True):
+    def __init__(self, db: Database, enabled=True, *, ingest=ingest_telemetry):
+        self._ingest = ingest
         self.db, self.enabled, self._lock = db, enabled, RLock()
         with db.connection() as c:
             c.execute("CREATE TABLE IF NOT EXISTS platform_settings(key TEXT PRIMARY KEY,value_json TEXT NOT NULL)")
@@ -82,7 +83,7 @@ class BackendDemo:
             if advance:
                 state["elapsed_seconds"] += 1
             self._save(state)
-            ingest_telemetry(self.db, fixture_payload(state), source="MOCK", scope="TEST_ONLY", transport="backend_demo",
+            self._ingest(self.db, fixture_payload(state), source="MOCK", scope="TEST_ONLY", transport="backend_demo",
                              context={"demo_sensors": state["sensors"], "scenario": state["scenario"], "risk_model": "DEMO_ONLY_piecewise_v1"})
             return self.state()
 
