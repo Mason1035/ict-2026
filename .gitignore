@@ -1,0 +1,9 @@
+# Local NODE-01 evidence stays on this machine; tracked history is unaffected.
+# The small public release note lives in docs/NODE01_SANDBOX_CAPTURE_V1.md.
+/docs/test_records/NODE-01/
+/firmware/node01/log.zhishao_node01.*.txt
+/firmware/node01/sdkconfig.local
+/firmware/node01/.venv*/
+/firmware/node01/tools/**/__pycache__/
+/firmware/node01/tests/__pycache__/
+# firmware/node01/.gitignore already excludes its build*/ directories.

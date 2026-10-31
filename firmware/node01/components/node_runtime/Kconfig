@@ -1,0 +1,65 @@
+menu "NODE-01 acquisition/storage diagnostics"
+choice NODE01_DIAGNOSTIC_MODE
+    prompt "Diagnostic isolation (never a calibrated experiment)"
+    default NODE01_DIAG_ACQUISITION
+config NODE01_DIAG_ACQUISITION
+    bool "Real sensors with diagnostic SD recording"
+config NODE01_DIAG_SENSORS_ONLY
+    bool "TEST_ONLY: real I2C sensors, no SD or network"
+    select I2C_ENABLE_DEBUG_LOG
+    help
+        Include SDK I2C NACK diagnostics that INFO builds cannot expose.
+        Extra error logging changes timing; this is an isolation test.
+config NODE01_DIAG_STORAGE_ONLY
+    bool "SYNTHETIC/TEST_ONLY: SD load, no I2C or network"
+endchoice
+choice NODE01_STARTUP_PLAN
+    prompt "TEST_ONLY controlled integration startup experiment"
+    depends on NODE01_DIAG_ACQUISITION
+    default NODE01_STARTUP_CONCURRENT
+config NODE01_STARTUP_CONCURRENT
+    bool "Concurrent startup (original task dependency order)"
+config NODE01_STARTUP_PROBE
+    bool "A: concurrent startup plus three fixed I2C address probes"
+    help
+        Same address-only SDK probes as Sensors-only, before task creation.
+        Does not enable I2C DEBUG, retry, or change sensor registers.
+config NODE01_STARTUP_IMU_FIRST
+    bool "B: IMUs ready, then ADS ready, then SD mount/open, then capture"
+    help
+        TEST_ONLY dependency experiment. Failed prerequisites block capture.
+        Task priorities, I2C speed, ODR and the storage service stay unchanged.
+endchoice
+config NODE01_IMU_DRDY
+    bool "Service 100Hz IMU updates from frozen GPIO4/5 DRDY (hardware retest required)"
+    default n
+    help
+        Keeps the sensor ODR at 100Hz. The ISR only counts/notifies; task
+        context validates Data Ready and reads the real observation.
+        Missing IRQs use an explicitly counted polling fallback.
+config NODE01_CAPTURE_SECONDS
+    int "Controlled diagnostic capture duration (0 = continuous)"
+    range 0 3600
+    default 0
+    help
+        Nonzero: stop producers at the actual monotonic deadline, drain the
+        queue, close the single capture file, then fully verify it.
+        Periodic fsync remains. This does not guarantee zero loss/durability.
+config NODE01_SANDBOX_EXPERIMENT
+    bool "Operator-controlled sandbox capture (30-300 seconds, one run per boot)"
+    depends on NODE01_DIAG_ACQUISITION && NODE01_STARTUP_IMU_FIRST && NODE01_IMU_DRDY && !NODE01_NETWORK_ENABLE
+    default n
+    help
+        Separate candidate mode. Initializes real sensors and SD, waits for
+        EXP START seconds on UART0 or USB Serial/JTAG secondary, accepts STOP.
+        No automatic experiment, calibration or risk. Hardware input not verified.
+config NODE01_I2C_LOCK_DIAG_TRACE
+    bool "TEST_ONLY: finite RAM I2C mutex lifecycle trace (post-capture output)"
+    depends on NODE01_SANDBOX_EXPERIMENT
+    default n
+    help
+        Independent diagnostic candidate only. Records first 100ms and first
+        eight ADS channel attempts, bounded rolling history and anomalies.
+        No timeout/priority/ODR change. Intrusion needs real-board assessment.
+        Saturation or missing links explicitly prevents completeness claims.
+endmenu

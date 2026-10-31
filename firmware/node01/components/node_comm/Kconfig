@@ -1,0 +1,10 @@
+menu "NODE-01 communication"
+config NODE01_NETWORK_ENABLE
+    bool "Enable provisioned Wi-Fi/MQTT (hardware/Broker NOT_RUN)"
+    default n
+    help
+        Reads credentials from device NVS, never from committed sdkconfig.
+        Requires node01_net strings: ssid, psk, uri, user, pass, site.
+        Requires a reviewed, provisioned node01_id/last_boot u64 counter.
+        Missing/corrupt state blocks publishing. No automatic NVS erase or ID seeding.
+endmenu

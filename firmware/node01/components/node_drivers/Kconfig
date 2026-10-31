@@ -1,0 +1,13 @@
+menu "NODE-01 V0.1 bring-up"
+config NODE01_I2C_HZ
+    int "I2C clock Hz (diagnostic 100000; formal target 400000)"
+    range 100000 400000
+    default 100000
+    help
+        Arduino 100 kHz evidence does not validate this ESP-IDF driver.
+        400 kHz requires a separate hardware test.
+config NODE01_SD_KHZ
+    int "SD SPI clock kHz (diagnostic 1000; formal 20000 or 10000)"
+    range 1000 20000
+    default 1000
+endmenu
