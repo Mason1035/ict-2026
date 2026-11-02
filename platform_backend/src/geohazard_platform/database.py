@@ -91,7 +91,8 @@ class Database:
                 );
                 CREATE TABLE IF NOT EXISTS alarms (
                     id TEXT PRIMARY KEY, site_id TEXT NOT NULL, device_id TEXT,
-                    source TEXT NOT NULL, level TEXT NOT NULL, score REAL,
+                    source TEXT NOT NULL, scope TEXT NOT NULL DEFAULT 'LEGACY_UNKNOWN',
+                    level TEXT NOT NULL, score REAL,
                     reason TEXT NOT NULL, source_message_id TEXT,
                     acknowledged INTEGER NOT NULL DEFAULT 0,
                     acknowledged_at TEXT, created_at TEXT NOT NULL
@@ -113,9 +114,19 @@ class Database:
                     password TEXT
                 );
             """)
+            # Serialize schema detection/ALTER across independent store instances.
+            connection.execute("BEGIN IMMEDIATE")
             columns = {row[1] for row in connection.execute("PRAGMA table_info(telemetry)")}
             if "context_json" not in columns:
                 connection.execute("ALTER TABLE telemetry ADD COLUMN context_json TEXT NOT NULL DEFAULT '{}' ")
+            alarm_columns = {row[1] for row in connection.execute("PRAGMA table_info(alarms)")}
+            if "scope" not in alarm_columns:
+                # Historical provenance does not establish operational purpose.
+                connection.execute("ALTER TABLE alarms ADD COLUMN scope TEXT NOT NULL DEFAULT 'LEGACY_UNKNOWN'")
+            # Reuse telemetry.scope/is_current and its per-device unique index.
+            # MOCK devices have a separate, globally registered provenance and
+            # retain their demo state; REAL research rows are never current.
+            connection.execute("UPDATE telemetry SET is_current=0, is_backfill=1 WHERE source='REAL' AND scope<>'OPERATIONAL' AND is_current=1")
             connection.commit()
             self._connection = connection
 

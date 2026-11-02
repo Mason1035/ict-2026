@@ -76,7 +76,7 @@ def _validate(data: dict[str, Any], old: dict[str, Any] | None = None) -> tuple[
             raise ConnectorError(422, "reserved HTTP adapter does not accept credentials")
         config = {"url": config["url"], "timeout_seconds": 5}
     else:
-        keys = {"host", "port", "site_id", "topic", "client_id", "username", "tls", "ca_cert_path", "qos", "keepalive", "password_configured", "payload_format"}
+        keys = {"host", "port", "site_id", "topic", "client_id", "username", "tls", "ca_cert_path", "qos", "keepalive", "password_configured", "payload_format", "scope"}
         if set(config) - keys:
             raise ConnectorError(422, "unsupported MQTT setting; TLS certificate verification cannot be disabled")
         config.pop("password_configured", None)
@@ -93,6 +93,11 @@ def _validate(data: dict[str, Any], old: dict[str, Any] | None = None) -> tuple[
         if not isinstance(payload_format, str) or payload_format not in {"telemetry_v2", "tinyquake_v1"}:
             raise ConnectorError(422, "payload_format must be telemetry_v2 or tinyquake_v1")
         experimental = payload_format == "tinyquake_v1"
+        scope = config.get("scope", "TEST_ONLY")
+        if not isinstance(scope, str) or scope not in {"TEST_ONLY", "OPERATIONAL"}:
+            raise ConnectorError(422, "MQTT scope must be TEST_ONLY or OPERATIONAL")
+        if scope == "OPERATIONAL" and (source != "REAL" or experimental):
+            raise ConnectorError(422, "OPERATIONAL scope requires REAL telemetry_v2 input")
         default_topic = f"zhifang/experimental/tinyquake/v1/{site}/+/+/result" if experimental else f"zhifang/v2/{site}/+/telemetry"
         topic = config.get("topic", default_topic)
         parts = topic.split("/") if isinstance(topic, str) else []
@@ -130,7 +135,7 @@ def _validate(data: dict[str, Any], old: dict[str, Any] | None = None) -> tuple[
         keepalive = config.get("keepalive", 30)
         if type(keepalive) is not int or not 5 <= keepalive <= 300:
             raise ConnectorError(422, "keepalive must be an integer 5..300 seconds")
-        config = {"host": host, "port": port, "site_id": site, "topic": topic, "client_id": client_id, "username": username, "tls": tls, "ca_cert_path": ca_path, "qos": qos, "keepalive": keepalive, "payload_format": payload_format}
+        config = {"host": host, "port": port, "site_id": site, "topic": topic, "client_id": client_id, "username": username, "tls": tls, "ca_cert_path": ca_path, "qos": qos, "keepalive": keepalive, "payload_format": payload_format, "scope": scope}
     return {"name": name.strip(), "kind": kind, "enabled": enabled, "source": source, "config": config}, password_changed, password
 
 
@@ -259,7 +264,7 @@ class _MQTTSession:
             self.state["messages_received"] += 1
         self._update(last_message_at=utc_now())
         source = self.item["source"]
-        scope = "TEST_ONLY" if source == "MOCK" or self.item["config"].get("payload_format") == "tinyquake_v1" else "OPERATIONAL"
+        scope = "TEST_ONLY" if source == "MOCK" or self.item["config"].get("payload_format") == "tinyquake_v1" else self.item["config"].get("scope", "TEST_ONLY")
         metadata = {"source": source, "scope": scope, "transport": "mqtt", "connector_id": self.item["id"], "topic": message.topic}
         try:
             if getattr(message, "retain", False):

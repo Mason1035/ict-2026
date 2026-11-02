@@ -137,8 +137,8 @@ def test_retained_broker_replay_is_quarantined_on_subscription(tmp_path, broker)
         # Reproduce an old retained broker snapshot delivered on a fresh
         # subscription, which must never become current arrival-only state.
         publisher.publish(topic, json.dumps(payload), qos=1, retain=True).wait_for_publish(timeout=2)
-        save_connector(db, {"name": "Retained replay test", "kind": "mqtt", "source": "MOCK", "enabled": True,
-                            "config": {"host": "127.0.0.1", "port": broker.port, "site_id": payload["site_id"]}})
+        save_connector(db, {"name": "Retained replay test", "kind": "mqtt", "source": "REAL", "enabled": True,
+                            "config": {"host": "127.0.0.1", "port": broker.port, "site_id": payload["site_id"], "scope": "OPERATIONAL"}})
         manager.start()
         wait_for(lambda: manager.statuses()[0]["connected"])
         wait_for(lambda: count(db, "quarantine") == 1)
