@@ -105,3 +105,42 @@
 - **远端交付未完成：** GitHub 连接器批量 create_tree 与范围更窄的 create_file 均被工具审批策略拦截，原文为 `MCP tool call requires approval, but approval policy is never`。未有文档写入成功，PR 尚未创建；已回读远端评估分支仍在 `7f3ac3c`。不改凭据/权限，也不经其他入口绕过该审批限制。
 - **可审阅交付准备：** 独立临时 checkout 仅提交两份 Markdown，另在 `/private/tmp/node01-assessment/` 准备补丁和 PR 描述。描述明确仅评估、无代码变更、原始数据未入库；本轮实际完成的核验和远端阻塞分别陈述，不假称 PR 已交付。
 - **停止点：** 停在本地文档完成及审阅准备；待连接器允许写入后仅补交文档 PR。等待何宇轩决定是否及按何路径进入下一轮施工；不自行开始导入器、用途隔离补丁、重采样、模型训练、烧录或在线联调，不合并 PR 或李青原分支。
+
+## 2026-11-02 — 阶段 I WP1 用途隔离修复与本地审阅交付
+
+### 授权范围和本地分支
+
+- 开工前已完整阅读仓库外 `Astra决策-2026-11-02.md` 的 §0、§4.1、§8.1、§9.3，再完整阅读 `任务书-阶段I-WP1-隔离修复.md`。本轮仅执行 WP1 的 source/scope、生产告警、当前态和查询隔离；模型路线保持多模态因果规则模型 v1，本轮没有实现规则链。
+- 接手时原仓库干净，`main`、本地 `origin/main` 均为 `672133d`。原仓库 `.git` 只读，创建分支时 `index.lock` 被系统以 `Operation not permitted` 拒绝；没有更改权限、凭据或原仓库 Git 元数据。
+- 在 `/private/tmp/stage1-wp1/repository/` 从本地仓库独立克隆，并从 `672133d` 建立 `codex/stage1-wp1-isolation`，用于本地提交和 format-patch。修复文件同步回原工作区；原工作区分支仍为 main，提交分支位于临时副本。交付目录为 `/private/tmp/stage1-wp1/`，供 Muse 复核；没有 push、创建 PR、连接远端写入或部署。
+
+### 修复行为和复用结构
+
+- `database.py` 为新库及旧 schema 的 `alarms` 增加 `scope`；初始化在写事务内检测列并 ALTER。既有告警统一为 `LEGACY_UNKNOWN`，不追认为 OPERATIONAL，保留原 ID、确认状态和其他字段。复用已有 `telemetry.scope`、`is_current`、`is_backfill` 和每设备唯一当前态索引，没有新增研究当前态表。初始化取消旧 REAL 非 OPERATIONAL 行的当前标记，不删除遥测、不清理历史 MOCK。
+- `telemetry.py` 以 `production_alarm_eligible` 集中检查 REAL、OPERATIONAL、经 full NODE 校验的原生身份、实时且有序的当前观测，以及既有生产者风险向上升级条件。REAL 输入中的派生回放身份、非实时 sidecar、非 MQTT 通路及已同步但超出时效的输入均只落库。时效沿用 `Settings.freshness_seconds`，默认 30 秒；未同步设备保留 null/false 和 arrival-only 语义。这里的身份有效性不等于固件或设备密码学认证。
+- REAL+TEST_ONLY 不更新生产当前态、不注册在线 boot、不参与生产风险基线。旧研究 boot 注册也不会挡住该 boot 第一条合规在线消息。MOCK/TEST_ONLY 可保留独立 MOCK 设备的演示当前值，既有设备全局来源约束继续拒绝 MOCK 冒用 REAL 设备。非当前研究输入沿用原回执的 `is_current=false/is_backfill=true` 字段。
+- 选择**非生产输入不落告警行**：MOCK、TEST_ONLY、历史或派生输入仍有遥测与 intake receipt 留痕，`alarm_id=null`；只有合规生产升级写入 `alarms.scope=OPERATIONAL` 及升级事件。同 device/boot/seq 改 scope 重发返回 409 并 quarantine，原行及 scope 不变；同 scope、同内容重复接收仍幂等。
+- `connectors.py` 复用持久化 MQTT `config`，新增 `config.scope`，默认 TEST_ONLY；旧配置缺字段也按 TEST_ONLY 接收。只有显式配置 REAL/telemetry_v2/OPERATIONAL 才进入生产资格检查；MOCK 和 TinyQuake 连接器不能配置 OPERATIONAL。
+- `main.py` 的 `/alarms` 默认只查 OPERATIONAL，可显式 `scope=TEST_ONLY` 或 `scope=LEGACY_UNKNOWN`，过滤在 LIMIT 前执行。dashboard 的告警列表与计数使用一致的 scope 条件，避免把历史未知用途当生产告警。告警行/确认响应新增 `scope`，MQTT 配置新增 `config.scope`，原响应外层结构保留。前端无需因附加字段改动；现有前端未提供 scope 控件，生产用途需经连接器 API 显式配置。本包没有改前端或运行 build。
+
+### 实测结果和未完成验收
+
+四组合均使用现有 v2 夹具，经真实接收函数和 SQLite 落库检查；每个场景先建立一条 REAL/OPERATIONAL/NORMAL 生产当前态，再送入有效高风险输入。MOCK 使用独立设备 ID。`behavior-matrix.json` 留在交付目录。
+
+| source | scope | 新增生产告警 | 生产当前态 | 遥测与回执 |
+| --- | --- | ---: | --- | --- |
+| MOCK | TEST_ONLY | 0 | 不变 | 保存 |
+| MOCK | OPERATIONAL | 0 | 不变 | 保存；MQTT 配置层拒绝该组合 |
+| REAL | TEST_ONLY | 0 | 不变 | 保存 |
+| REAL | OPERATIONAL | 1 | 更新为合规输入 | 保存 |
+
+- **已运行：** 新增 `test_isolation.py` 的 21 项测试使用标准库 unittest 全部通过，包含四组合、派生/非实时/超龄/乱序输入、换 scope 重发及重启、旧 alarms 迁移、旧 REAL 研究当前态、boot/告警基线隔离、MQTT 默认/显式用途与 scope 变更回调。全部 21 个后端源文件和测试模块语法编译检查通过；diff whitespace 检查通过。测试仅使用临时 SQLite 和不连网的 MQTT 回调，没有启动平台、Broker、演示源或其他服务。
+- **全量 pytest 尚未通过：** 任务书给定基线为 `155 passed`；本机改前、改后均因 `No module named pytest` 无法开始测试。系统 Python 为 3.9；已在交付目录用现成 Python 3.12 建临时环境，但缺 pytest、FastAPI、amqtt、Paho、OpenCV 等依赖，安装被包源 DNS 解析失败阻塞。没有修改系统 Python 或项目依赖声明。
+- **静态清点不是实跑：** AST 按现有参数化展开，改前 155 项、改后 178 项；旧用例未删除，新增 21 项标准库兼容用例及 2 项 HTTP 端点用例。`test-inventory.json` 保存清单。新增 HTTP 用例及完整既有回归尚待具备依赖的环境实跑，不能将 178 写为 passed。PR 草案逐条列出 8 项既有测试的资格夹具/用途修改及理由。
+- **交付限制：** 本地提交、format-patch 和 PR 描述草案可供审阅，但未满足任务书的全量 pytest 验收条件。Muse 复核时需先补跑完整 178 项预期用例，实际收集数和结果以 pytest 为准，再决定后续推送。本轮没有宣称部署或验收完成。
+
+### 未做事项和停止点
+
+- 未实现 CSV 适配器、原始回放、规则执行器或神经网络训练；未拆 `inference.py` TOP/TOE 窗口，未改研究模型或 OM，未改前端、固件及契约文档。
+- 未连接或修改 Atlas、任何服务及板上数据库，未处理板上历史 MOCK 数据；未 push、开 PR、合并或删除分支。
+- 停在 WP1 本地修复和审阅材料准备；范围之外的阶段 I 工作不继续启动。尚欠完整 pytest 验收，原仓库 `.git` 只读导致提交位于临时副本，两项差异均在 PR 草案和最终回复中明示。

@@ -83,7 +83,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     inference = InferenceService(db, settings)
 
     def ingest(db, payload, **metadata):
-        receipt = ingest_telemetry(db, payload, **metadata)
+        receipt = ingest_telemetry(db, payload, freshness_seconds=settings.freshness_seconds, **metadata)
         if receipt["status"] == "accepted" and receipt.get("is_current"):
             with suppress(Exception):
                 inference.observe({**payload, "source": receipt["source"], "scope": receipt["scope"]})
@@ -171,10 +171,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             c.execute("INSERT INTO events(id,kind,message,site_id,device_id,source,details_json,created_at) VALUES(?,?,?,?,?,?,?,?)",
                       (str(uuid4()),kind,message,site_id,device_id,source,json.dumps(details or {},ensure_ascii=False),utc_now()))
 
-    def filtered_rows(table, *, site_id=None, device_id=None, source=None, limit=100, before=None, after=None):
+    def filtered_rows(table, *, site_id=None, device_id=None, source=None, scope=None, limit=100, before=None, after=None):
         # table names are internal constants; all user inputs remain parameters.
         where, args = [], []
-        for name, value in (("site_id",site_id),("device_id",device_id),("source",source)):
+        for name, value in (("site_id",site_id),("device_id",device_id),("source",source),("scope",scope)):
             if value is not None:
                 where.append(f"{name}=?")
                 args.append(value)
@@ -288,8 +288,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @api.get("/alarms")
     def alarm_list(site_id:str|None=None,device_id:str|None=None,source:Literal["REAL","MOCK"]|None=None,
-                   limit:int=Query(100,ge=1,le=500),before:str|None=None,after:str|None=None):
-        return {"items":filtered_rows("alarms",site_id=site_id,device_id=device_id,source=source,limit=limit,before=before,after=after)}
+                   limit:int=Query(100,ge=1,le=500),before:str|None=None,after:str|None=None,
+                   scope:Literal["OPERATIONAL","TEST_ONLY","LEGACY_UNKNOWN"]="OPERATIONAL"):
+        return {"items":filtered_rows("alarms",site_id=site_id,device_id=device_id,source=source,scope=scope,limit=limit,before=before,after=after)}
 
     @api.post("/alarms/{alarm_id}/ack")
     def acknowledge(alarm_id:str,body:AckInput|None=None):
@@ -422,7 +423,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         current=latest(db,device_id=device_id,site_id=site_id,source=source,freshness_seconds=settings.freshness_seconds)
         entries=history(db,device_id=device_id,site_id=site_id,source=source,limit=120)["items"]
         charts=[{"time":r["received_at"],"score":r["risk"]["final_score"],**r["sensors"]} for r in reversed(entries)]
-        alarm_rows=filtered_rows("alarms",site_id=site_id,device_id=device_id,source=source)
+        alarm_scope="OPERATIONAL" if source=="REAL" else "TEST_ONLY"
+        alarm_rows=filtered_rows("alarms",site_id=site_id,device_id=device_id,source=source,scope=alarm_scope)
         event_rows=filtered_rows("events",site_id=site_id,source=source,limit=80)
         evidence_page=app.state.vision.evidence_page(site_id,200,device_id=device_id,source=source)
         results_page=app.state.vision.results_page(site_id,200,device_id=device_id,source=source)
@@ -430,7 +432,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         results=results_page["items"]
         with db.connection() as c:
             count=c.execute("SELECT count(*) FROM telemetry WHERE site_id=? AND device_id=? AND source=?",(site_id,device_id,source)).fetchone()[0]
-            alarm_count=c.execute("SELECT count(*) FROM alarms WHERE site_id=? AND device_id=? AND source=?",(site_id,device_id,source)).fetchone()[0]
+            alarm_count=c.execute("SELECT count(*) FROM alarms WHERE site_id=? AND device_id=? AND source=? AND scope=?",(site_id,device_id,source,alarm_scope)).fetchone()[0]
         return {"site_id":site_id,"device_id":device_id,"source":source,"scope":current["scope"] if current else None,
                 "latest":current,"history":charts,"alarms":alarm_rows,"events":event_rows,
                 "stats":{"telemetry_count":count,"alarm_count":alarm_count,"evidence_count":evidence_page["total"],"vision_result_count":results_page["total"]},

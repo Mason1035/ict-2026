@@ -96,7 +96,7 @@ def test_backend_demo_scores_history_and_durable_restart(tmp_path, monkeypatch):
 def test_reset_only_clears_designated_mock_device_preserves_operational_data(tmp_path):
     with opened(tmp_path) as (client, app):
         ingest_telemetry(app.state.db, payload("REAL-NODE-01", score=85, level="EMERGENCY"),
-                         source="REAL", scope="DEVICE_INTAKE", transport="mqtt")
+                         source="REAL", scope="OPERATIONAL", transport="mqtt")
         assert inject(client, payload("MOCK-OTHER", score=40, level="WATCH")).status_code == 201
         client.post(API + "/demo/scenario", json={"scenario": "D"})
         reset = client.post(API + "/demo/reset")
@@ -147,8 +147,12 @@ def test_null_fields_remain_unknown_and_provenance_cannot_be_smuggled_in(tmp_pat
 
 
 def test_ack_is_idempotent_and_dropout_does_not_erase_emergency_alarm(tmp_path):
-    with opened(tmp_path) as (client, _):
-        accepted = inject(client, payload(score=91, level="EMERGENCY")).json()
+    with opened(tmp_path) as (client, app):
+        def ingest_live(**values):
+            return ingest_telemetry(app.state.db, payload("REAL-API-ALARM", **values),
+                                    source="REAL", scope="OPERATIONAL", transport="mqtt")
+
+        accepted = ingest_live(score=91, level="EMERGENCY")
         alarm_id = accepted["alarm_id"]
         assert alarm_id
         first = client.post(API + f"/alarms/{alarm_id}/ack", json={"note": "人工已读"})
@@ -156,20 +160,70 @@ def test_ack_is_idempotent_and_dropout_does_not_erase_emergency_alarm(tmp_path):
         assert first.status_code == second.status_code == 200
         assert first.json()["acknowledged_at"] == second.json()["acknowledged_at"]
         assert first.json()["level"] == "EMERGENCY" and first.json()["score"] == 91
-        assert inject(client, payload(seq=2)).status_code == 201
-        assert inject(client, payload(seq=3, score=92, level="EMERGENCY")).status_code == 201
-        alarms = client.get(API + "/alarms", params={"device_id": "MOCK-API-01"}).json()["items"]
+        assert ingest_live(seq=2)["status"] == "accepted"
+        assert ingest_live(seq=3, score=92, level="EMERGENCY")["status"] == "accepted"
+        alarms = client.get(API + "/alarms", params={"device_id": "REAL-API-ALARM"}).json()["items"]
         assert len(alarms) == 1 and alarms[0]["level"] == "EMERGENCY" and alarms[0]["acknowledged"] == 1
-        events = client.get(API + "/events", params={"device_id": "MOCK-API-01"}).json()["items"]
+        events = client.get(API + "/events", params={"device_id": "REAL-API-ALARM"}).json()["items"]
         assert sum(item["kind"] == "alarm_acknowledged" for item in events) == 1
         assert client.post(API + "/alarms/missing/ack", json={}).status_code == 404
+
+
+def test_alarm_scope_defaults_to_operational_and_filters_before_limit(tmp_path):
+    with opened(tmp_path, demo=False) as (client, app):
+        # Seed read-projection fixtures: ingestion deliberately creates no
+        # TEST_ONLY alarms, while existing/audited test rows remain queryable.
+        with app.state.db.connection() as connection:
+            connection.executemany("""INSERT INTO alarms
+                (id,site_id,device_id,source,scope,level,score,reason,created_at)
+                VALUES(?,?,?,?,?,'WARNING',70,'scope query fixture',?)""", [
+                ("operational", SITE, "SCOPE-NODE", "REAL", "OPERATIONAL", "2026-11-02T00:00:00.000Z"),
+                ("research-real", SITE, "SCOPE-NODE", "REAL", "TEST_ONLY", "2026-11-02T00:00:01.000Z"),
+                ("research-mock", SITE, "SCOPE-NODE", "MOCK", "TEST_ONLY", "2026-11-02T00:00:02.000Z"),
+                ("legacy", SITE, "SCOPE-NODE", "REAL", "LEGACY_UNKNOWN", "2026-11-02T00:00:03.000Z"),
+            ])
+        default = client.get(API + "/alarms", params={"limit": 1}).json()["items"]
+        assert [item["id"] for item in default] == ["operational"]
+        assert default[0]["scope"] == "OPERATIONAL"
+        explicit = client.get(API + "/alarms", params={"scope": "TEST_ONLY", "source": "REAL", "limit": 1}).json()["items"]
+        assert [item["id"] for item in explicit] == ["research-real"]
+        all_test = client.get(API + "/alarms", params={"scope": "TEST_ONLY"}).json()["items"]
+        assert {item["id"] for item in all_test} == {"research-real", "research-mock"}
+        legacy = client.get(API + "/alarms", params={"scope": "LEGACY_UNKNOWN"}).json()["items"]
+        assert [item["id"] for item in legacy] == ["legacy"]
+        assert client.get(API + "/alarms", params={"scope": "ALL"}).status_code == 422
+        assert client.get(API + "/alarms", params={"device_id": "OTHER"}).json()["items"] == []
+        assert client.get(API + "/alarms", params={"site_id": "OTHER"}).json()["items"] == []
+        dashboard = client.get(API + "/dashboard", params={"device_id": "SCOPE-NODE", "source": "REAL"}).json()
+        assert [item["id"] for item in dashboard["alarms"]] == ["operational"]
+        assert dashboard["stats"]["alarm_count"] == 1
+
+
+def test_real_test_telemetry_keeps_operational_device_and_dashboard_current(tmp_path):
+    with opened(tmp_path, demo=False) as (client, app):
+        live = ingest_telemetry(app.state.db, payload("REAL-SCOPE-NODE", score=10, level="NORMAL"),
+                                 source="REAL", scope="OPERATIONAL", transport="mqtt")
+        research = ingest_telemetry(app.state.db, payload("REAL-SCOPE-NODE", seq=2, score=91, level="EMERGENCY"),
+                                     source="REAL", scope="TEST_ONLY", transport="mqtt")
+        assert research["is_current"] is False and research["alarm_id"] is None
+        dashboard = client.get(API + "/dashboard", params={"device_id": "REAL-SCOPE-NODE", "source": "REAL"}).json()
+        assert dashboard["latest"]["id"] == live["telemetry_id"]
+        assert dashboard["scope"] == "OPERATIONAL"
+        assert dashboard["alarms"] == [] and dashboard["stats"]["alarm_count"] == 0
+        devices = client.get(API + "/devices", params={"source": "REAL"}).json()["items"]
+        assert len(devices) == 1 and devices[0]["scope"] == "OPERATIONAL"
+        history = client.get(API + "/devices/REAL-SCOPE-NODE/telemetry").json()["items"]
+        assert {item["id"] for item in history} == {live["telemetry_id"], research["telemetry_id"]}
+        assert {item["scope"] for item in history} == {"OPERATIONAL", "TEST_ONLY"}
+        assert client.get(API + "/alarms").json()["items"] == []
+        assert client.get(API + "/alarms", params={"scope": "TEST_ONLY"}).json()["items"] == []
 
 
 def test_rest_source_isolation_and_unknown_device_has_no_manufactured_zero(tmp_path):
     with opened(tmp_path) as (client, app):
         assert inject(client, payload(score=72, level="WARNING")).status_code == 201
         ingest_telemetry(app.state.db, payload("REAL-API-01", score=91, level="EMERGENCY"),
-                         source="REAL", scope="DEVICE_INTAKE", transport="mqtt")
+                         source="REAL", scope="OPERATIONAL", transport="mqtt")
         real = client.get(API + "/dashboard", params={"device_id": "REAL-API-01", "source": "REAL"}).json()
         assert real["latest"]["source"] == "REAL"
         assert all(item["source"] == "REAL" for item in real["alarms"] + real["events"])
@@ -370,14 +424,16 @@ def test_connector_url_and_escaped_unicode_errors_return_422(tmp_path):
 
 def test_time_filters_use_equivalent_utc_offsets_and_reject_naive_dates(tmp_path):
     with opened(tmp_path) as (client, app):
-        assert inject(client, payload(score=90, level="EMERGENCY")).status_code == 201
+        receipt = ingest_telemetry(app.state.db, payload("REAL-API-TIME", score=90, level="EMERGENCY"),
+                                   source="REAL", scope="OPERATIONAL", transport="mqtt")
+        assert receipt["status"] == "accepted"
         stamp = "2026-10-18T00:00:00.000Z"
         with app.state.db.connection() as connection:
-            connection.execute("UPDATE telemetry SET received_at=? WHERE device_id=?", (stamp, "MOCK-API-01"))
-            connection.execute("UPDATE alarms SET created_at=? WHERE device_id=?", (stamp, "MOCK-API-01"))
-            connection.execute("UPDATE events SET created_at=? WHERE device_id=?", (stamp, "MOCK-API-01"))
-        for path in ("/devices/MOCK-API-01/telemetry", "/alarms", "/events"):
-            params = {"device_id": "MOCK-API-01"}
+            connection.execute("UPDATE telemetry SET received_at=? WHERE device_id=?", (stamp, "REAL-API-TIME"))
+            connection.execute("UPDATE alarms SET created_at=? WHERE device_id=?", (stamp, "REAL-API-TIME"))
+            connection.execute("UPDATE events SET created_at=? WHERE device_id=?", (stamp, "REAL-API-TIME"))
+        for path in ("/devices/REAL-API-TIME/telemetry", "/alarms", "/events"):
+            params = {"device_id": "REAL-API-TIME"}
             # An equal timestamp in another zone must produce the same set.
             utc = client.get(API + path, params={**params, "after": stamp}).json()["items"]
             offset = client.get(API + path, params={**params, "after": "2026-10-18T08:00:00+08:00"}).json()["items"]
@@ -438,7 +494,7 @@ def test_vision_api_scopes_before_pagination_and_dashboard_uses_total_counts(tmp
         assert dashboard["vision"]["evidence_next_cursor"]
         # Count all alarms while returning only the recent display slice.
         with app.state.db.connection() as connection:
-            connection.executemany("INSERT INTO alarms(id,site_id,device_id,source,level,score,reason,source_message_id,created_at) VALUES(?,?,?,?,?,?,?,?,?)", [(f"alarm-{i}", SITE, "TARGET", "MOCK", "WATCH", 40, "count test", None, "2026-10-18T00:00:00.000Z") for i in range(105)])
+            connection.executemany("INSERT INTO alarms(id,site_id,device_id,source,scope,level,score,reason,source_message_id,created_at) VALUES(?,?,?,?,?,?,?,?,?,?)", [(f"alarm-{i}", SITE, "TARGET", "MOCK", "TEST_ONLY", "WATCH", 40, "count test", None, "2026-10-18T00:00:00.000Z") for i in range(105)])
         dashboard = client.get(API + "/dashboard", params={"device_id": "TARGET"}).json()
         assert dashboard["stats"]["alarm_count"] == 105
         assert len(dashboard["alarms"]) == 100

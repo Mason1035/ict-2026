@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import math
+from datetime import datetime
 from typing import Any
 from uuid import uuid4
 
@@ -160,9 +161,42 @@ def quarantine_message(db: Database, raw: Any, *, source: str, scope: str, trans
     return identifier
 
 
-def ingest_telemetry(db: Database, payload: Any, *, source: str = "MOCK", scope: str = "TEST_ONLY", transport: str = "http_test", connector_id: str | None = None, topic: str | None = None, context: dict[str, Any] | None = None) -> dict[str, Any]:
+def production_alarm_eligible(*, source: str, scope: str, native_identity: bool,
+                              live_observation: bool, is_current: bool,
+                              level: str | None, previous_level: str | None) -> bool:
+    """The sole production escalation gate, after full NODE validation.
+
+    Native identity means validated device/boot/seq from the trusted direct
+    intake, without a derived replay identity. It is not firmware attestation.
+    The existing producer-risk upward-transition rule remains the business gate;
+    this function grants no eligibility to research model outputs.
+    """
+    return (source == "REAL" and scope == "OPERATIONAL"
+            and native_identity and live_observation and is_current
+            and level is not None
+            and LEVELS.get(level, -1) > max(0, LEVELS.get(previous_level, -1)))
+
+
+def _live_observation(payload: dict[str, Any], context: dict[str, Any], *,
+                      transport: str, received_at: str, freshness_seconds: int) -> bool:
+    # Only the direct MQTT intake currently provides live REAL NODE telemetry.
+    # Sidecar claims cannot promote SD/HTTP replay into that trusted path.
+    if (transport != "mqtt" or context.get("current_live_observation", True) is not True
+            or context.get("is_replay", False) is not False
+            or context.get("is_backfill", False) is not False):
+        return False
+    if payload["time_synced"]:
+        arrival_ms = datetime.fromisoformat(received_at.replace("Z", "+00:00")).timestamp() * 1000
+        return abs(arrival_ms - payload["timestamp_ms"]) <= freshness_seconds * 1000
+    # Unsynced devices retain arrival-only time semantics, never fabricated UTC.
+    return True
+
+
+def ingest_telemetry(db: Database, payload: Any, *, source: str = "MOCK", scope: str = "TEST_ONLY", transport: str = "http_test", connector_id: str | None = None, topic: str | None = None, context: dict[str, Any] | None = None, freshness_seconds: int = 30) -> dict[str, Any]:
     if source not in {"MOCK", "REAL"}:
         raise IngestionError(422, "backend provenance must be MOCK or REAL")
+    if not isinstance(scope, str) or scope not in {"OPERATIONAL", "TEST_ONLY"}:
+        raise IngestionError(422, "backend scope must be OPERATIONAL or TEST_ONLY")
     errors = validate_telemetry(payload, topic=topic)
     if errors:
         quarantine_id = quarantine_message(db, payload, source=source, scope=scope, transport=transport, connector_id=connector_id, topic=topic, reason=json.dumps(errors, ensure_ascii=False))
@@ -176,6 +210,14 @@ def ingest_telemetry(db: Database, payload: Any, *, source: str = "MOCK", scope:
     original = json.dumps(snapshot, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False)
     identity = {field: snapshot[field] for field in ("site_id", "device_id", "boot_id", "seq")}
     now = utc_now()
+    provenance = receipt["context"]
+    native_identity = (provenance.get("identity_is_native_and_valid", True) is True
+                       and provenance.get("generated_replay_identity", False) is False)
+    live_observation = _live_observation(snapshot, provenance, transport=transport,
+                                         received_at=now, freshness_seconds=freshness_seconds)
+    operational = source == "REAL" and scope == "OPERATIONAL" and native_identity and live_observation
+    # Preserve the separate MOCK demo device state, never a REAL device's state.
+    current_candidate = operational or (source == "MOCK" and scope == "TEST_ONLY")
     receipt_id = str(uuid4())
     sidecar_json = json.dumps(receipt["context"], ensure_ascii=False)
     conflict: str | None = None
@@ -183,39 +225,48 @@ def ingest_telemetry(db: Database, payload: Any, *, source: str = "MOCK", scope:
     with db.connection() as connection:
         old = connection.execute("SELECT * FROM telemetry WHERE device_id=? AND boot_id=? AND seq=?", (snapshot["device_id"], snapshot["boot_id"], snapshot["seq"])).fetchone()
         if old:
-            if old["payload_json"] == original and old["source"] == source:
+            if old["payload_json"] == original and old["source"] == source and old["scope"] == scope:
                 connection.execute("INSERT INTO intake_receipts(id,telemetry_id,status,source,scope,transport,connector_id,topic,context_json,received_at) VALUES(?,?,?,?,?,?,?,?,?,?)", (receipt_id, old["id"], "duplicate", source, scope, transport, connector_id, topic, sidecar_json, now))
                 return {"receipt_id": receipt_id, "status": "duplicate", "telemetry_id": old["id"], "identity": identity, "source": old["source"], "scope": old["scope"], "durable": True, "node_cleanup_authorized": False, "risk": snapshot["risk"]}
-            conflict = "same device/boot/seq already exists with different payload or provenance"
+            conflict = "same device/boot/seq already exists with different payload, provenance or scope"
         registered = connection.execute("SELECT site_id,source FROM telemetry WHERE device_id=? LIMIT 1", (snapshot["device_id"],)).fetchone()
         if registered and (registered["site_id"] != snapshot["site_id"] or registered["source"] != source):
             conflict = "device_id is globally unique; site/provenance does not match existing registration"
         if conflict is None:
-            previous = connection.execute("SELECT * FROM telemetry WHERE device_id=? AND is_current=1", (snapshot["device_id"],)).fetchone()
-            session = connection.execute("SELECT ordinal FROM boot_sessions WHERE device_id=? AND boot_id=?", (snapshot["device_id"], snapshot["boot_id"])).fetchone()
-            connection.execute("INSERT OR IGNORE INTO boot_sessions(device_id,boot_id,first_seen) VALUES(?,?,?)", (snapshot["device_id"], snapshot["boot_id"], now))
+            previous = connection.execute("SELECT * FROM telemetry WHERE device_id=? AND source=? AND scope=? AND is_current=1", (snapshot["device_id"], source, scope)).fetchone()
+            # Existing databases may have boot_sessions created by research.
+            # Only observations that actually advanced this scope establish a
+            # previously live boot for the ordering check.
+            session = connection.execute("SELECT 1 FROM telemetry WHERE device_id=? AND boot_id=? AND source=? AND scope=? AND is_backfill=0 LIMIT 1", (snapshot["device_id"], snapshot["boot_id"], source, scope)).fetchone()
+            # Research/backfill identities must not register an operational boot
+            # and make its later first live observation look like an old reboot.
+            if current_candidate:
+                connection.execute("INSERT OR IGNORE INTO boot_sessions(device_id,boot_id,first_seen) VALUES(?,?,?)", (snapshot["device_id"], snapshot["boot_id"], now))
             current = previous is None
             if previous is not None:
                 if previous["boot_id"] == snapshot["boot_id"]:
                     current = snapshot["seq"] > previous["seq"] and snapshot["uptime_ms"] >= previous["uptime_ms"]
                 elif session is None:
                     current = not (snapshot["timestamp_ms"] is not None and previous["source_time"] is not None and snapshot["timestamp_ms"] < previous["source_time"])
+            current = current and current_candidate
             identifier = str(uuid4())
             if current:
                 connection.execute("UPDATE telemetry SET is_current=0 WHERE device_id=? AND is_current=1", (snapshot["device_id"],))
             connection.execute("INSERT INTO telemetry(id,site_id,device_id,boot_id,seq,source,scope,transport,connector_id,topic,payload_json,context_json,source_time,uptime_ms,received_at,is_current,is_backfill) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (identifier, snapshot["site_id"], snapshot["device_id"], snapshot["boot_id"], snapshot["seq"], source, scope, transport, connector_id, topic, original, sidecar_json, snapshot["timestamp_ms"], snapshot["uptime_ms"], now, int(current), int(not current)))
             connection.execute("INSERT INTO intake_receipts(id,telemetry_id,status,source,scope,transport,connector_id,topic,context_json,received_at) VALUES(?,?,?,?,?,?,?,?,?,?)", (receipt_id, identifier, "accepted", source, scope, transport, connector_id, topic, sidecar_json, now))
             level = snapshot["risk"]["level"]
-            # Compare the most recent *known* risk in the active boot. Unknown
-            # readings do not clear an alarm or reset the escalation baseline.
-            known = connection.execute("SELECT payload_json FROM telemetry WHERE device_id=? AND is_backfill=0 AND id<>? AND json_extract(payload_json,'$.risk.level') IS NOT NULL ORDER BY rowid DESC LIMIT 1", (snapshot["device_id"], identifier)).fetchone()
+            # Only known operational risks participate in the escalation baseline.
+            # Unknown risks and research input cannot clear or suppress an alarm.
+            known = connection.execute("SELECT payload_json FROM telemetry WHERE device_id=? AND source='REAL' AND scope='OPERATIONAL' AND is_backfill=0 AND id<>? AND json_extract(payload_json,'$.risk.level') IS NOT NULL ORDER BY rowid DESC LIMIT 1", (snapshot["device_id"], identifier)).fetchone()
             previous_level = json.loads(known["payload_json"])["risk"]["level"] if known else None
             alarm_id = None
-            if current and level is not None and LEVELS.get(level, -1) > max(0, LEVELS.get(previous_level, -1)):
+            if production_alarm_eligible(source=source, scope=scope, native_identity=native_identity,
+                                         live_observation=live_observation, is_current=current,
+                                         level=level, previous_level=previous_level):
                 alarm_id = str(uuid4())
                 reason = f"Producer-reported risk escalated to {level}; calibration is owned by the producer"
-                connection.execute("INSERT INTO alarms(id,site_id,device_id,source,level,score,reason,source_message_id,created_at) VALUES(?,?,?,?,?,?,?,?,?)", (alarm_id, snapshot["site_id"], snapshot["device_id"], source, level, snapshot["risk"]["sensor_score"], reason, identifier, now))
-                connection.execute("INSERT INTO events(id,kind,message,site_id,device_id,source,details_json,created_at) VALUES(?,?,?,?,?,?,?,?)", (str(uuid4()), "risk_escalation", reason, snapshot["site_id"], snapshot["device_id"], source, json.dumps({"telemetry_id": identifier, "alarm_id": alarm_id, "risk": snapshot["risk"]}), now))
+                connection.execute("INSERT INTO alarms(id,site_id,device_id,source,scope,level,score,reason,source_message_id,created_at) VALUES(?,?,?,?,?,?,?,?,?,?)", (alarm_id, snapshot["site_id"], snapshot["device_id"], source, scope, level, snapshot["risk"]["sensor_score"], reason, identifier, now))
+                connection.execute("INSERT INTO events(id,kind,message,site_id,device_id,source,details_json,created_at) VALUES(?,?,?,?,?,?,?,?)", (str(uuid4()), "risk_escalation", reason, snapshot["site_id"], snapshot["device_id"], source, json.dumps({"telemetry_id": identifier, "alarm_id": alarm_id, "scope": scope, "risk": snapshot["risk"]}), now))
             result = {"receipt_id": receipt_id, "status": "accepted", "telemetry_id": identifier, "identity": identity, "source": source, "scope": scope, "durable": True, "node_cleanup_authorized": False, "risk": snapshot["risk"], "is_current": current, "is_backfill": not current, "alarm_id": alarm_id}
     if conflict is not None:
         quarantine_id = quarantine_message(db, payload, source=source, scope=scope, transport=transport, connector_id=connector_id, topic=topic, reason=conflict)

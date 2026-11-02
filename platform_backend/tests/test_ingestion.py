@@ -34,6 +34,10 @@ def risk_payload(payload, *, seq, score=None, level=None, boot=1, uptime=None):
     return p
 
 
+def ingest_operational(db, payload):
+    return ingest_telemetry(db, payload, source="REAL", scope="OPERATIONAL", transport="mqtt")
+
+
 def test_durable_duplicate_conflict_and_restart(db, payload):
     result = ingest_telemetry(db, payload)
     assert result["status"] == "accepted" and result["durable"]
@@ -67,16 +71,16 @@ def test_unknowns_and_sidecar_preserved_without_mutation(db, payload):
 
 
 def test_backfill_known_boot_and_null_risk_do_not_reset_alarm_baseline(db, payload):
-    ingest_telemetry(db, risk_payload(payload, seq=5, score=82, level="EMERGENCY"))
-    old = ingest_telemetry(db, risk_payload(payload, seq=1, score=90, level="EMERGENCY"))
+    ingest_operational(db, risk_payload(payload, seq=5, score=82, level="EMERGENCY"))
+    old = ingest_operational(db, risk_payload(payload, seq=1, score=90, level="EMERGENCY"))
     assert old["is_backfill"]
-    ingest_telemetry(db, risk_payload(payload, seq=6))
-    ingest_telemetry(db, risk_payload(payload, seq=7, score=84, level="EMERGENCY"))
+    ingest_operational(db, risk_payload(payload, seq=6))
+    ingest_operational(db, risk_payload(payload, seq=7, score=84, level="EMERGENCY"))
     assert len(rows(db, "alarms")) == 1
     # Boot IDs are unique, not numerically monotonic.
-    newer = ingest_telemetry(db, risk_payload(payload, seq=1, boot=0, score=70, level="WARNING"))
+    newer = ingest_operational(db, risk_payload(payload, seq=1, boot=0, score=70, level="WARNING"))
     assert newer["is_current"]
-    backfill = ingest_telemetry(db, risk_payload(payload, seq=8, boot=1, score=95, level="EMERGENCY"))
+    backfill = ingest_operational(db, risk_payload(payload, seq=8, boot=1, score=95, level="EMERGENCY"))
     assert not backfill["is_current"] and backfill["alarm_id"] is None
     assert len([r for r in rows(db, "telemetry") if r["is_current"]]) == 1
     assert next(r for r in rows(db, "telemetry") if r["is_current"])["boot_id"] == 0
@@ -84,7 +88,7 @@ def test_backfill_known_boot_and_null_risk_do_not_reset_alarm_baseline(db, paylo
 
 def test_alarm_only_upward_transitions_and_emergency_is_not_cleared(db, payload):
     for seq, score, level in [(1, 10, "NORMAL"), (2, 35, "WATCH"), (3, 50, "WATCH"), (4, 65, "WARNING"), (5, 85, "EMERGENCY"), (6, None, None), (7, 0, "NORMAL")]:
-        ingest_telemetry(db, risk_payload(payload, seq=seq, score=score, level=level))
+        ingest_operational(db, risk_payload(payload, seq=seq, score=score, level=level))
     alarms = rows(db, "alarms")
     assert [row["level"] for row in alarms] == ["WATCH", "WARNING", "EMERGENCY"]
     assert all(row["acknowledged"] == 0 for row in alarms)
