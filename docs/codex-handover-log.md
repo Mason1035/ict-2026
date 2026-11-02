@@ -144,3 +144,46 @@
 - 未实现 CSV 适配器、原始回放、规则执行器或神经网络训练；未拆 `inference.py` TOP/TOE 窗口，未改研究模型或 OM，未改前端、固件及契约文档。
 - 未连接或修改 Atlas、任何服务及板上数据库，未处理板上历史 MOCK 数据；未 push、开 PR、合并或删除分支。
 - 停在 WP1 本地修复和审阅材料准备；范围之外的阶段 I 工作不继续启动。尚欠完整 pytest 验收，原仓库 `.git` 只读导致提交位于临时副本，两项差异均在 PR 草案和最终回复中明示。
+
+## 2026-11-02 — 阶段 I WP2 原始回放与内部分析格式
+
+### 基线、授权与实际交付状态
+
+- 开工前完整阅读仓库外 `任务书-阶段I-WP2-回放适配.md`，阅读 Astra 决策中阶段 I、原始回放、分通道、时间/量纲、用途与验收口径，以及本日志尾部 WP1 记录。按用户本轮覆盖后的交付要求施工，不 push、不创建 PR。
+- 本地 main 和 origin/main 的基线均为 `ed50d14130e465d1f202bf8316700391587e73d5`（PR #12 已合并），开始时工作区干净。
+- **分支和提交未完成：** 原仓库执行 `git switch -c codex/stage1-wp2-replay main` 被沙箱拒绝创建 `.git/index.lock`，原文 `Operation not permitted`。本轮要求直接在原仓库提交，因此没有沿用 WP1 的替代仓库；实际仍在 main，改动为未提交工作区文件，没有 WP2 提交哈希。
+- **指定交付目录未写成：** 创建 `~/Desktop/ICT-2026/deliveries/stage1-wp2/` 同样被沙箱以 `Operation not permitted` 拒绝。审阅说明、验证摘要、测试输出、四场统计和普通 diff 补丁保存在原仓库内可写的 `work/stage1-wp2/`（已被既有 `.gitignore` 忽略，位于桌面项目内，非 `/private/tmp`）。`delivery-note.md` 如实写明没有提交哈希及这两项路径/权限差异，不能视为已完成用户指定的 Git/目录交付。
+
+### 实现与口径
+
+- 新增 `sd_replay.py`，只读读取单场 BEG/CSV/END，逐项核对身份与固件声明、22 列结构、原始全字节长度/CRC32、END 行数及有效计数、全表从 0 连续的 acquisition_index。三件套分别计算 SHA-256；不一致抛结构化异常，不返回部分场次。非 Valid 行单独计数并保留原始 validity/error、缺失值及源物理行号。
+- 新增 `research_sessions.py`，定义 `research-raw-session-v1` 内部会话/观测/五通道序列及转换，提供 `register_session()` 和 `python -m geohazard_platform.research_sessions` CLI。TOP/TOE 与三路 soil 各自独立，场内时间使用 acquired_uptime_us 相对 END.start_us，缺 acquired 仍为 None，不使用 attempt/登记时间替代；UTC 原样保持 null/false。合法 ADC=0 与缺测明确区分；不补零、不重采样、不拼场次。
+- 专用 SQLite 研究登记库仅存元数据/指纹及登记审计，不复制或持久化原始观测。以完整 `(experiment_id, adapter_version)` 登记持久 UUID，标 `generated_replay_identity=true`；同内容重导幂等，同身份异字节或改类型拒收并审计。登记库不得放在输入场次目录内，已有生产/其他业务表的数据库拒绝复用。完整性拒收记录 `REJECTED_INTEGRITY`，身份冲突记录 `REJECTED_IDENTITY`，已知场次错标签记录 `REJECTED_METADATA`。
+- 研究元数据固定 REAL/TEST_ONLY/sd_replay，risk/fusion eligible 均 false。R3/R4 的完整 experiment_id 对应会话及 soil_toe 的 `AIN2_JITTER_REVIEW`；R4 另标 `POST_RAIN_NOT_DRY_BASELINE`，四场类型按完整身份核对。固件声明一致不等于本体独立验收，保留未标定与声明身份标记。
+- 按通道输出总数、原始 Valid/非 Valid 数、usable 数、缺值数、首末 acquired 时长和相邻 usable 记录间隔中位数。错误/缺测行不被间隔计算跨越；无数据/无间隔为 null。时长是观测跨度，不是连续覆盖率；长缺口策略、窗口、特征、参考与规则判定留 WP3。
+- 新增合成与外部数据测试两文件；新增 [SD 回放格式与 CLI 文档](protocols/sd_replay_analysis.md)，平台 README 增加入口链接。未修改 WP1 的 database/telemetry/connectors/main/dashboard 或任何既有测试；未改历史 inference 混窗入口，此路径不调用旧 soil/motion 模型。无新依赖、前端、固件、规则、部署或硬件操作。
+
+### 实物核对与旧故障样本
+
+四场新批共 172,559 行；以下为本轮独立核对并固定在新增测试中的验收值，三件套字节/CRC/行数/索引及有效计数全部一致，非 Valid 行为 0。
+
+| 类型 | CSV | 数据行 | CRC32 | IMU TOP / TOE 有效 | AIN0 / AIN1 / AIN2 有效 |
+| --- | --- | ---: | --- | --- | --- |
+| rain_50 | N0000001.CSV | 36,979 | 8d69498e | 17,998 / 17,901 | 360 / 360 / 360 |
+| rain_70 | N0000002.CSV | 36,978 | 730feccd | 17,997 / 17,901 | 360 / 360 / 360 |
+| rain_100 | N0000004.CSV | 36,973 | 711a03ea | 17,995 / 17,898 | 360 / 360 / 360 |
+| post_rain_static | N0000005.CSV | 61,629 | 1a5fd03b | 29,994 / 29,835 | 600 / 600 / 600 |
+
+- 新批原件位于 `~/Desktop/ICT-2026/数据/2026-11-02重测与无雨300秒/`；12 份 BEG/CSV/END 在 CLI 前后 SHA-256 全等，新增黄金值测试也逐场复查读前/读后指纹。原始数据未写入或复制到仓库；work 下的数据库与 JSON 仅为研究登记元数据、统计和验证记录。
+- **旧 N0000002 原件未定位，真实故障回归跳过。** 历史评估附录 A 记载路径为 `数据/相同降雨量/70 pwm挡位/1（I2C错误）/N0000002.CSV`，本次该路径不存在。已用 rg 检索整个项目父目录中 N0000002/N0000006 文件，并枚举数据目录；目前仅两个 N0000002 位置，分别在新批目录与 `数据/相同降雨量/70档pwm/`，二者完整身份均为 `NODE01-d5a1317c1f27fded-N0000002.CSV`，CRC 730feccd、零错误，不是旧故障样本。
+- 旧回归只在原件实际可读时核对历史文档固定的 SHA-256 `d54c00fda2788361d87f2c5975a5017b8ce5597e58288a4200b9ca4c4fe005fb`、CRC 311660b9、36,020 行、771 错误与通道计数；可用 `ICT_REPLAY_LEGACY_N2` 指定确切 CSV。没有编造旧 experiment_id 或以新数据充当旧故障数据。合成测试已实测错误保留、缺时间/缺载荷、通道失效及合法零值。
+
+### 实测结果与尚欠验收
+
+- **新增测试：** `PYTHONPATH=platform_backend/src python3 -m unittest discover -s platform_backend/tests -p 'test_sd_replay*.py' -v`，标准库 loader 实际收集并运行 26 项，**25 通过、1 跳过、0 失败/错误**。含 21 项合成回归、4 场黄金值回归；唯一 skip 是上述确实未找到的旧 N0000002。未将 skip 计作通过，也未宣称执行了 pytest 收集。
+- **CLI：** 通过真实 `python -m` 入口依次登记四场并生成五通道统计，研究库恰有 4 场；R1 重导复用回放身份，审计为 REGISTERED×4、DUPLICATE×1。统计 JSON 和专用研究库位于 `work/stage1-wp2/`。
+- **编译：** 用显式输出到 work 的 `py_compile.compile(..., doraise=True)` 编译全部 25 个后端源文件/测试模块，通过。系统默认 bytecode 缓存目录不可写，因此输出位置显式落在可写工作区。
+- **全量 pytest 未运行成功：** `python3 -m pytest platform_backend/tests` 返回 `No module named pytest`。本机仅发现系统 Python 3.9.6，平台声明要求 Python >=3.11，pytest/FastAPI/NumPy/Paho/OpenCV/Pydantic/amqtt 等依赖均未装。未安装、升级或新增依赖。
+- **WP1 回归尝试也被环境阻断：** 标准 unittest 导入既有 edge_intake 时，Python 3.9 无法求值既有 `Mapping[str, Any] | None` 注解，尚未运行其中 21 项。此失败与新增路径无关，但本轮没有把 WP1 历史通过数当作复跑结果。既有用例未删改；完整回归是否不低于 WP1 合并基线，仍须 Python 3.11+ 开发依赖环境补跑后才能确认。
+- 验证详情保存 `work/stage1-wp2/validation-summary.json`、`new-tests.txt`、`full_pytest.txt`、`wp1_unittest.txt`。已通过 tracked diff 及五个新文件的空白检查，普通补丁 `review.patch` 的 `git apply --check --reverse` 检查通过；六个 WP1/旧推理模块与十个既有测试文件逐字节等于 HEAD。本包没有前端变更，未跑前端 build，也没有访问板子、生产数据库或服务。
+- **剩余交付：** 在可写原仓库 Git 的环境从 main 建立 `codex/stage1-wp2-replay` 并提交这七个实现/测试/文档文件；把 delivery-note 放至用户指定桌面交付目录并填实际提交哈希；补跑全量 pytest。当前不具备这些路径/依赖条件，不能声明本地提交或完整验收已完成。按要求停在审阅材料准备，不推送、不建 PR、不合并。
