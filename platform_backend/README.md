@@ -121,6 +121,8 @@ npm run build
 
 测试覆盖存储、协议校验、去重/冲突/补传、真实本地 MQTT Broker、图像处理及 API。只验证此平台的相关软件，不替代正式数据、硬件、云或地质灾害效果验证。
 
+阶段 I WP2 新增独立的 SD 长表研究回放 CLI，支持 BEG/CSV/END 完整性校验、五通道分析格式、幂等会话登记与逐通道统计。使用和数据口径见 [SD 原始回放与内部分析格式](../docs/protocols/sd_replay_analysis.md)；该路径固定 REAL/TEST_ONLY，不经过完整 v2 投影或旧 soil/motion 推理入口。
+
 2026-10-16 接入版本的软件验证：73 项后端测试、9 项平台页面联调通过，前端 TypeScript 检查与生产构建通过。验证包含本地 Broker 的真实 MQTT 握手和收发，不包含 ESP32 真板、Atlas 或云端验证。
 
 2026-10-18 本轮相关 Python 验证合计 117 项通过：API / 接入 / 配置 / 真实本机 MQTT 共 67 项、视觉 32 项、启动与配置 18 项。新增回归覆盖 retained 重放隔离及下一条实时接收、存储失败恢复、时区、错误参数、跨设备证据与稳定分页，以及首次安装失败重试和源码更新后的页面重建。前端专项验证见 [应用 README](../apps/geohazard-demo/README.md)。
