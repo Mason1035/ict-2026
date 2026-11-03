@@ -15,6 +15,8 @@
 
 ## 对接入口
 
+- 2026-11-03 已接收四场工程采集并新增专用只读 ZIP 质检工具，见 [`docs/REAL_DATA_REVIEW_2026-11-03.md`](docs/REAL_DATA_REVIEW_2026-11-03.md)。这些记录尚不满足新方案标定门禁；雨后无新增降雨不等于干土基线。
+
 - 2026-10-13 等待数据前的独立工具已补齐，运行入口是 [`run_independent.py`](run_independent.py)，PyCharm/解释器、回放产物、归一化、指标和交接包说明见 [`LOCAL_WORK_GUIDE.md`](LOCAL_WORK_GUIDE.md)。正式 Training Contract、标定参数和真实评价继续等待材料。
 
 - 2026-10-06 补充 [`telemetry_v2_intake/RUNTIME_HANDOFF.md`](telemetry_v2_intake/RUNTIME_HANDOFF.md)：参数化的原始观测 → 因果 Feature → 四路贡献 → Risk 内核，附 PyCharm 可直接运行的正常/异常/缺测回放。默认 Telemetry 入口保持未标定阻塞；正式配置模板保留 null，等待 A 实测及团队会签。
