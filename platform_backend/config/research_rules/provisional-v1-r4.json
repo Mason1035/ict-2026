@@ -1,0 +1,324 @@
+{
+  "channels": {
+    "imu_toe": {
+      "method_version": "PROVISIONAL-v1",
+      "metrics": {
+        "direction_angle_deg": {
+          "count": 1139,
+          "frozen_value": 0.29024311884309134,
+          "mad": 0.0171000297080178,
+          "maximum": 0.1381280945724482,
+          "median": 0.03990928881265672,
+          "method": "max(abs(R4)) + max(6 * 1.4826 * MAD(abs(R4)), minimum_margin)",
+          "minimum_margin": 1e-06,
+          "p95": 0.07385204509618805,
+          "p99": 0.07686482786559838
+        },
+        "gyro_rms_dps": {
+          "count": 1139,
+          "frozen_value": 1.0258366177296352,
+          "mad": 0.0025632735735690027,
+          "maximum": 1.0030347613285948,
+          "median": 0.3135283303304378,
+          "method": "max(abs(R4)) + max(6 * 1.4826 * MAD(abs(R4)), minimum_margin)",
+          "minimum_margin": 1e-06,
+          "p95": 0.3420597966826383,
+          "p99": 0.867982449699169
+        },
+        "lta_energy": {
+          "count": 1139,
+          "frozen_value": 0.006596151199012785,
+          "mad": 2.679809052522254e-05,
+          "maximum": 0.006357766104936616,
+          "median": 0.00012371058677835973,
+          "method": "max(abs(R4)) + max(6 * 1.4826 * MAD(abs(R4)), minimum_margin)",
+          "minimum_margin": 1e-12,
+          "p95": 0.005519008925931881,
+          "p99": 0.006333370031715616
+        },
+        "sta_lta": {
+          "count": 1139,
+          "frozen_value": 291.2255742417142,
+          "mad": 0.18391663289209215,
+          "maximum": 289.5895254421593,
+          "median": 0.9062733998333702,
+          "method": "max(abs(R4)) + max(6 * 1.4826 * MAD(abs(R4)), minimum_margin)",
+          "minimum_margin": 1e-06,
+          "p95": 2.5898801287939475,
+          "p99": 13.68368514516375
+        },
+        "tilt_rate_deg_s": {
+          "count": 1139,
+          "frozen_value": 0.3071766302912567,
+          "mad": 0.0025970185798414374,
+          "maximum": 0.2840745918124192,
+          "median": 0.004547924848455065,
+          "method": "max(abs(R4)) + max(6 * 1.4826 * MAD(abs(R4)), minimum_margin)",
+          "minimum_margin": 1e-06,
+          "p95": 0.012558359001108941,
+          "p99": 0.019889633101476522
+        },
+        "vibration_rms_mps2": {
+          "count": 1139,
+          "frozen_value": 0.18541760812480199,
+          "mad": 0.0011148397230084876,
+          "maximum": 0.17550043988480768,
+          "median": 0.010879331039155017,
+          "method": "max(abs(R4)) + max(6 * 1.4826 * MAD(abs(R4)), minimum_margin)",
+          "minimum_margin": 1e-09,
+          "p95": 0.022116543222016637,
+          "p99": 0.15704674703885302
+        }
+      },
+      "source_experiment_id": "NODE01-2e379f02688fd631-N0000005.CSV"
+    },
+    "imu_top": {
+      "method_version": "PROVISIONAL-v1",
+      "metrics": {
+        "direction_angle_deg": {
+          "count": 1133,
+          "frozen_value": 0.19979969617686064,
+          "mad": 0.006171291902520873,
+          "maximum": 0.14490235192879597,
+          "median": 0.03288883682662498,
+          "method": "max(abs(R4)) + max(6 * 1.4826 * MAD(abs(R4)), minimum_margin)",
+          "minimum_margin": 1e-06,
+          "p95": 0.04466267818349889,
+          "p99": 0.056068949799959085
+        },
+        "gyro_rms_dps": {
+          "count": 1133,
+          "frozen_value": 4.659059937784949,
+          "mad": 0.007017018657239582,
+          "maximum": 4.596639346617609,
+          "median": 1.062287029333202,
+          "method": "max(abs(R4)) + max(6 * 1.4826 * MAD(abs(R4)), minimum_margin)",
+          "minimum_margin": 1e-06,
+          "p95": 1.171037157529924,
+          "p99": 4.047393805364169
+        },
+        "lta_energy": {
+          "count": 1133,
+          "frozen_value": 0.011153748774457175,
+          "mad": 3.667516254336951e-05,
+          "maximum": 0.010827501198536378,
+          "median": 0.0001550252439827862,
+          "method": "max(abs(R4)) + max(6 * 1.4826 * MAD(abs(R4)), minimum_margin)",
+          "minimum_margin": 1e-12,
+          "p95": 0.008160750468243817,
+          "p99": 0.010768181848572778
+        },
+        "sta_lta": {
+          "count": 1133,
+          "frozen_value": 351.93581251437433,
+          "mad": 0.2250205646046286,
+          "maximum": 349.9341195798774,
+          "median": 0.8682185473765922,
+          "method": "max(abs(R4)) + max(6 * 1.4826 * MAD(abs(R4)), minimum_margin)",
+          "minimum_margin": 1e-06,
+          "p95": 3.2041507325612124,
+          "p99": 20.009590498663446
+        },
+        "tilt_rate_deg_s": {
+          "count": 1133,
+          "frozen_value": 0.44820319335328734,
+          "mad": 0.002833457854258398,
+          "maximum": 0.42299788566494634,
+          "median": 0.005024690038531808,
+          "method": "max(abs(R4)) + max(6 * 1.4826 * MAD(abs(R4)), minimum_margin)",
+          "minimum_margin": 1e-06,
+          "p95": 0.01612344033307536,
+          "p99": 0.03962438270439651
+        },
+        "vibration_rms_mps2": {
+          "count": 1133,
+          "frozen_value": 0.24270985115312518,
+          "mad": 0.0015103511310714177,
+          "maximum": 0.22927437163156628,
+          "median": 0.011719370027200266,
+          "method": "max(abs(R4)) + max(6 * 1.4826 * MAD(abs(R4)), minimum_margin)",
+          "minimum_margin": 1e-09,
+          "p95": 0.0279021891974579,
+          "p99": 0.18691017133089635
+        }
+      },
+      "source_experiment_id": "NODE01-2e379f02688fd631-N0000005.CSV"
+    },
+    "soil_middle": {
+      "method_version": "PROVISIONAL-v1",
+      "metrics": {
+        "adc_rate_code_s": {
+          "count": 579,
+          "frozen_value": 25.142302744334188,
+          "mad": 1.943841684365043,
+          "maximum": 7.850664656896514,
+          "median": 1.9781806672403388,
+          "method": "max(abs(R4)) + max(6 * 1.4826 * MAD(abs(R4)), minimum_margin)",
+          "minimum_margin": 1e-06,
+          "p95": 3.998608487844013,
+          "p99": 5.9816411983294016
+        },
+        "adjacent_delta_adc_code": {
+          "count": 580,
+          "frozen_value": 12.8956,
+          "mad": 1.0,
+          "maximum": 4,
+          "median": 1.0,
+          "method": "max(abs(R4)) + max(6 * 1.4826 * MAD(abs(R4)), minimum_margin)",
+          "minimum_margin": 1.0,
+          "p95": 2.0,
+          "p99": 3.0
+        },
+        "relative_change_fraction": {
+          "count": 580,
+          "frozen_value": 0.015382988146411359,
+          "mad": 0.0011289132039425122,
+          "maximum": 0.005340627849420346,
+          "median": 0.0036906777821197516,
+          "method": "max(abs(R4)) + max(6 * 1.4826 * MAD(abs(R4)), minimum_margin)",
+          "minimum_margin": 1e-06,
+          "p95": 0.005084451391602619,
+          "p99": 0.005166948894967652
+        }
+      },
+      "source_experiment_id": "NODE01-2e379f02688fd631-N0000005.CSV"
+    },
+    "soil_toe": {
+      "method_version": "PROVISIONAL-v1",
+      "metrics": {
+        "adc_rate_code_s": {
+          "count": 578,
+          "frozen_value": 322.7463081935889,
+          "mad": 0.0,
+          "maximum": 322.7463071935889,
+          "median": 0.0,
+          "method": "max(abs(R4)) + max(6 * 1.4826 * MAD(abs(R4)), minimum_margin)",
+          "minimum_margin": 1e-06,
+          "p95": 228.029357988085,
+          "p99": 254.00178253157063
+        },
+        "adjacent_delta_adc_code": {
+          "count": 599,
+          "frozen_value": 616.78,
+          "mad": 50,
+          "maximum": 172,
+          "median": 81,
+          "method": "max(abs(R4)) + max(6 * 1.4826 * MAD(abs(R4)), minimum_margin)",
+          "minimum_margin": 1.0,
+          "p95": 151.70000000000016,
+          "p99": 170.0
+        },
+        "relative_change_fraction": {
+          "count": 579,
+          "frozen_value": 0.06047221075233296,
+          "mad": 0.004542076141712774,
+          "maximum": 0.020067718226112807,
+          "median": 0.011066149145263854,
+          "method": "max(abs(R4)) + max(6 * 1.4826 * MAD(abs(R4)), minimum_margin)",
+          "minimum_margin": 1e-06,
+          "p95": 0.0194978941283343,
+          "p99": 0.019985135023536212
+        }
+      },
+      "source_experiment_id": "NODE01-2e379f02688fd631-N0000005.CSV"
+    },
+    "soil_top": {
+      "method_version": "PROVISIONAL-v1",
+      "metrics": {
+        "adc_rate_code_s": {
+          "count": 579,
+          "frozen_value": 193.24884604123037,
+          "mad": 3.836199755031971,
+          "maximum": 159.12354750036795,
+          "median": 5.831164464106267,
+          "method": "max(abs(R4)) + max(6 * 1.4826 * MAD(abs(R4)), minimum_margin)",
+          "minimum_margin": 1e-06,
+          "p95": 37.71029655355562,
+          "p99": 75.26339040117554
+        },
+        "adjacent_delta_adc_code": {
+          "count": 580,
+          "frozen_value": 97.7912,
+          "mad": 2.0,
+          "maximum": 80,
+          "median": 3.0,
+          "method": "max(abs(R4)) + max(6 * 1.4826 * MAD(abs(R4)), minimum_margin)",
+          "minimum_margin": 1.0,
+          "p95": 19.0,
+          "p99": 38.0
+        },
+        "relative_change_fraction": {
+          "count": 580,
+          "frozen_value": 0.07563845288569698,
+          "mad": 0.004845548152634767,
+          "maximum": 0.03253439473911915,
+          "median": 0.007874015748031496,
+          "method": "max(abs(R4)) + max(6 * 1.4826 * MAD(abs(R4)), minimum_margin)",
+          "minimum_margin": 1e-06,
+          "p95": 0.029345850999394296,
+          "p99": 0.032119927316777715
+        }
+      },
+      "source_experiment_id": "NODE01-2e379f02688fd631-N0000005.CSV"
+    }
+  },
+  "config_sha256": "baf8b4bec4ab1cbace6f2abef1a76cb2dabcbe0e8cfde8b8b8f06f62f84cb8cd",
+  "generated_at": "2026-11-02T14:33:50.196601+00:00",
+  "interpretation": "R4 is post-rain static, not a dry/calibrated baseline. Self-check is in-sample only.",
+  "method_version": "PROVISIONAL-v1",
+  "parameters": {
+    "ain2_adjacent_guard_adc": 616.78,
+    "ain2_median_samples": 5,
+    "baseline_window_us": 10000000,
+    "evaluation_step_us": 250000,
+    "gravity_tau_s": 1.0,
+    "imu_expected_interval_us": 10000,
+    "imu_max_gap_us": 30000,
+    "lta_window_us": 10000000,
+    "minimum_coverage": 0.9,
+    "noise_floor_energy": {
+      "imu_toe": 1.2371058677835974e-05,
+      "imu_top": 1.550252439827862e-05
+    },
+    "orientation_dwell_us": 3000000,
+    "recovery_dwell_us": 1000000,
+    "recovery_ratio": 0.8,
+    "rms_window_us": 2000000,
+    "soil_dwell_us": 3000000,
+    "soil_max_gap_us": 1500000,
+    "sta_window_us": 1000000,
+    "vibration_dwell_us": 1000000
+  },
+  "reason_bits": {
+    "ORIENTATION_IMU_TOE": 2,
+    "ORIENTATION_IMU_TOP": 1,
+    "SOIL_MIDDLE": 8,
+    "SOIL_TOE": 16,
+    "SOIL_TOP": 4,
+    "VIBRATION_IMU_TOE": 64,
+    "VIBRATION_IMU_TOP": 32
+  },
+  "reason_definition_version": "PROVISIONAL-platform-reason-v1-awaiting-B",
+  "reference_version": "r4-post-rain-static-provisional-v1",
+  "rule_version": "research-causal-rules-v1",
+  "schema_version": "research-rule-config-v1",
+  "scope": "RESEARCH",
+  "source": {
+    "adapter_version": "node01-sd-longtable-v1",
+    "experiment_id": "NODE01-2e379f02688fd631-N0000005.CSV",
+    "file_sha256": {
+      "beg": "593fc9981a580be61a921387744e314d84d6486803935bb990da50396a12d73b",
+      "csv": "715f7edcaccd21d1db341c34ffe0094a797a380cd82aaa72f7b1b83e06073104",
+      "end": "8270f23c41ebc37aa47a05cf7e8638e51e78f3c6da9199cfa2cc18af83f4fdbd"
+    },
+    "quality_flags": [
+      "UNCALIBRATED",
+      "FIRMWARE_IDENTITY_DECLARED_ONLY",
+      "AIN2_JITTER_REVIEW",
+      "POST_RAIN_NOT_DRY_BASELINE"
+    ],
+    "replay_id": "sd-replay-cf72a78f-001e-4dbb-bada-3fe72354b7d5",
+    "session_type": "post_rain_static"
+  },
+  "uncalibrated": true
+}
