@@ -10,7 +10,7 @@ import { usePlatform } from "./platform/usePlatform";
 import { connectionSettings, errorMessage, saveConnection } from "./platform/api";
 import { dateTime, deviceKey, levelColors, levelNames, reading, sensorFields, type TelemetryRow, normalizeLevel } from "./platform/types";
 import "./styles/platform.css";
-const emit = defineEmits<{ localDemo: [] }>();
+const emit = defineEmits<{ localDemo: []; research: [] }>();
 const { predictions, predictionError, dashboard, health, devices, selectedKey, selected, history, historyCursor, historyLoading, moreHistory, connection, error, actionError, updatedAt, busy, reconnect, select, action } = usePlatform();
 const aclState = computed(() => health.value?.capabilities?.atlas_acl || "not_connected");
 const aclLabel = computed(() => ({ connected: "已连接", degraded: "已降级", not_connected: "未连接" }[aclState.value] || "未连接"));
@@ -43,7 +43,8 @@ function applySettings() {
   try { saveConnection(apiBase.value, apiToken.value); settings.value?.close(); }
   catch (cause) { settingsError.value = errorMessage(cause); }
 }
-function navigate(id: string) { page.value = id; window.scrollTo({ top: 0, behavior: "instant" }); }
+nav.push({ id: "research", label: "研究回放", icon: Activity });
+function navigate(id: string) { if (id === "research") { emit("research"); return; } page.value = id; window.scrollTo({ top: 0, behavior: "instant" }); }
 function confirmReset() {
   if (!isDemo.value || busy.value) return;
   resetConfirmation.value?.close();

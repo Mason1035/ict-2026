@@ -9,6 +9,7 @@
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview --host 127.0.0.1",
     "test": "node --import tsx --test tests/engine.test.ts",
+    "test:research": "node --import tsx --test tests/research-api.test.ts",
     "test:browser": "node tests/browser-smoke.mjs",
     "test:platform": "node tests/platform-smoke.mjs",
     "test:tinyquake": "node tests/tinyquake-smoke.mjs",
