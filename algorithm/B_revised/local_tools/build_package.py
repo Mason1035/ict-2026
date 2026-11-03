@@ -16,6 +16,7 @@ sys.path.insert(0, str(B_ROOT))
 def source_files(root=B_ROOT):
     root = Path(root)
     names = {"run_independent.py", "RUN_LOCAL.cmd", "LOCAL_WORK_GUIDE.md", "LICENSE"}
+    names.add("data_intake/requirements-plot.txt")
     for package in ("candidate_features", "data_intake", "evaluation", "telemetry_v2_intake", "local_tools", "contracts"):
         for path in (root / package).iterdir():
             if path.is_file() and path.suffix in (".py", ".json", ".md"):
