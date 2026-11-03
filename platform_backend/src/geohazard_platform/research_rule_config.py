@@ -47,6 +47,19 @@ def config_digest(config):
     return hashlib.sha256(canonical_json({k: v for k, v in config.items() if k != "config_sha256"}).encode()).hexdigest()
 
 
+def _quantize(value):
+    """Round a frozen statistic to 9 significant digits.
+
+    Feature floats are computed through libm (atan2/sqrt), whose last-ULP
+    results differ between macOS and Linux.  Without quantization a freeze
+    regenerated on another platform differs in the final digits and can
+    never byte-match the committed config; 9 significant digits absorb
+    that noise (observed drift <= ~1e-12 relative) while staying far
+    tighter than any decision margin in the executor.
+    """
+    return float(f"{value:.9g}")
+
+
 def describe(values, minimum_margin):
     values = sorted(abs(v) for v in values if v is not None)
     if len(values) < 20 or any(not math.isfinite(v) for v in values):
@@ -59,10 +72,11 @@ def describe(values, minimum_margin):
         lo = int(pos)
         return values[lo] + (values[min(lo + 1, len(values) - 1)] - values[lo]) * (pos - lo)
 
-    return {"count": len(values), "median": median, "mad": mad,
-            "p95": quantile(.95), "p99": quantile(.99), "maximum": values[-1],
+    return {"count": len(values), "median": _quantize(median), "mad": _quantize(mad),
+            "p95": _quantize(quantile(.95)), "p99": _quantize(quantile(.99)),
+            "maximum": _quantize(values[-1]),
             "minimum_margin": minimum_margin,
-            "frozen_value": values[-1] + max(6 * 1.4826 * mad, minimum_margin),
+            "frozen_value": _quantize(values[-1] + max(6 * 1.4826 * mad, minimum_margin)),
             "method": "max(abs(R4)) + max(6 * 1.4826 * MAD(abs(R4)), minimum_margin)"}
 
 
@@ -82,7 +96,7 @@ def freeze_config(session, *, generated_at=None):
         lta = [x["values"]["lta_energy"] for x in initial[sensor] if x["state"] == "READY"]
         if not lta:
             raise ValueError("R4 has no covered IMU windows")
-        parameters["noise_floor_energy"][sensor] = max(statistics.median(lta) * .1, 1e-12)
+        parameters["noise_floor_energy"][sensor] = _quantize(max(statistics.median(lta) * .1, 1e-12))
     features = compute_features(session, parameters)
     channels = {}
     for series in session.channels:
