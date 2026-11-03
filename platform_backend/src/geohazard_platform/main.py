@@ -33,6 +33,8 @@ from .vision import VisionService, VisionError
 from .inference import InferenceService, InferenceError
 from .demo import BackendDemo, SITE, DEVICE
 from .dashboard import latest, history, normalize_time_filter
+from .research_display import ResearchDisplay
+from .research_api import research_router
 
 
 class StrictModel(BaseModel):
@@ -165,6 +167,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         app.add_exception_handler(exception_type, handle_service_error)
 
     api = APIRouter(prefix="/api/v1", dependencies=[Depends(authorize)])
+    app.include_router(research_router(ResearchDisplay(settings.research_registry_path, settings.database_path), authorize))
 
     def audit(kind, message, *, site_id=None, device_id=None, source="SYSTEM", details=None):
         with db.connection() as c:

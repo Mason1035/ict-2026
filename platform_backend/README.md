@@ -125,6 +125,8 @@ npm run build
 
 阶段 I WP3 在上述登记会话上增加 CPU 因果特征、R4-only 的 PROVISIONAL v1 阈值冻结工具和独立规则 CLI。配置与原因位表可版本化替换；输出固定 RESEARCH，不写生产告警或当前态。方法、窗口和运行命令见 [研究规则执行器](../docs/protocols/research_rules.md)。
 
+阶段 I WP4 增加 `/api/research` 下的三类只读接口和前端「研究回放」入口（`/?mode=research`）。通过 `GEOHAZARD_RESEARCH_REGISTRY` 指向已有 WP2 专用登记库，默认 `work/replay/research.sqlite3`；接口不会自动登记或创建研究库。配置、曲线降采样、口径与本地运行方法见 [研究展示协议](../docs/protocols/research_display.md)，验收状态见 [阶段 I 验收说明](../docs/research/stage1-wp4/README.md)。
+
 2026-10-16 接入版本的软件验证：73 项后端测试、9 项平台页面联调通过，前端 TypeScript 检查与生产构建通过。验证包含本地 Broker 的真实 MQTT 握手和收发，不包含 ESP32 真板、Atlas 或云端验证。
 
 2026-10-18 本轮相关 Python 验证合计 117 项通过：API / 接入 / 配置 / 真实本机 MQTT 共 67 项、视觉 32 项、启动与配置 18 项。新增回归覆盖 retained 重放隔离及下一条实时接收、存储失败恢复、时区、错误参数、跨设备证据与稳定分页，以及首次安装失败重试和源码更新后的页面重建。前端专项验证见 [应用 README](../apps/geohazard-demo/README.md)。

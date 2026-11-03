@@ -234,3 +234,35 @@ freeze CLI 在写配置前要求零事件和零振动候选；最终 run CLI 另
 - **全量 pytest 未运行成功：** 默认 Python 3.9.6 执行 `python3 -m pytest platform_backend/tests` 返回 `No module named pytest`。平台要求 >=3.11；本轮未安装/升级依赖，也未把历史 WP1 或全量回归当作本轮通过。Muse 需在 VM 的 Python 3.11+ 开发依赖环境补跑全量，确认实际收集规模不低于 204 及无回归。
 - `review.patch` 覆盖全部实现/配置/测试/文档变更，交付检查包含空白、当前工作区反向检查和干净 HEAD 文件树上的应用/逐文件内容核对；最终检查结果见 `validation-summary.json`。原仓库仍未提交，不能声称有本地提交哈希。
 - 与任务书的其他差异仅为已授权的 Git/交付目录沙箱备用路径及本机全量 pytest 环境限制；CPU 真机运行、地灾效果、长期误报和标定均未在本包宣称完成。本轮没有前端改动，不涉及前端 build。
+
+## 2026-11-03 — 阶段 I WP4 网站研究展示与验收材料
+
+### 基线、授权与实际交付
+
+- 完整阅读仓库外 `任务书-阶段I-WP4-网站展示.md`、WP2/WP3 两份协议和本日志对应记录，再梳理后端路由及 `apps/geohazard-demo`。基线为干净 main `795cabab003586c2f8fdc5a0e067b7b39fd7eef3`，PR #14 已合并。
+- `git switch -c codex/stage1-wp4-display main` 被沙箱以 `.git/index.lock: Operation not permitted` 拒绝。实际仍为 main，无本地提交哈希；按用户明确的备用协议，审阅材料放 `work/stage1-wp4/`，由 Muse 建目标分支并本地提交。本轮不 push、不开 PR，也没有另建提交仓库绕过限制。
+
+### 实现与隔离边界
+
+- 新增 `research_display.py` 与 `research_api.py`，独立 `/api/research/sessions`、`/sessions/{experiment_id}`、`/sessions/{experiment_id}/rules` 三类 GET。沿用现有鉴权、loopback、Origin、TrustedHost 与 no-store；API 没有注册、配置修改、确认或任何写入口。
+- 专用 WP2 登记库由 `GEOHAZARD_RESEARCH_REGISTRY` 指定（默认 `work/replay/research.sqlite3`），只用 SQLite URI `mode=ro` 和 query_only。不存在返回 503，不创建研究库；拒绝与生产数据库同路径/同文件及混有非研究表的数据库。列表消费登记元数据；详情/规则重新解析原件，核对三件套指纹和完整元数据后才运行现有 WP3。未登记返回 404，原件/配置失效返回脱敏 409。
+- 全部研究响应带 RESEARCH / uncalibrated=true 和 production_alarm/risk/fusion eligible=false；输入的 REAL / TEST_ONLY / sd_replay 保留。研究读取层只用生产路径作错库排除，不持有生产 Database 对象、不调用接收/推理/告警函数，既有生产端点语义不变。
+- 通道统计沿用 WP2；方向角、RMS、STA/LTA、土壤原始 ADC 码/相对变化沿用 WP3。先完整规则计算，再按每曲线 16–2000 点（默认 600）做分桶极值展示，保留真实时标、null 与跨隐藏缺口断线；不将展示点重新送回规则。
+- 前端增加独立「研究回放」导航及 `/?mode=research`，研究视图不挂载生产 Dashboard/轮询。R1–R4 列表、五通道十二条曲线、触发/候选起始及确认区间、通道贡献、原因码解码、配置来源均来自研究 API。切换会话/连接和卸载取消旧请求，核对详情与规则的身份/摘要一致后展示。
+- 页面显著标「研究结果 · 未标定 · 非生产预警」；R4「雨后静置，非干土基线」、AIN2 质量提示、零触发不代表安全等口径保留。土壤仅为原始 ADC 码/相对变化。前端源文件未出现禁用的概率表述。使用现有 Vue + SVG，无新增依赖；生产组件和全局样式未改，仅 App/导航加切换接线。
+- 新增 [WP4 API 协议](protocols/research_display.md)、[阶段 I 四包验收说明](research/stage1-wp4/README.md)，平台 README 加入口。验收说明列 PR #12/#13/#14 与 WP4 暂无 PR、历史/本轮验收依据，以及 PROVISIONAL 待 B、AIN2 抖动、TOE 防水盒疑似移动未证实、旧故障原件缺失、IoTDA 未接、在线链路属阶段 II 等限制。
+
+### 当前配置与四场只读核验
+
+- **基线已有摘要差异：** PR #14 内的 `e3337b4` 把冻结统计量化为 9 位有效数字，main 当前文件的内容摘要为 `edf695f3479d210d19466460a0d2f3e51ba6bd8690dc56b5d979adb740ca4065`；WP3 旧日志/报告及 work JSON 的 `baf8b4be...` 是修复前产物。本包既不改冻结文件，也不覆写旧报告；页面和 API 读取当前真实摘要，验收说明保留差异证据。方法仍为 PROVISIONAL-v1，来源/生成时间仍为 R4 / `2026-11-02T14:33:50.196601+00:00`。
+- 在本机通过新增服务层（**非 HTTP/浏览器**）只读消费现有 WP3 登记库，对四场分别取得详情/规则并与当前 `run_rules()` 逐字段比较，全部一致；每场五通道十二条曲线，`max_points=600` 的每条输出均不超限。R1/R2/R3 各 5 触发 / 0 候选，R4 0/0；事件通道、起始、确认、末端、原因 mask、类别和关闭原因也与旧报告一致，但旧配置摘要/阈值末位不同，不宣称完整 JSON 逐字节相同。
+- 12 份原件、研究登记库及冻结配置在核验前后 SHA-256 全同，未创建生产数据库。证据为 `work/stage1-wp4/real-session-check.json`。未把原始三件套复制进仓库，未访问 Atlas、MQTT、串口、云或板上服务。
+
+### 测试、构建与差异
+
+- **本轮实跑：** 新增 `test_research_display.py` 13 项标准库 unittest 全通过，覆盖摘要、统计、曲线界限/极值/null/断线、冻结规则原样消费、来源、404、只读、错库、原件/登记篡改拒绝。WP3 26 项回归全通过；WP2 26 项运行，25 通过、1 skip（旧故障 N0000002 原件缺失），0 失败/错误。
+- 新增 `test_research_api.py` 静态展开 16 项真实 FastAPI HTTP 测试：三端点、404、点数限制、仅 GET、Token/Origin/远程边界、原件篡改，以及生产告警与研究结果双向隔离并比较全部生产表不变。新增前端 4 项请求回归覆盖独立 URL、鉴权、边界拒绝、错误与取消。**这些 HTTP/前端测试未在本机运行。**
+- 34 个 Python 源/测试模块语法编译通过；所有既有后端测试、WP1/WP2/WP3 核心源及冻结配置逐字节等于 HEAD（main/settings 只加研究接线/路径设置）。AST 静态清点从 230 到 259 项，是清点而非 pytest collected/passed。未删改既有用例。
+- **全量 pytest 阻断：** `python3 -m pytest platform_backend/tests` 在收集前退出 `No module named pytest`，本机 Python 3.9.6，平台要求 >=3.11。因此尚未验证实际全量规模不低于 230 或全部通过，不能以部分 unittest 替代。
+- **前端构建阻断：** 在 `apps/geohazard-demo` 执行 `npm run build` 与 `npm run test:research` 均退出 127，`command not found: npm`；本机 Node 也不可用。类型检查、Vite 构建、前端请求测试及页面视觉/生产样式回归均待 Muse 在 VM 补验。未安装系统运行时或修改依赖声明。
+- `work/stage1-wp4/` 保存完整补丁、文件清单、交付说明、验证摘要、三组 unittest 日志、全量 pytest/构建失败日志、静态清单及四场只读证据。补丁包含新文件；最终应用/内容检查见 `patch-verification.json`。与任务书的未完成项为 Git 权限备用交付，以及上述 VM 全量测试/构建/浏览器验收；未声称阶段 I 全部验证完成。

@@ -23,6 +23,8 @@ class Settings:
     demo_interval: float = 2.0
     freshness_seconds: int = 30
     allowed_origins: tuple[str, ...] = field(default_factory=local_origins)
+    research_registry_path: Path = field(default_factory=lambda: Path(os.environ.get(
+        "GEOHAZARD_RESEARCH_REGISTRY", str(REPO_ROOT / "work/replay/research.sqlite3"))))
 
     @property
     def database_path(self) -> Path:
