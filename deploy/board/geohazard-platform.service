@@ -1,0 +1,18 @@
+[Unit]
+Description=Geohazard contest live platform
+Wants=network-online.target mosquitto.service
+After=network-online.target mosquitto.service
+
+[Service]
+Type=simple
+User=geohazard
+Group=geohazard
+WorkingDirectory=/opt/ict-2026
+EnvironmentFile=/etc/geohazard/platform.env
+ExecStart=/bin/bash /opt/ict-2026/deploy/board/start-platform.sh
+Restart=on-failure
+RestartSec=5
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

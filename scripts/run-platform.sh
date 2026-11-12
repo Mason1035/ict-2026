@@ -6,6 +6,12 @@ cd "$PLATFORM_REPO"
 PLATFORM_PYTHON="$PLATFORM_REPO/platform_backend/.venv/bin/python"
 PLATFORM_APP="$PLATFORM_REPO/apps/geohazard-demo"
 PLATFORM_PORT="${GEOHAZARD_PORT:-8000}"
+PLATFORM_HOST="${GEOHAZARD_HOST:-127.0.0.1}"
+PLATFORM_TOKEN="${GEOHAZARD_API_TOKEN:-}"
+if [[ "$PLATFORM_HOST" != 127.0.0.1 && "$PLATFORM_HOST" != localhost && "$PLATFORM_HOST" != ::1 && -z "${PLATFORM_TOKEN//[[:space:]]/}" ]]; then
+  printf '非 loopback GEOHAZARD_HOST 必须设置 GEOHAZARD_API_TOKEN。\n' >&2
+  exit 1
+fi
 
 if [[ ! "$PLATFORM_PORT" =~ ^[0-9]{1,5}$ ]] || (( 10#$PLATFORM_PORT < 1 || 10#$PLATFORM_PORT > 65535 )); then
   printf 'GEOHAZARD_PORT 必须是 1–65535 之间的整数。\n' >&2
@@ -61,5 +67,5 @@ if [[ "$PLATFORM_BUILD_NEEDED" == 1 ]]; then
   (cd "$PLATFORM_APP" && npm run build)
 fi
 
-printf '\n智哨防灾平台：http://127.0.0.1:%s\nAPI 文档：http://127.0.0.1:%s/docs\n按 Ctrl+C 停止。后端演示数据明确标记 MOCK，可用 GEOHAZARD_DEMO=0 禁用。\n\n' "$PLATFORM_PORT" "$PLATFORM_PORT"
-exec "$PLATFORM_PYTHON" -m uvicorn geohazard_platform.main:app --host 127.0.0.1 --port "$PLATFORM_PORT"
+printf '\n智哨防灾平台：http://%s:%s\nAPI 文档：http://%s:%s/docs\nLAN 浏览器请使用板端 LAN IP。按 Ctrl+C 停止；GEOHAZARD_DEMO=0 禁用 MOCK 演示。\n\n' "$PLATFORM_HOST" "$PLATFORM_PORT" "$PLATFORM_HOST" "$PLATFORM_PORT"
+exec "$PLATFORM_PYTHON" -m uvicorn geohazard_platform.main:app --host "$PLATFORM_HOST" --port "$PLATFORM_PORT"

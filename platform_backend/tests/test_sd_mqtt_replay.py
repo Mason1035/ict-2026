@@ -178,6 +178,10 @@ def check_local_real_mqtt_test_only_dashboard(capture, tmp_path, demo):
             assert dash["replay_latest"]["payload"]["seq"] == 5
             assert dash["stats"]["telemetry_count"] == 5
             assert dash["alarms"] == []
+            assert count(db, "provisional_risk") == 5
+            assert dash["provisional_risk"]["status"] == "PROVISIONAL"
+            assert dash["provisional_risk"]["scope"] == "TEST_ONLY"
+            assert dash["provisional_risk"]["fusion_eligible"] is False
     finally:
         publisher.disconnect()
         publisher.loop_stop()
@@ -202,6 +206,21 @@ class Captured:
         self.out.seek(0); self.out.truncate()
         self.err.seek(0); self.err.truncate()
         return value
+
+
+def test_remote_broker_credentials_and_redacted_log(tmp_path, capsys, monkeypatch):
+    session = capture(tmp_path)
+    monkeypatch.setenv("GEOHAZARD_MQTT_PASSWORD", "synthetic-private-password")
+    with patch("paho.mqtt.client.Client") as client:
+        assert main([str(session.directory), "--host", "192.0.2.20", "--port", "1883",
+                     "--username", "node01", "--max-frames", "1"]) == 0
+        client.return_value.username_pw_set.assert_called_once_with("node01", "synthetic-private-password")
+        client.return_value.connect.assert_called_once_with("192.0.2.20", 1883, keepalive=30)
+        assert client.return_value.publish.call_count == 1
+    output = capsys.readouterr()
+    path = Path(output.err.split("Replay log: ")[-1].strip())
+    assert "synthetic-private-password" not in path.read_text() + output.out + output.err
+    assert json.loads(path.read_text())["options"]["password"] == "<redacted>"
 
 
 class SDMQTTReplayTests(unittest.TestCase):

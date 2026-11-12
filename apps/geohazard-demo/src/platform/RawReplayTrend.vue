@@ -3,7 +3,7 @@ import { computed } from "vue";
 import type { TelemetryRow } from "./types";
 const props = defineProps<{ rows: TelemetryRow[] }>();
 import { replayGroups, rawPath, type RawReplayPayload } from "./rawReplay";
-const groups = computed(() => replayGroups(props.rows));
+const groups = computed(() => replayGroups(props.rows, true));
 const colors = ["#39866a", "#ce7548", "#537db5"];
 const charts = computed(() => groups.value.flatMap(group => [
   { name: "土壤原码", unit: "ADC 码", fields: ["top_raw", "middle_raw"], labels: ["AIN0 / TOP", "AIN1 / MIDDLE"], read: (r: RawReplayPayload, f: string) => r.soil[f] },
@@ -17,7 +17,7 @@ const charts = computed(() => groups.value.flatMap(group => [
 </script>
 <template>
   <section class="panel platform-section raw-replay-panel" data-testid="raw-replay-trend">
-    <h2>原始通道</h2><p>未标定 · 无插值、平滑或补点 · 设备 uptime（秒）；不同 boot 分开绘制，不跨场连接。AIN2 默认不发布。</p>
+    <h2>原始通道</h2><p>未标定 · 无插值、平滑或补点 · 设备 uptime（秒）；不同 boot 分开绘制，不跨场连接。AIN2 仅诊断，不参与临时风险。</p>
     <div class="raw-replay-grid"><figure v-for="chart in charts" :key="`${chart.boot}-${chart.name}`">
       <figcaption>{{ chart.name }}（{{ chart.unit }}） <span v-for="(label, i) in chart.labels" :key="label" :style="{ color: colors[i] }">{{ label }} </span></figcaption>
       <p>boot {{ chart.boot }} · {{ chart.first.toFixed(3) }}–{{ chart.last.toFixed(3) }} 秒</p><div>{{ chart.max.toPrecision(5) }}</div>

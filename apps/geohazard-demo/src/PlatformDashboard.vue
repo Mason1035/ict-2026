@@ -6,6 +6,7 @@ import ConnectorPanel from "./platform/ConnectorPanel.vue";
 import VisionPanel from "./platform/VisionPanel.vue";
 import TinyQuakePanel from "./platform/TinyQuakePanel.vue";
 import RawReplayTrend from "./platform/RawReplayTrend.vue";
+import ProvisionalRiskPanel from "./platform/ProvisionalRiskPanel.vue";
 import PlatformTrend from "./platform/PlatformTrend.vue";
 import { usePlatform } from "./platform/usePlatform";
 import { connectionSettings, errorMessage, saveConnection } from "./platform/api";
@@ -77,7 +78,8 @@ function stateLabel(key: string) { const value = fresh.value ? latest.value?.sys
           </div>
           <div class="section-label"><h2>传感器遥测</h2><span>{{ sourceName }} · 采集 {{ dateTime(latest?.source_time) }}</span></div>
           <section class="sensor-grid platform-sensors" aria-label="后端传感器读数"><article v-for="field in sensorFields" :key="field.key" class="panel platform-sensor"><div><span>{{ field.label }}</span><i :class="['status-dot', { paused: sensors[field.key] == null }]" /></div><div class="platform-sensor-reading" :data-testid="`reading-${field.key}`">{{ reading(sensors[field.key], field.decimals) }}<span>{{ field.unit }}</span></div><small>{{ sensors[field.key] == null ? latest?.stale ? '采样已过期' : '暂无有效读数' : selected?.source === 'MOCK' ? '后端模拟数据' : '设备上报数据' }}</small></article></section>
-          <RawReplayTrend v-if="isReplay" :rows="history" />
+          <ProvisionalRiskPanel :latest="dashboard?.provisional_risk || null" :history="dashboard?.provisional_history || []" :stale="connection !== 'online' || (!isReplay && !fresh)" :replay="isReplay" />
+          <RawReplayTrend v-if="selected?.source === 'REAL'" :rows="history" />
           <div class="platform-operations"><section class="panel platform-section"><div class="platform-panel-heading"><div><Radio :size="18" /><div><h2>设备链路状态</h2><p>由上报消息中的系统状态提供。</p></div></div></div><div class="device-health-grid"><div v-for="field in systemFields" :key="field.key"><i :class="['status-dot', { paused: !fresh || !latest?.system?.[field.key] }]" /><span>{{ field.name }}</span><strong>{{ stateLabel(field.key) }}</strong></div></div><p class="system-note">{{ fresh && latest?.system.sensor_degraded ? '设备报告传感器降级，请检查原始遥测。' : '链路就绪状态以设备上报为准；不表示平台主动完成了端到端探测。' }}</p></section><section class="panel platform-section"><div class="platform-panel-heading"><div><Database :size="18" /><div><h2>当前数据流</h2><p>{{ selected?.site_id || '—' }} / {{ selected?.device_id || '—' }}</p></div></div><button class="text-button" @click="navigate('history')">查看历史</button></div><div class="platform-counts"><div><strong>{{ numberCount(dashboard?.stats.telemetry_count) }}</strong><span>遥测记录</span></div><div><strong>{{ numberCount(dashboard?.stats.alarm_count) }}</strong><span>告警记录</span></div><div><strong>{{ numberCount(dashboard?.stats.evidence_count) }}</strong><span>视觉证据</span></div></div></section></div>
           <section class="panel platform-section inference-section" aria-label="昇腾预测（研究模型 · 未校准）">
             <div class="platform-panel-heading"><div><Activity :size="18" /><div><h2>昇腾预测（研究模型 · 未校准）</h2><p>趋势增量仅供研究，不参与风险融合。土壤百分比近似 VWC；运动通道单位尚未核准。</p></div></div></div>

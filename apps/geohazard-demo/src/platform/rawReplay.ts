@@ -5,11 +5,11 @@ export interface RawReplayPayload {
   soil: Record<string, number | null>;
   imu: { ax: number | null; ay: number | null; az: number | null }[];
 }
-export function replayGroups(rows: TelemetryRow[]) {
+export function replayGroups(rows: TelemetryRow[], includeLive = false) {
   const groups = new Map<number, RawReplayPayload[]>();
   for (const row of rows) {
     const p = row.payload as unknown as RawReplayPayload | undefined;
-    if (row.source !== "REAL" || !p?.experiment?.run_id?.startsWith("REAL_REPLAY|")) continue;
+    if (row.source !== "REAL" || !p || (!includeLive && !p.experiment?.run_id?.startsWith("REAL_REPLAY|"))) continue;
     const samples = groups.get(p.boot_id) || [];
     samples.push(p); groups.set(p.boot_id, samples);
   }

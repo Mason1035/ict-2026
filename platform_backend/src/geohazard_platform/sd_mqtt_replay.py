@@ -7,6 +7,7 @@ from dataclasses import dataclass
 import hashlib
 import json
 import math
+import os
 from pathlib import Path
 import re
 import sys
@@ -190,6 +191,9 @@ def parser():
     p.add_argument("--csv")
     p.add_argument("--host", default="127.0.0.1")
     p.add_argument("--port", type=int, default=18883)
+    p.add_argument("--username", help="remote broker username")
+    p.add_argument("--password", default=os.environ.get("GEOHAZARD_MQTT_PASSWORD"),
+                   help="broker password; prefer GEOHAZARD_MQTT_PASSWORD to avoid shell history/process args")
     p.add_argument("--embedded-broker", action="store_true")
     for name in ("site-id", "device-id"):
         p.add_argument("--"+name, default=getattr(ReplayOptions(), name.replace("-", "_")))
@@ -217,6 +221,10 @@ def main(argv=None):
         # No implicit public destinations. A supplied --host is an explicit broker choice.
         if args.embedded_broker and args.host != "127.0.0.1":
             raise ValueError("embedded broker requires --host 127.0.0.1")
+        if args.password is not None and not args.username:
+            raise ValueError("--password requires --username")
+        if args.embedded_broker and (args.username or args.password is not None):
+            raise ValueError("embedded broker does not support credentials; use an external Mosquitto")
         sessions = [parse_sd_session(directory, args.csv) for directory in args.session_dirs]
         if args.deterministic_boot:
             for session in sessions:
@@ -226,7 +234,7 @@ def main(argv=None):
     log_dir = Path(__file__).resolve().parents[3]/"work/replay"
     log_dir.mkdir(parents=True, exist_ok=True)
     log_path = log_dir/f"mqtt-{time.time_ns()}-{uuid4().hex[:8]}.json"
-    log = {"options": vars(args), "sessions": []}
+    log = {"options": {**vars(args), "password": "<redacted>" if args.password is not None else None}, "sessions": []}
 
     stop = Event()
 
@@ -237,6 +245,8 @@ def main(argv=None):
             if not args.dry_run:
                 import paho.mqtt.client as mqtt
                 client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
+                if args.username:
+                    client.username_pw_set(args.username, args.password)
                 client.connect(args.host, args.port, keepalive=30)
                 client.loop_start()
             remaining = args.max_frames

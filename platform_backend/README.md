@@ -13,7 +13,19 @@ chmod +x scripts/run-platform.sh
 
 打开 <http://127.0.0.1:8000>，交互式 API 文档为 <http://127.0.0.1:8000/docs>。启动脚本自动准备虚拟环境，在依赖声明变化或首次安装未完成时重试安装；页面源码、静态资源或配置更新后自动重新构建，普通重启复用现有构建。首次安装需要联网，安装或构建失败时不会启动一个不完整的平台。
 
-可用 `GEOHAZARD_PYTHON=python3.12 ./scripts/run-platform.sh` 指定首次创建虚拟环境的解释器；已有虚拟环境继续使用自身解释器。用 `GEOHAZARD_PORT=8001 ./scripts/run-platform.sh` 切换本地端口，该端口对应的 loopback Origin 同时允许访问。脚本仍绑定 `127.0.0.1`。
+可用 `GEOHAZARD_PYTHON=python3.12 ./scripts/run-platform.sh` 指定首次创建虚拟环境的解释器；已有虚拟环境继续使用自身解释器。用 `GEOHAZARD_PORT=8001 ./scripts/run-platform.sh` 切换本地端口，该端口对应的 loopback Origin 同时允许访问。默认绑定 `127.0.0.1`；`GEOHAZARD_HOST=0.0.0.0` 可开放 LAN，但必须同时设置非空 `GEOHAZARD_API_TOKEN`，否则拒绝启动。浏览器连接设置已有 Bearer token 会话存储。
+
+板端现场步骤、PC 构建 dist、Mosquitto 密码、systemd、SD 远程回放与 A 分支 NVS 配网命令见 [板端实时演示速查](../docs/BOARD_LIVE_DEMO.md)。板端 wrapper 使用已准备的 Python 3.11+ 环境及 PC 构建产物，不自动安装依赖或运行 Node。
+
+## 临时风险（未标定，非正式告警）
+
+所有新接收且 `risk.level=null` 的遥测（REAL/OPERATIONAL、REAL/TEST_ONLY 回放、MOCK）独立生成 `provisional_risk` 记录并关联 telemetry id。原始 `payload.risk`、正式 latest/current、告警规则不变；计算错误仅记录日志、保存点回滚，不阻止入库。每条携带 `status=PROVISIONAL`、`calibration_version=null`、`fusion_eligible=false` 与 `uncalibrated, not a formal alarm`。已有旧遥测不自动回算。
+
+AIN0=top、AIN1=middle 采用 B 的 2026-11-12 AIR/WATER 候选端点线性映射 0–1，越界裁剪并标记；不是土壤含水率，AIN2=toe 仅诊断、排除。双 IMU 计算重力向量对 +Z 的角度、相对最初 10 个有效样本平均方向的变化，以及 `( |accel| - 9.80665 )` 与陀螺向量模长的 2 秒采样 RMS；至少 2 点，间隔超过 2.5 秒清空短窗。状态按站点/设备/boot/来源/用途隔离并持久化，重启恢复，迟到或时间倒退只保存不可评估结果。初始方向固定，不随危险变化漂移。
+
+角度计算复用 `research_features.py`；角度、振动与陀螺参考数值读取并校验 `config/research_rules/provisional-v1-r4.json`。B 的离线执行器面向高频采集，1 Hz 不满足其覆盖率/STA-LTA/持续时间规则，因此这里是独立演示适配，不声称执行了完整 B 规则。分级 NORMAL/ATTENTION/WARNING、湿度 0.60/0.85、WARNING 参考倍数 2 等补充常量集中于 `provisional_config.py`，标注 **PROVISIONAL_DEMO**；每条记录附阈值路径、摘要和实际值。序数分数 0/50/100 非概率；NORMAL 不证明安全。未应用候选 IMU 零偏/比例修正。
+
+`GET /api/v1/provisional-risk/latest?site_id=SITE01&device_id=NODE-01` 返回最新入库临时结果或 null；`/history` 返回 `items`（新到旧），支持 `source`、`scope`、`boot_id`、`limit`（1–500）、带时区的 `before/after`（按入库时间）。独立查询 latest 不代表实时有效性。`/dashboard` 附 `provisional_risk` 与当前显示 boot/scope 的 `provisional_history`（旧到新），只有匹配当前显示遥测的结果才作为临时最新值。前端显示原因、质量标记、特征及独立趋势；过期结果明确标为历史。正式风险卡仍使用生产者上报值。
 
 开发模式可以使用两个终端：
 
@@ -162,7 +174,7 @@ SQLite 事务先保存原始消息、接入 sidecar、身份与接收路径，�
 
 ## 本地访问与测试
 
-默认只接受 loopback，请求 Host 和 Origin 受限。设置 `GEOHAZARD_API_TOKEN` 后所有 `/api/v1` 请求要求 `Authorization: Bearer ...`；前端连接设置可录入该令牌，图片也经认证请求加载。`.env.example` 为说明，不会自动读取。
+默认只接受 loopback，请求 Host 和 Origin 受限。设置 `GEOHAZARD_API_TOKEN` 后所有 `/api/v1` 请求要求 `Authorization: Bearer ...`；前端连接设置可录入该令牌，图片也经认证请求加载。显式设置非 loopback `GEOHAZARD_HOST` 时允许 LAN Host 与同源 Origin，跨源仍按原白名单限制；静态页面无需 token，API 必须认证。`.env.example` 为说明，不会自动读取；systemd 使用 `/etc/geohazard/platform.env`。
 
 ```bash
 # 仓库根目录；开发测试依赖只用于软件验证

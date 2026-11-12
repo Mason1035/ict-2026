@@ -8,15 +8,22 @@ export interface Health { capabilities: Record<string, string>; status: string; 
 export interface Risk { sensor_score: number | null; vision_score: number | null; final_score: number | null; level: Level; mode: string; reason: string; }
 export interface Latest { id: string; received_at: string; source_time: number | null; age_seconds: number; stale: boolean; sensors: Sensors; risk: Risk; system: Record<string, boolean | null>; }
 export interface HistoryPoint extends Sensors { time: string; score: number | null; }
+export interface ProvisionalRisk {
+  telemetry_id: string; received_at: string; source: Source; scope: string; boot_id: number;
+  status: "PROVISIONAL"; calibration_version: null; fusion_eligible: false;
+  level: "NORMAL" | "ATTENTION" | "WARNING" | null; score: number | null;
+  reasons: { feature: string; value: number; level: string }[]; quality_flags: string[];
+  features: { soil_index: Record<string, number | null>; imu: Record<string, Record<string, number | null>> };
+}
 export interface Alarm { id: string; level: Level | string; score: number | null; reason: string; acknowledged: boolean; created_at: string; source?: Source; }
 export interface Event { id: string; kind: string; message: string; created_at: string; }
-export interface ConnectorConfig { payload_format?: "telemetry_v2" | "tinyquake_v1"; host: string; port: number; topic: string; site_id: string; username?: string; password?: string; password_configured?: boolean; tls: boolean; client_id?: string; }
+export interface ConnectorConfig { payload_format?: "telemetry_v2" | "tinyquake_v1"; scope?: "OPERATIONAL" | "TEST_ONLY"; host: string; port: number; topic: string; site_id: string; username?: string; password?: string; password_configured?: boolean; tls: boolean; client_id?: string; }
 export interface Connector { id: string; name: string; kind: "mqtt"; source: Source; enabled: boolean; config: ConnectorConfig; status?: MqttStatus | string; password_configured?: boolean; has_password?: boolean; }
 export interface ConnectorWrite { name: string; kind: "mqtt"; source: Source; enabled: boolean; config: ConnectorConfig; }
 export interface Evidence { id: string; file_url: string; original_name?: string; filename?: string; width: number; height: number; camera_id: string; site_id: string; device_id: string | null; source: Source; scope: string; capture_time?: string | null; captured_at?: string | null; created_at?: string; received_at?: string; arrival_time?: string; }
 export interface Region { x: number; y: number; width: number; height: number; }
 export interface VisionResult { site_id?: string; device_id?: string | null; source?: Source; camera_id?: string; scope?: string; roi?: Region; id: string; evidence_id: string; reference_id: string | null; vision_score: number | null; quality: Record<string, unknown>; metrics: Record<string, number | string | boolean | null>; baseline_valid: boolean; fusion_eligible: boolean; reasons: string[]; overlay_url: string | null; created_at?: string; }
-export interface Dashboard { site_id: string; device_id: string; source: Source; scope: string; latest: Latest | null; replay_latest?: TelemetryRow | null; history: HistoryPoint[]; alarms: Alarm[]; events: Event[]; stats: { telemetry_count: number; alarm_count: number; evidence_count: number }; demo: { running: boolean; scenario: string; elapsed_seconds: number }; connectors: Connector[]; vision: { evidence: Evidence[]; results: VisionResult[]; latest_result: VisionResult | null }; }
+export interface Dashboard { site_id: string; device_id: string; source: Source; scope: string; provisional_risk?: ProvisionalRisk | null; provisional_history?: ProvisionalRisk[]; latest: Latest | null; replay_latest?: TelemetryRow | null; history: HistoryPoint[]; alarms: Alarm[]; events: Event[]; stats: { telemetry_count: number; alarm_count: number; evidence_count: number }; demo: { running: boolean; scenario: string; elapsed_seconds: number }; connectors: Connector[]; vision: { evidence: Evidence[]; results: VisionResult[]; latest_result: VisionResult | null }; }
 export interface TelemetryRow { id: string; received_at: string; source_time?: string; source?: Source; payload?: Record<string, unknown>; sensors?: Sensors; risk?: Risk; [key: string]: unknown; }
 export interface Items<T> { items: T[]; next_cursor?: string | null; total?: number; }
 export const sensorFields: { key: SensorKey; label: string; unit: string; decimals: number }[] = [

@@ -71,6 +71,16 @@ class Database:
                     UNIQUE(device_id, boot_id, seq)
                 );
                 CREATE INDEX IF NOT EXISTS telemetry_site_time ON telemetry(site_id, received_at DESC);
+                CREATE TABLE IF NOT EXISTS provisional_risk (
+                    telemetry_id TEXT PRIMARY KEY REFERENCES telemetry(id) ON DELETE CASCADE,
+                    status TEXT NOT NULL DEFAULT 'PROVISIONAL' CHECK(status='PROVISIONAL'),
+                    calibration_version TEXT CHECK(calibration_version IS NULL),
+                    fusion_eligible INTEGER NOT NULL DEFAULT 0 CHECK(fusion_eligible=0),
+                    disclaimer TEXT NOT NULL DEFAULT 'uncalibrated, not a formal alarm',
+                    result_json TEXT NOT NULL, state_json TEXT
+                );
+                CREATE INDEX IF NOT EXISTS telemetry_provisional_partition ON telemetry
+                    (site_id,device_id,boot_id,source,scope,seq DESC);
                 CREATE INDEX IF NOT EXISTS telemetry_device_order ON telemetry(device_id, boot_id, seq DESC);
                 CREATE UNIQUE INDEX IF NOT EXISTS telemetry_one_current ON telemetry(device_id) WHERE is_current=1;
                 CREATE TABLE IF NOT EXISTS intake_receipts (

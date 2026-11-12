@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased — 2026-11-13
+
+- 新增独立 PROVISIONAL 实时风险特征、候选土壤指数、等级原因、状态持久化与 latest/history API；隔离于原始 risk、正式 current 与 alarms，异常不阻止遥测入库。
+- 页面新增未标定临时风险及趋势、REAL 实时原始曲线、连接器 OPERATIONAL/TEST_ONLY 选项；保留原正式风险展示。
+- 支持 GEOHAZARD_HOST LAN 绑定并强制 token，复用浏览器 Bearer 会话；新增板端 Mosquitto/systemd、无构建启动 wrapper、PC dist 复制脚本及中文现场手册。
+- SD 回放增加远端 Broker 用户名/密码与环境变量，日志脱敏；补充特征、因果状态、接入隔离、MQTT 回放、LAN 认证与启动回归。
+
 ## 0.3.0 — 2026-10-20
 
 - 新增隔离 TinyQuake result.v1 存储、查询、分页和数据流 API；不写入正式遥测或告警。
