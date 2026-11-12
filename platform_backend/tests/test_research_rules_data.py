@@ -20,7 +20,7 @@ class ExternalResearchRulesTests(unittest.TestCase):
     def assert_session(self, kind):
         relative, filename, identity, *_ = GOLDEN[kind]
         source = DATA_ROOT / relative
-        if not source.is_dir() and "ICT_REPLAY_DATA_ROOT" not in os.environ:
+        if not source.is_dir():
             self.skipTest(f"external golden capture unavailable: {source}")
         before = {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in source.glob("N*.*")
                   if p.suffix in (".BEG", ".CSV", ".END")}

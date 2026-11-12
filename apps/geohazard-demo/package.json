@@ -13,7 +13,8 @@
     "test:browser": "node tests/browser-smoke.mjs",
     "test:platform": "node tests/platform-smoke.mjs",
     "test:tinyquake": "node tests/tinyquake-smoke.mjs",
-    "test:platform:regressions": "node --import tsx --test tests/platform-api.test.ts && node tests/platform-regressions.mjs"
+    "test:platform:regressions": "node --import tsx --test tests/platform-api.test.ts && node tests/platform-regressions.mjs",
+    "test:replay": "node --import tsx --test tests/raw-replay.test.ts"
   },
   "dependencies": {
     "lucide-vue-next": "0.577.0",

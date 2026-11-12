@@ -79,6 +79,59 @@ platform_backend/.venv/bin/python scripts/mqtt_demo.py
 
 随后在平台配置 MQTT：host `127.0.0.1`、port `18883`、site_id `MOCK-LAB`、来源 `MOCK`，Topic `zhifang/v2/MOCK-LAB/+/telemetry`，启用且不启用 TLS。该脚本只监听本机、持续发布 `MOCK-NODE-01`，默认场景 C；可用 `--scenario A/B/C/D` 指定。平台收到消息后可从设备选择器切换查看，验证 Broker → Paho → 校验 → SQLite → 网页整条链路。它不是正式设备 Broker 的部署配置。
 
+### 真实 SD 数据经 MQTT 回放
+
+这条路径复用 `parse_sd_session()`，完整检查 BEG/CSV/END 后，经过 Broker → Paho → v2 校验 → SQLite → 主平台「原始通道」。它独立于 `/?mode=research`，不会改变研究回放或 MOCK 演示。
+
+```bash
+# 仓库根目录；开发 extras 已含 amqtt，不增加依赖
+platform_backend/.venv/bin/pip install -e './platform_backend[dev]'
+# 只读校验和 JSON lines（摘要写 stderr，不连接 Broker）
+platform_backend/.venv/bin/python scripts/replay_sd_to_mqtt.py "/workspace/realdata/标定数据/标定土壤传感器/AIR-1" --csv N0000010.CSV --dry-run --frame-hz 2
+# 启动本机 Broker 并按设备时间回放；替换为实际提供的 50PWM 目录
+platform_backend/.venv/bin/python scripts/replay_sd_to_mqtt.py "<50PWM目录>" --embedded-broker --speed 1
+```
+
+`SESSION_DIR...` 可按顺序提供多场；目录有多个 CSV 时必须用 `--csv NAME.CSV`，它对所有目录使用同一文件名。解析器拒收的会话直接退出，不绕过 BEG/END/CRC/计数校验。原件不写入仓库；每场结束再次比较三件套 SHA-256。对应关系、参数、指纹和摘要写入已 gitignore 的 `work/replay/mqtt-*.json`，中断也保存已有计数。
+
+选项：`--host 127.0.0.1 --port 18883`、`--site-id REPLAY-LAB --device-id REPLAY-NODE01`、`--speed 0.1..50`（默认 1）、`--frame-hz 0.5..10`（默认 2）、`--imu-max-age-ms 50`、`--soil-max-age-ms 1000`、`--include-ain2`、`--derive-display --baseline-s 5`、`--rain-level 0..3`、`--boot-id INTEGER` 或 `--deterministic-boot`、`--loop`、`--dry-run`、`--max-frames N`。max-frames 限制整个命令（包括多场/循环）的帧数。site/device 必须为单个 Topic 段且不能以 MOCK-/DEMO- 开头。embedded Broker 只监听 `127.0.0.1`，要求 host 同为该地址；其他 host 仅用于明确指定的 Broker，不使用公网演示 Broker。
+
+默认 boot 为 Unix 毫秒；确定性 boot 取 experiment_id 中间的 16 位 hex 的低 53 位（没有该段则拒收）。同一次命令内遇到重复 boot 会递增避碰，场与场重置 seq 为 1。重复使用显式或确定性 boot 可能在已有数据库中去重或发生身份冲突，重复答辩推荐默认 boot。所有实际 boot 都记录在日志中。
+
+连接器请求体（`POST /api/v1/connectors`，也可通过页面「配置与接入」填写；需要认证时带 Bearer Token）：
+
+```json
+{
+  "name": "真实 SD 回放（非预警）",
+  "kind": "mqtt",
+  "enabled": true,
+  "source": "REAL",
+  "config": {
+    "host": "127.0.0.1", "port": 18883,
+    "site_id": "REPLAY-LAB", "topic": "zhifang/v2/REPLAY-LAB/+/telemetry",
+    "tls": false, "qos": 0, "keepalive": 30,
+    "payload_format": "telemetry_v2", "scope": "TEST_ONLY"
+  }
+}
+```
+
+**必须保持 REAL / TEST_ONLY，不可设 OPERATIONAL。** 发布 QoS 0、retain=false；本地每帧先调用原有 `validate_telemetry`，失败计数并跳过，连续 10 帧失败中止。平台继续把 REAL/TEST_ONLY 作为 backfill 保存，不更新生产 current。设备索引仅为带 `REAL_REPLAY|` 标记的 MQTT 测试流增加可见项；dashboard 另给 `replay_latest`，原 `latest` 语义不变。页面从历史 payload 绘制 AIN0/1 ADC 和 TOP/TOE 的 ax/ay/az；null 断线，不跨 boot 连线。
+
+数据未标定、只有设备 uptime、没有 UTC；timestamp_ms 始终 null、time_synced 始终 false。AIN2 默认不发；pct 与 risk 始终全为 null。每帧锚定在采样截止时刻后第一条实际 acquired 观察，使用不晚于锚点且在 max-age 内的最新 Valid 样本，缺测发 null。帧率投影不做插值、平滑或异常值剔除；低频帧无法呈现全部约 100 Hz IMU 样本/尖峰，完整原件仍由研究回放核查。节奏用单调时钟的累计目标时间，按原始 uptime 差除以 speed；换场立即开始独立时间轴，不伪造场间设备时间。
+
+`--derive-display` 默认为关；开启后页面提示「未标定显示值」。倾角为当前加速度相对本场前 baseline-s 秒平均向量的方向角，基线只累计已经出现的样本，到期冻结；尚无有效基线或零向量时为空。振动为前一帧锚点之后至当前锚点（首帧从场起点）Valid 加速度模长减窗口均值后的 RMS，单位 m/s²，平台投影转 g 时除以 9.80665。它们是粗显示值，不是正式特征；不使用 B 的候选标定参数，不代表实时监测或预警效果。
+
+手动验收（本任务未执行，需有实际降雨目录）：
+
+1. 终端 1 执行 `./scripts/run-platform.sh`，打开 http://127.0.0.1:8000。
+2. 终端 2 执行上面的 `<50PWM目录> --embedded-broker --speed 1` 命令。
+3. 在「配置与接入」按上述 JSON 添加并启用连接器，确认收到 SUBACK 后显示已连接。可用 `--loop` 延长演示时间；已启动 Broker 时可不带 embedded 再次回放。
+4. 设备选择器切到 `REPLAY-NODE01 / REAL`，确认「真实数据回放 · 未标定 · 非实时预警」徽标、原始通道随 uptime 推进、缺测断线、不同 boot 分图。开启 derive-display 时核对「未标定显示值」提示。
+5. 告警中心没有新增回放告警，切回 MOCK 演示确认原行为正常。
+6. 停止平台后用 `GEOHAZARD_DEMO=0 ./scripts/run-platform.sh` 重复上述步骤，回放应一致。
+
+测试：`ICT_REPLAY_DATA_ROOT=/workspace/realdata/标定数据 platform_backend/.venv/bin/python -m pytest platform_backend/tests`。标定 AIR-1 冒烟约 60 帧，降雨目录缺失时相应外部数据测试 skip。合成三件套覆盖投影、因果派生、假时钟、身份、指纹和本机真实 MQTT→HTTP（demo 开/关）；不依赖提交原始数据。无第三方依赖时，可用 `PYTHONPATH=platform_backend/src:platform_backend/tests:. ICT_REPLAY_DATA_ROOT=/workspace/realdata/标定数据 platform_backend/.venv/bin/python -m unittest test_sd_mqtt_replay test_sd_replay test_sd_replay_data test_research_rules test_research_rules_data` 运行可用的标准库测试，本机 MQTT/API 测试会明确 skip。前端新增断线/boot 分组回归：`cd apps/geohazard-demo && npm run test:replay`（使用现有 tsx 开发依赖；Node 22.18+ 也可直接执行 `node tests/raw-replay.test.ts`）。
+
 配置密码单独保存在本地数据库，数据库权限为 0600，读取接口只返回是否已配置，不返回密码；省略更新密码时保留原值。TLS 开启时必须验证证书，不能关闭验证。当前是本地管理员模型，生产密钥管理、用户角色和多租户权限需后续实现。
 
 ## ESP32 接入状态
