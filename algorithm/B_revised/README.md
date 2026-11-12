@@ -15,6 +15,10 @@
 
 ## 对接入口
 
+- 2026-11-12 新标定包已完成双 IMU 候选、AIR/WATER 重复性与 5 秒称重复核，见 [`docs/CALIBRATION_REVIEW_2026-11-12.md`](docs/CALIBRATION_REVIEW_2026-11-12.md)。输出待复核，不能加载为设备标定或风险配置。
+
+- 现有四场工程数据的原始量统计、变化/间隔回查索引和离线图表已完成，见 [`docs/ENGINEERING_EXPLORATION_2026-11-03.md`](docs/ENGINEERING_EXPLORATION_2026-11-03.md)。分析无物理标定或阈值拟合；绘图库为独立可选依赖。
+
 - 2026-11-03 已接收四场工程采集并新增专用只读 ZIP 质检工具，见 [`docs/REAL_DATA_REVIEW_2026-11-03.md`](docs/REAL_DATA_REVIEW_2026-11-03.md)。这些记录尚不满足新方案标定门禁；雨后无新增降雨不等于干土基线。
 
 - 2026-10-13 等待数据前的独立工具已补齐，运行入口是 [`run_independent.py`](run_independent.py)，PyCharm/解释器、回放产物、归一化、指标和交接包说明见 [`LOCAL_WORK_GUIDE.md`](LOCAL_WORK_GUIDE.md)。正式 Training Contract、标定参数和真实评价继续等待材料。

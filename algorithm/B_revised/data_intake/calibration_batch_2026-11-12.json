@@ -1,0 +1,25 @@
+{
+  "archive_sha256": "c422729a343bb707b3add0c762334b2c03e1a57b577dbd8535dada9cc723f2e8",
+  "imu_root": "标定数据/标定IMU/",
+  "gyro": "300秒静态零偏标定IMU/第二轮测试数据/N0000002.CSV",
+  "faces": {
+    "-X": ["IMU  -X朝上/通过数据/N0000001.CSV"],
+    "+X": ["IMU +X朝上/通过数据/N0000001.CSV"],
+    "-Y": ["IMU  -Y朝上/N0000001.CSV"],
+    "+Y": ["IMU +Y朝上/N0000001.CSV"],
+    "-Z": ["IMU  -Z朝上/N0000001.CSV"],
+    "+Z": ["IMU +Z朝上/通过数据/N0000015.CSV", "IMU +Z朝上/通过数据/N0000016.CSV"]
+  },
+  "soil_root": "标定数据/标定土壤传感器/",
+  "soil_repeats": {
+    "AIR": ["AIR-1/N0000010.CSV", "AIR-2/N0000011.CSV", "AIR-3/N0000012.CSV"],
+    "WATER": ["WATER-1/N0000021.CSV", "WATER-2/N0000023.CSV", "WATER-3/N0000025.CSV"]
+  },
+  "gravity_mps2": 9.80665,
+  "pump": {
+    "source": "SANDBOX-01_沙盘与降雨实验_综合简表_时间记录细化版.xlsx / 沙盘与降雨综合表 / rows 31–39; 36 is a nonmeasurement",
+    "top_area_m2": 0.1152,
+    "seconds": 5,
+    "readings": [[0, 0, "off"], [30, 30, "unstable"], [35, 45, "excluded"], [40, 63.5, "excluded"], [50, 74.5, "reference"], [70, 116.5, "reference"], [80, 129.5, "backup"], [100, 156, "reference"]]
+  }
+}
