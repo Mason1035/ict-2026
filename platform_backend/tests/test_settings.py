@@ -19,3 +19,10 @@ def test_invalid_platform_port_fails_before_startup(monkeypatch, port):
     monkeypatch.setenv("GEOHAZARD_PORT", port)
     with pytest.raises(ValueError, match="GEOHAZARD_PORT"):
         Settings()
+
+
+@pytest.mark.parametrize("host", ["0.0.0.0", "192.0.2.1", "::", "atlas-board"])
+def test_lan_requires_nonempty_token(host):
+    with pytest.raises(ValueError, match="GEOHAZARD_API_TOKEN"):
+        Settings(host=host, api_token=" ")
+    assert Settings(host=host, api_token="secret").host == host

@@ -5,6 +5,8 @@ import TerrainScene from "./components/TerrainScene.vue";
 import ConnectorPanel from "./platform/ConnectorPanel.vue";
 import VisionPanel from "./platform/VisionPanel.vue";
 import TinyQuakePanel from "./platform/TinyQuakePanel.vue";
+import RawReplayTrend from "./platform/RawReplayTrend.vue";
+import ProvisionalRiskPanel from "./platform/ProvisionalRiskPanel.vue";
 import PlatformTrend from "./platform/PlatformTrend.vue";
 import { usePlatform } from "./platform/usePlatform";
 import { connectionSettings, errorMessage, saveConnection } from "./platform/api";
@@ -23,6 +25,9 @@ const apiToken = ref(connectionSettings.token);
 const settingsError = ref("");
 const historyExpanded = ref<string | null>(null);
 const latest = computed(() => dashboard.value?.latest);
+const replayRow = computed(() => dashboard.value?.replay_latest || history.value[0]);
+const isReplay = computed(() => selected.value?.source === "REAL" && String((replayRow.value?.payload?.experiment as { run_id?: string } | undefined)?.run_id || "").startsWith("REAL_REPLAY|"));
+const derivedDisplay = computed(() => isReplay.value && ((replayRow.value?.payload?.imu as { tilt_deg?: number | null; vibration_rms?: number | null }[] | undefined) || []).some(i => i.tilt_deg != null || i.vibration_rms != null));
 const fresh = computed(() => connection.value === "online" && !!latest.value && !latest.value.stale);
 const risk = computed(() => fresh.value ? latest.value?.risk : null);
 const level = computed(() => risk.value?.level || "unknown");
@@ -63,6 +68,7 @@ function stateLabel(key: string) { const value = fresh.value ? latest.value?.sys
         <div v-if="connection === 'offline'" class="backend-alert" role="alert"><TriangleAlert :size="20" /><div><strong>无法连接后端，实时读数已清空</strong><p>{{ error }}。请确认服务已启动；需要认证时在连接设置中填写访问密钥。</p></div><button class="secondary-button" @click="openSettings">检查连接</button></div>
         <div v-else-if="connection === 'loading'" class="backend-alert neutral" role="status"><RefreshCw :size="18" /><div><strong>正在读取后端</strong><p>平台不会自动切换为本地模拟数据。</p></div></div>
         <div v-if="page !== 'tinyquake'" class="platform-context"><div><span :class="['source-badge', selected?.source?.toLowerCase()]">{{ selected?.source || '—' }}</span><strong>{{ sourceName }}</strong><span>{{ selected?.scope || '未选择设备' }}</span><span v-if="latest?.stale" class="stale-tag">数据已过期 · {{ Math.floor(latest.age_seconds) }} 秒数据年龄</span><span v-else-if="latest && fresh">最新入库 {{ dateTime(latest.received_at) }}</span><span v-else>等待有效数据</span></div><span><Database :size="12" />{{ health?.storage?.durable ? 'SQLite 持久化' : '存储状态未知' }}<span class="context-update"> · 读取 {{ dateTime(updatedAt) }}</span></span></div>
+        <div v-if="isReplay" class="backend-alert neutral" role="status" data-testid="real-replay-badge"><TriangleAlert :size="20" /><div><strong>真实数据回放 · 未标定 · 非实时预警</strong><p>原始设备 uptime，无 UTC；曲线为回放采样帧，缺测不补点。<span v-if="derivedDisplay">倾角与振动为未标定显示值，非正式特征。</span></p></div></div>
         <p v-if="actionError" class="inline-error" role="alert">{{ actionError }}</p>
         <template v-if="page === 'overview'">
           <div v-if="isDemo" class="simulation-bar platform-demo-bar"><div class="simulation-status"><Radio :size="15" /><strong>后端演示</strong><span>{{ dashboard?.demo?.running ? '运行中' : '已暂停' }} · {{ elapsed }} 秒</span><span class="demo-storage-note">样本写入数据库</span></div><div class="platform-scenarios"><button v-for="scenario in scenarios" :key="scenario.id" :class="{ selected: dashboard?.demo?.scenario === scenario.id }" :disabled="busy || connection !== 'online'" @click="action('/demo/scenario', { scenario: scenario.id })">{{ scenario.label }}</button></div><div class="playback-controls"><button class="playback-button" :disabled="busy || connection !== 'online'" :aria-label="dashboard?.demo?.running ? '暂停后端演示' : '继续后端演示'" @click="action('/demo/control', { running: !dashboard?.demo?.running })"><Pause v-if="dashboard?.demo?.running" :size="14" /><Play v-else :size="14" />{{ dashboard?.demo?.running ? '暂停' : '继续' }}</button><button class="icon-button" aria-label="后端演示推进一步" :disabled="busy || connection !== 'online'" @click="action('/demo/step')"><SkipForward :size="16" /></button><button class="icon-button" aria-label="重置后端演示" :disabled="busy || connection !== 'online'" @click="resetConfirmation?.showModal()"><RotateCcw :size="15" /></button></div></div>
@@ -72,6 +78,8 @@ function stateLabel(key: string) { const value = fresh.value ? latest.value?.sys
           </div>
           <div class="section-label"><h2>传感器遥测</h2><span>{{ sourceName }} · 采集 {{ dateTime(latest?.source_time) }}</span></div>
           <section class="sensor-grid platform-sensors" aria-label="后端传感器读数"><article v-for="field in sensorFields" :key="field.key" class="panel platform-sensor"><div><span>{{ field.label }}</span><i :class="['status-dot', { paused: sensors[field.key] == null }]" /></div><div class="platform-sensor-reading" :data-testid="`reading-${field.key}`">{{ reading(sensors[field.key], field.decimals) }}<span>{{ field.unit }}</span></div><small>{{ sensors[field.key] == null ? latest?.stale ? '采样已过期' : '暂无有效读数' : selected?.source === 'MOCK' ? '后端模拟数据' : '设备上报数据' }}</small></article></section>
+          <ProvisionalRiskPanel :latest="dashboard?.provisional_risk || null" :history="dashboard?.provisional_history || []" :stale="connection !== 'online' || (!isReplay && !fresh)" :replay="isReplay" />
+          <RawReplayTrend v-if="selected?.source === 'REAL'" :rows="history" />
           <div class="platform-operations"><section class="panel platform-section"><div class="platform-panel-heading"><div><Radio :size="18" /><div><h2>设备链路状态</h2><p>由上报消息中的系统状态提供。</p></div></div></div><div class="device-health-grid"><div v-for="field in systemFields" :key="field.key"><i :class="['status-dot', { paused: !fresh || !latest?.system?.[field.key] }]" /><span>{{ field.name }}</span><strong>{{ stateLabel(field.key) }}</strong></div></div><p class="system-note">{{ fresh && latest?.system.sensor_degraded ? '设备报告传感器降级，请检查原始遥测。' : '链路就绪状态以设备上报为准；不表示平台主动完成了端到端探测。' }}</p></section><section class="panel platform-section"><div class="platform-panel-heading"><div><Database :size="18" /><div><h2>当前数据流</h2><p>{{ selected?.site_id || '—' }} / {{ selected?.device_id || '—' }}</p></div></div><button class="text-button" @click="navigate('history')">查看历史</button></div><div class="platform-counts"><div><strong>{{ numberCount(dashboard?.stats.telemetry_count) }}</strong><span>遥测记录</span></div><div><strong>{{ numberCount(dashboard?.stats.alarm_count) }}</strong><span>告警记录</span></div><div><strong>{{ numberCount(dashboard?.stats.evidence_count) }}</strong><span>视觉证据</span></div></div></section></div>
           <section class="panel platform-section inference-section" aria-label="昇腾预测（研究模型 · 未校准）">
             <div class="platform-panel-heading"><div><Activity :size="18" /><div><h2>昇腾预测（研究模型 · 未校准）</h2><p>趋势增量仅供研究，不参与风险融合。土壤百分比近似 VWC；运动通道单位尚未核准。</p></div></div></div>

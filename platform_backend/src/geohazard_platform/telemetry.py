@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import math
+import logging
 from datetime import datetime
 from typing import Any
 from uuid import uuid4
@@ -15,6 +16,9 @@ from uuid import uuid4
 from edge_intake import receive_validated_telemetry
 from edge_intake.intake import EdgeIntakeError
 from .database import Database, utc_now
+from . import provisional_risk
+
+logger = logging.getLogger(__name__)
 
 SCHEMA = "zhifang.telemetry.v2"
 MAX_INTEGER = 9007199254740991
@@ -268,6 +272,12 @@ def ingest_telemetry(db: Database, payload: Any, *, source: str = "MOCK", scope:
                 connection.execute("INSERT INTO alarms(id,site_id,device_id,source,scope,level,score,reason,source_message_id,created_at) VALUES(?,?,?,?,?,?,?,?,?,?)", (alarm_id, snapshot["site_id"], snapshot["device_id"], source, scope, level, snapshot["risk"]["sensor_score"], reason, identifier, now))
                 connection.execute("INSERT INTO events(id,kind,message,site_id,device_id,source,details_json,created_at) VALUES(?,?,?,?,?,?,?,?)", (str(uuid4()), "risk_escalation", reason, snapshot["site_id"], snapshot["device_id"], source, json.dumps({"telemetry_id": identifier, "alarm_id": alarm_id, "scope": scope, "risk": snapshot["risk"]}), now))
             result = {"receipt_id": receipt_id, "status": "accepted", "telemetry_id": identifier, "identity": identity, "source": source, "scope": scope, "durable": True, "node_cleanup_authorized": False, "risk": snapshot["risk"], "is_current": current, "is_backfill": not current, "alarm_id": alarm_id}
+            if level is None:
+                try:
+                    provisional_risk.record(db, identifier, snapshot, source=source, scope=scope, received_at=now)
+                except Exception:
+                    # Optional display processing must never roll back durable intake.
+                    logger.exception("Provisional risk failed for telemetry %s", identifier)
     if conflict is not None:
         quarantine_id = quarantine_message(db, payload, source=source, scope=scope, transport=transport, connector_id=connector_id, topic=topic, reason=conflict)
         raise IngestionError(409, {"message": conflict, "quarantine_id": quarantine_id})

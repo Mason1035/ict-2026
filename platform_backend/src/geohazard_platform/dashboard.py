@@ -108,3 +108,20 @@ def latest(db, *, device_id, site_id=None, source=None, freshness_seconds=30):
     with db.connection() as c:
         row = c.execute("SELECT * FROM telemetry WHERE "+" AND ".join(clauses), args).fetchone()
     return project(row, freshness_seconds) if row else None
+
+
+def device_listing(db, site_id=None, source=None):
+    # Replay remains backfill, visible only as an explicitly labelled test stream.
+    where, args = ["""(is_current=1 OR (source='REAL' AND scope='TEST_ONLY'
+        AND NOT EXISTS (SELECT 1 FROM telemetry live WHERE live.device_id=telemetry.device_id AND live.is_current=1)
+        AND transport='mqtt' AND substr(json_extract(payload_json,'$.experiment.run_id'),1,12)='REAL_REPLAY|'
+        AND rowid=(SELECT max(t2.rowid) FROM telemetry t2 WHERE t2.device_id=telemetry.device_id
+                   AND t2.source='REAL' AND t2.scope='TEST_ONLY' AND t2.transport='mqtt'
+                   AND substr(json_extract(t2.payload_json,'$.experiment.run_id'),1,12)='REAL_REPLAY|')))"""], []
+    for name,value in (("site_id",site_id),("source",source)):
+        if value is not None:
+            where.append(f"{name}=?")
+            args.append(value)
+    with db.connection() as c:
+        rows=c.execute("SELECT site_id,device_id,source,scope,received_at AS last_received_at FROM telemetry WHERE "+" AND ".join(where)+" ORDER BY site_id,device_id",args).fetchall()
+    return {"items":[dict(r) for r in rows]}

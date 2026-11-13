@@ -25,14 +25,15 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 from starlette.concurrency import run_in_threadpool
 
 from . import __version__, tinyquake
-from .settings import Settings, REPO_ROOT
+from .settings import Settings, REPO_ROOT, loopback_host
+from . import provisional_risk
 from .database import Database, utc_now
 from .telemetry import IngestionError, ingest_telemetry, validate_telemetry
 from .connectors import ConnectorError, MQTTManager, list_connectors, get_connector, save_connector, delete_connector, test_connector
 from .vision import VisionService, VisionError
 from .inference import InferenceService, InferenceError
 from .demo import BackendDemo, SITE, DEVICE
-from .dashboard import latest, history, normalize_time_filter
+from .dashboard import latest, history, normalize_time_filter, device_listing
 from .research_display import ResearchDisplay
 from .research_api import research_router
 
@@ -130,7 +131,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app = FastAPI(title="智哨防灾 · 多模态平台 API", version=__version__, lifespan=lifespan,
                   description="Local software integration. MOCK and operational sources are isolated; OpenCV observations are uncalibrated.")
     app.state.inference = inference
-    app.add_middleware(TrustedHostMiddleware, allowed_hosts=["127.0.0.1", "localhost", "[::1]"])
+    lan_mode = not loopback_host(settings.host)
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"] if lan_mode else ["127.0.0.1", "localhost", "[::1]"])
     app.add_middleware(CORSMiddleware, allow_origins=list(settings.allowed_origins),
                        allow_methods=["GET", "POST", "PUT", "DELETE"], allow_headers=["Authorization", "Content-Type"])
 
@@ -140,7 +142,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             if not settings.api_token and request.client and request.client.host not in {"127.0.0.1", "::1", "localhost"}:
                 return JSONResponse({"detail": "本地模式只接受 loopback 请求；远程部署需配置 API Token"}, status_code=403)
             origin = request.headers.get("origin")
-            if origin and origin not in settings.allowed_origins:
+            same_origin = lan_mode and origin == f"{request.url.scheme}://{request.url.netloc}"
+            if origin and origin not in settings.allowed_origins and not same_origin:
                 return JSONResponse({"detail": "Origin is not allowed"}, status_code=403)
             length = request.headers.get("content-length")
             if length:
@@ -226,14 +229,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return {"items":[dict(r) for r in rows]}
 
     def device_items(site_id=None, source=None):
-        where, args = ["is_current=1"], []
-        for name,value in (("site_id",site_id),("source",source)):
-            if value is not None:
-                where.append(f"{name}=?")
-                args.append(value)
-        with db.connection() as c:
-            rows=c.execute("SELECT site_id,device_id,source,scope,received_at AS last_received_at FROM telemetry WHERE "+" AND ".join(where)+" ORDER BY site_id,device_id",args).fetchall()
-        return {"items":[dict(r) for r in rows]}
+        return device_listing(db, site_id, source)
 
     @api.get("/devices")
     def devices(site_id: str | None=None, source: Literal["REAL","MOCK"] | None=None):
@@ -248,6 +244,21 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                           limit:int=Query(120,ge=1,le=500),before:str|None=None,after:str|None=None,cursor:str|None=None):
         try:
             return history(db,device_id=device_id,site_id=site_id,source=source,limit=limit,before=before,after=after,cursor=cursor)
+        except ValueError as exc:
+            raise HTTPException(422,str(exc)) from exc
+
+    @api.get("/provisional-risk/latest")
+    def provisional_latest(site_id:str, device_id:str, source:Literal["REAL","MOCK"]|None=None,
+                           scope:Literal["OPERATIONAL","TEST_ONLY"]|None=None, boot_id:int|None=None):
+        return provisional_risk.latest(db, site_id=site_id, device_id=device_id, source=source, scope=scope, boot_id=boot_id)
+
+    @api.get("/provisional-risk/history")
+    def provisional_history(site_id:str, device_id:str, source:Literal["REAL","MOCK"]|None=None,
+                            scope:Literal["OPERATIONAL","TEST_ONLY"]|None=None, boot_id:int|None=None,
+                            limit:int=Query(120,ge=1,le=500), before:str|None=None, after:str|None=None):
+        try:
+            return provisional_risk.history(db, site_id=site_id, device_id=device_id, source=source,
+                scope=scope, boot_id=boot_id, limit=limit, before=before, after=after)
         except ValueError as exc:
             raise HTTPException(422,str(exc)) from exc
 
@@ -425,6 +436,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def dashboard(site_id:str=SITE,device_id:str=DEVICE,source:Literal["REAL","MOCK"]="MOCK"):
         current=latest(db,device_id=device_id,site_id=site_id,source=source,freshness_seconds=settings.freshness_seconds)
         entries=history(db,device_id=device_id,site_id=site_id,source=source,limit=120)["items"]
+        replay_entry = None if current else next((r for r in entries if r["source"] == "REAL" and r["scope"] == "TEST_ONLY" and str(r["payload"]["experiment"]["run_id"] or "").startswith("REAL_REPLAY|")), None)
+        display_entry = current or replay_entry
+        provisional_rows = provisional_risk.history(db, site_id=site_id, device_id=device_id, source=source,
+            scope=display_entry["scope"], boot_id=display_entry["identity"]["boot_id"])["items"] if display_entry else []
+        provisional_current = next((r for r in provisional_rows if r["telemetry_id"] == display_entry["id"]), None) if display_entry else None
         charts=[{"time":r["received_at"],"score":r["risk"]["final_score"],**r["sensors"]} for r in reversed(entries)]
         alarm_scope="OPERATIONAL" if source=="REAL" else "TEST_ONLY"
         alarm_rows=filtered_rows("alarms",site_id=site_id,device_id=device_id,source=source,scope=alarm_scope)
@@ -436,8 +452,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         with db.connection() as c:
             count=c.execute("SELECT count(*) FROM telemetry WHERE site_id=? AND device_id=? AND source=?",(site_id,device_id,source)).fetchone()[0]
             alarm_count=c.execute("SELECT count(*) FROM alarms WHERE site_id=? AND device_id=? AND source=? AND scope=?",(site_id,device_id,source,alarm_scope)).fetchone()[0]
-        return {"site_id":site_id,"device_id":device_id,"source":source,"scope":current["scope"] if current else None,
-                "latest":current,"history":charts,"alarms":alarm_rows,"events":event_rows,
+        return {"site_id":site_id,"device_id":device_id,"source":source,"scope":current["scope"] if current else replay_entry["scope"] if replay_entry else None,
+                "latest":current,"replay_latest":replay_entry,"history":charts,"alarms":alarm_rows,"events":event_rows,
+                "provisional_risk":provisional_current,"provisional_history":list(reversed(provisional_rows)),
                 "stats":{"telemetry_count":count,"alarm_count":alarm_count,"evidence_count":evidence_page["total"],"vision_result_count":results_page["total"]},
                 "demo":app.state.demo.state(),"connectors":connector_list()["items"],
                 "vision":{"evidence":evidence,"results":results,"latest_result":results[0] if results else None,

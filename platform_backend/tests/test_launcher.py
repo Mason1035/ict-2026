@@ -151,3 +151,12 @@ def test_invalid_port_does_not_install_or_start_services(installation, port):
     assert result.returncode != 0
     assert "GEOHAZARD_PORT" in result.stderr
     assert commands() == []
+
+
+def test_lan_bind_requires_token_before_dependency_setup(installation):
+    _, _, run, commands = installation
+    result = run(GEOHAZARD_HOST="0.0.0.0", GEOHAZARD_API_TOKEN="")
+    assert result.returncode != 0 and "GEOHAZARD_API_TOKEN" in result.stderr
+    assert commands() == []
+    assert run(GEOHAZARD_HOST="0.0.0.0", GEOHAZARD_API_TOKEN="test-token").returncode == 0
+    assert any(command[1:3] == ["-m", "uvicorn"] and command[command.index("--host")+1] == "0.0.0.0" for command in commands())

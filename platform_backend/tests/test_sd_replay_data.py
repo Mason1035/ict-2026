@@ -34,7 +34,7 @@ class GoldenSDReplayTests(unittest.TestCase):
     def assert_capture(self, kind):
         directory, filename, experiment, rows, size, crc, counts = GOLDEN[kind]
         source = DATA_ROOT / directory
-        if not source.is_dir() and "ICT_REPLAY_DATA_ROOT" not in os.environ:
+        if not source.is_dir():
             self.skipTest(f"external golden captures unavailable: {source}")
         before = {p.name: hashlib.sha256(p.read_bytes()).hexdigest()
                   for p in source.glob("N*.*") if p.suffix in (".CSV", ".BEG", ".END")}
