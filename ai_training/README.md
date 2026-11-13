@@ -260,7 +260,7 @@ D(t)、velocity、state 是 latent/synthetic ground truth，failure time 只属�
 设计依据，不能成为部署输入。3 Soil + 2 IMU 的模拟观测不等于 A 的原始实验采样；Soil normalized
 值不能称真实 VWC，vibration/tilt proxy 不能冒充已标定的硬件计算特征。
 
-RealAdapter 始终 WAITING_FOR_A / WAITING_FOR_B。当前没有使用 A 尚未交付的数据。
+RealAdapter 始终 WAITING_FOR_A / WAITING_FOR_B。正式训练入口继续拒绝真实数据；工程格式只读转换见下文。
 Simulator Observation CSV ≠ A Real Experiment CSV ≠ B Feature Table ≠ zhifang.telemetry.v2。
 本模块不实现 Production Telemetry Adapter、MQTT、Risk Fusion、Cloud、Web、IoTDA 或 Gateway。
 
@@ -322,3 +322,63 @@ CLI `--self-test` 重复执行完整 toy run、epoch 2 中断/恢复到同一终
 验证正式契约入口拒绝，并保存 `validation_summary.json`。`--output-root` 可另指定新验证根目录。
 未传 `--self-test` 不会自动运行 toy。pytest 还覆盖非法契约/输入、泄漏、损坏 artifact、恢复身份、
 Test 密封、ONNX 不实声明和防覆盖。实际测试数量/日期见 CHANGELOG。
+
+## NODE01 工程长表只读转换
+
+`real_intake/node01_contract_csv.py` 是独立的纯标准库工具（Python 3.11+），把
+`NODE01_ENGINEERING_DIAGNOSTIC_V1` 转成 A→B 固定 20 列 CSV，保留时间、有效性与来源侧表。
+它不依赖 `platform_backend`，不启用正式训练适配器；RealAdapter 仍为 WAITING_FOR_A / WAITING_FOR_B。
+
+在仓库根目录运行（输入目录只读；输出必须是新目录或空目录）：
+
+```bash
+python3 ai_training/scripts/convert_node01_to_contract_csv.py \
+  /workspace/realdata/标定数据/标定土壤传感器/AIR-1/N0000010.CSV \
+  --output-dir work/node01_contract/AIR-1
+# 文件名带备注时可自动唯一匹配 stem*.BEG/END，也可显式指定：
+python3 ai_training/scripts/convert_node01_to_contract_csv.py \
+  /workspace/realdata/标定数据/标定土壤传感器/测试ANI2异常数据/N0000023.CSV \
+  --beg /workspace/realdata/标定数据/标定土壤传感器/测试ANI2异常数据/N0000023I2C报错.BEG \
+  --end /workspace/realdata/标定数据/标定土壤传感器/测试ANI2异常数据/N0000023.END \
+  --output-dir work/node01_contract/N0000023
+
+ICT_NODE01_DATA_ROOT=/workspace/realdata/标定数据 \
+  work/.venv/bin/python -m pytest -c ai_training/pyproject.toml ai_training/tests/test_node01_contract_csv.py -q
+```
+
+可选参数：`--session`（默认读取同目录 session.json）、`--run-id`（默认完整 experiment_id）、
+`--pair-tolerance-us`（默认 5000）、`--blank-ain2`（清空诊断 AIN2 列并在 provenance 留证）。
+输出只允许放在仓库外或已经被 gitignore 的 `work/` 中，已有非空目录拒绝写入。
+不覆盖原件或历史产物；BEG/END 的完整 experiment_id 与逻辑 CSV 名核对，session 也按完整身份选记录。
+转换前验证固件身份、22 列表头、字节数、CRC32、accepted/verified_rows、逐通道 Valid 计数及连续索引。
+失败 exit 2，stderr 输出 JSON 原因；全部校验后才原子发布，不留下部分输出。发布前再核对原件 SHA-256。
+
+映射与审阅依据：
+
+- TOP（imu channel 0）按 acquired 时间排序，Error 无 acquired 时使用 attempted；每个锚点取容差内
+  最近且未使用的 TOE（channel 1）。等距时取较早时间，再取较小 acquisition_index；未配对 TOE 单独成行。
+  不插值、重采样、滤波、删尖峰或校准。IMU 的六个固件换算数值文本原样复制，单位 m/s² 和 °/s。
+- soil channel 0/1/2 分别对应 top/middle/toe。每条观测只填一次，放在不早于观测的第一个锚点，
+  raw=0 保留；其他位置留空，不沿用旧值。若有效 soil 晚于最后锚点或同通道多条落在同一首个锚点，
+  因无法在此规则下无损表达而拒绝。Error 通道留空，所有非 Valid 记录保存在 validity.csv。
+- `<run_id>.contract.csv` 首行严格为 20 列表头，无注释。timestamp_ms、flow_lpm、rain_level、label 均空。
+  `timing.csv` 中 row_index 从 0 开始，保留通道索引、实际 acquired 时间及锚点；
+  `toe_minus_top_us` 使用 acquired/attempted 的有效时间差，`soil_chN_to_anchor_us` 为锚点减观测时间。
+  time_basis 固定为 DEVICE_UPTIME_US_UNSYNCED，不将主机时间冒充设备 UTC。
+- `provenance.json` 包含原件路径/字节数/哈希、CSV 注释元数据、完整 BEG/END、session 主机 BEGIN/FINALIZED
+  观测与设备同步状态、映射规则、输出行数和逐列非空数。`handoff.json` 使用 B.run_handoff.draft.v1，
+  引用路径相对于自身目录，保存 CSV/timing/validity 的 SHA-256。未知项为 null，校准和标签证据引用留空；
+  因此 `check_handoff.py` 报缺项是预期结果。产物不写当前时间，相同输入与选项逐字节确定。
+
+可对转换后的 CSV 运行只读初检（报告也放在 work/ 中）：
+
+```bash
+python3 algorithm/B_revised/data_intake/check_experiment_csv.py \
+  work/node01_contract/AIR-1/NODE01-02d2774d245ce042-N0000010.CSV.contract.csv \
+  --output work/node01_contract/AIR-1/csv_check.json
+```
+
+局限性：真实传感器数据仍**未校准、无可信 UTC、轴未映射、AIN2 仅作诊断、无标签**。
+转换结果不等于正式训练数据集；CSV_CHECKED 只表示 CSV 初检通过。不得据此使用 B 的标定候选参数，
+也不得称 VWC、已标定或可训练。原始数据、转换产物和报告均不纳入版本控制。
+真实测试未设置 ICT_NODE01_DATA_ROOT 时 skip，设置后缺少样例则 fail；合成测试数据仅在临时 TEST_ONLY 目录生成。

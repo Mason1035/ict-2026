@@ -1,5 +1,21 @@
 # Changelog
 
+## [node01-contract-csv-v1] - 2026-11-12
+
+- 新增纯标准库 NODE01 工程诊断长表只读转换器与 CLI，严格验证 BEG/CSV/END 的身份、
+  固件、CRC32、字节数、行数、通道计数和连续索引；输出固定 20 列 CSV、timing/validity、
+  provenance 与 B.run_handoff.draft.v1。原件 SHA-256 在发布前复核，输出原子发布且不覆盖。
+- TOP 锚点最近未使用 TOE 配对，未配对 TOE 单独成行；soil 首个因果锚点仅填一次，保留 raw=0。
+  Error 保留侧表；未做插值、校准、坐标转换或标签分配，支持诊断 AIN2 清空选项。
+- 新增测试实际结果：**30 passed**（24 项合成测试、6 项真实数据测试，含五个真实样例与空场次拒绝）。
+  五份真实输出经 B 的 check_experiment_csv.py 检查全部 exit 0 / CSV_CHECKED；
+  300 秒样例 61632 条原始记录转换为 31533 行，实测约 1.51 秒。原件哈希未变。
+- 单独原有测试 **177 passed, 5 failed**；加入本次测试后 **207 passed, 5 failed**。
+  五项均为原有 B 历史 fixture 哈希不匹配（dataset_all.csv / excluded_unknown.csv），
+  与此前记录一致；未修改 B 文件、历史 fixture 或校验规则。
+- RealAdapter 的 WAITING_FOR_A / WAITING_FOR_B 状态未改。产物仍未校准、无 UTC、轴未映射、
+  AIN2 仅诊断、无标签，不是正式训练数据集。原件、产物和报告均未纳入版本控制。
+
 ## [multimodal-0.1.0] - 2026-10-19
 
 - 新增独立PUBLIC_DATA_RESEARCH入口：LISA TDR/Smartstone数值MAT reader、NumPy土壤/运动下一观测预测器、
