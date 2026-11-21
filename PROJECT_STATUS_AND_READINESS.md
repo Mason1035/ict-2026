@@ -1,5 +1,14 @@
 # PROJECT-WIDE ADAPTATION AND READINESS REPORT
 
+## 2026-11-21 当前进度增量：板端测试遥测闭环与证据边界
+
+详见 [2026-11-21 项目状态与证据边界](docs/team_handoffs/PROJECT_STATUS_2026-11-21.md)，日期均为 Asia/Taipei。该文同时为 2026-10-22 至 11-13 合并的 PR #9–#20 补充索引。
+
+- 仓库静态实现以 `main@0e6e552` 为准；本轮为 docs-only，没有运行测试或部署。
+- 2026-11-16 C 平台侧人工验收：备用 ESP32 → A 电脑转发 → Atlas Mosquitto → 平台 SQLite，10 条 MOCK/TEST_ONLY 测试遥测 10/10 入库且内容一致，正式告警 0 条。IMU/soil 全为 null，不是传感器或科学验证。原始结果包由团队离线保存，未入库。
+- 2026-11-19 正式 NODE-01 Stage 2.2 MQTT-only 握手：预检时 1883 转发入口和 Atlas 管理路径不可用，没有 CONNECT；专用短期账号和 ACL 尚未就绪。
+- 2026-11-21 没有新的设备验证，所有在线状态均未复核。`project_status.json` 仍为 2026-10-20 快照。
+
 ## 2026-10-20 当前进度增量：TinyQuake 独立实验
 
 交付见 [队友进度交接](docs/team_handoffs/TINYQUAKE_PROGRESS_2026-10-20.md)、[科学评估](docs/model_evaluation/TINYQUAKE_EVALUATION.md) 与 [ESP32 接入指南](docs/model_evaluation/TINYQUAKE_ESP32_GUIDE.md)。基于最新 main（0093f57）保留 NODE-01 框架和公开数据土壤/运动研究工作。

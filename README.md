@@ -7,6 +7,8 @@
 
 2026-10-20 新增 [TinyQuake / ESP32 进度交接](docs/team_handoffs/TINYQUAKE_PROGRESS_2026-10-20.md)：官方 CNN 桌面评估、独立参考固件及平台实验通道已交付；实板与双 IMU 验证待完成。[模型与烧录接入步骤](docs/model_evaluation/TINYQUAKE_ESP32_GUIDE.md)。
 
+2026-11-21 新增[项目状态与证据边界](docs/team_handoffs/PROJECT_STATUS_2026-11-21.md)：分开说明仓库静态实现（main 0e6e552）、2026-11-16 板端 10 条 MOCK/TEST_ONLY 测试遥测闭环人工验收、2026-11-19 正式 NODE-01 握手未执行，以及 11-21 尚未复核的在线状态；未校准，不是正式预警。
+
 最高依据：[00_TEAM_SHARED_CONTRACT.pdf](docs/00_TEAM_SHARED_CONTRACT.pdf)。
 个人文档、交付契约、README 或代码发生冲突时，以 00 为准；正式资料只读。
 
