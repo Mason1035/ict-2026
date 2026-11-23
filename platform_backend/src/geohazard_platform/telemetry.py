@@ -274,7 +274,7 @@ def ingest_telemetry(db: Database, payload: Any, *, source: str = "MOCK", scope:
             result = {"receipt_id": receipt_id, "status": "accepted", "telemetry_id": identifier, "identity": identity, "source": source, "scope": scope, "durable": True, "node_cleanup_authorized": False, "risk": snapshot["risk"], "is_current": current, "is_backfill": not current, "alarm_id": alarm_id}
             if level is None:
                 try:
-                    provisional_risk.record(db, identifier, snapshot, source=source, scope=scope, received_at=now)
+                    provisional_risk.record(db, identifier, snapshot, source=source, scope=scope, received_at=now, context=provenance)
                 except Exception:
                     # Optional display processing must never roll back durable intake.
                     logger.exception("Provisional risk failed for telemetry %s", identifier)

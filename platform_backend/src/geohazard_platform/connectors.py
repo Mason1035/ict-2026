@@ -6,6 +6,7 @@ or invented durable acknowledgements are published by this local intake.
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 import ssl
 from threading import Event, RLock
@@ -76,7 +77,7 @@ def _validate(data: dict[str, Any], old: dict[str, Any] | None = None) -> tuple[
             raise ConnectorError(422, "reserved HTTP adapter does not accept credentials")
         config = {"url": config["url"], "timeout_seconds": 5}
     else:
-        keys = {"host", "port", "site_id", "topic", "client_id", "username", "tls", "ca_cert_path", "qos", "keepalive", "password_configured", "payload_format", "scope"}
+        keys = {"host", "port", "site_id", "topic", "client_id", "username", "tls", "ca_cert_path", "qos", "keepalive", "password_configured", "payload_format", "scope", "firmware_elf_sha256"}
         if set(config) - keys:
             raise ConnectorError(422, "unsupported MQTT setting; TLS certificate verification cannot be disabled")
         config.pop("password_configured", None)
@@ -135,7 +136,14 @@ def _validate(data: dict[str, Any], old: dict[str, Any] | None = None) -> tuple[
         keepalive = config.get("keepalive", 30)
         if type(keepalive) is not int or not 5 <= keepalive <= 300:
             raise ConnectorError(422, "keepalive must be an integer 5..300 seconds")
+        firmware = config.get("firmware_elf_sha256")
+        if firmware is not None and (not isinstance(firmware, str) or not re.fullmatch(r"[0-9a-f]{64}", firmware)):
+            raise ConnectorError(422, "firmware_elf_sha256 must be a lowercase SHA-256")
+        if firmware and ("+" in topic or "#" in topic or experimental):
+            raise ConnectorError(422, "Firmware applicability requires a single-device telemetry topic")
         config = {"host": host, "port": port, "site_id": site, "topic": topic, "client_id": client_id, "username": username, "tls": tls, "ca_cert_path": ca_path, "qos": qos, "keepalive": keepalive, "payload_format": payload_format, "scope": scope}
+        if firmware is not None:
+            config["firmware_elf_sha256"] = firmware
     return {"name": name.strip(), "kind": kind, "enabled": enabled, "source": source, "config": config}, password_changed, password
 
 
@@ -287,7 +295,7 @@ class _MQTTSession:
             if self.item["config"].get("payload_format") == "tinyquake_v1":
                 receipt = tinyquake.ingest(self.db, payload, **metadata)
             else:
-                receipt = self._ingest(self.db, payload, **metadata)
+                receipt = self._ingest(self.db, payload, **metadata, context={"firmware_elf_sha256": self.item["config"].get("firmware_elf_sha256"), "firmware_evidence": "operator_declared_connector_not_attestation"})
             with self._lock:
                 self.state["messages_accepted"] += 1
                 self.state["duplicates"] += int(receipt["status"] == "duplicate")
