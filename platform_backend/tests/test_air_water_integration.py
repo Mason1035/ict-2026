@@ -60,3 +60,38 @@ def test_mqtt_context_reaches_saved_result(db,payload):
     assert r['features']['soil_w_rel_pct']['toe']==100
     assert r['soil_calibration']['evidence']=='operator_declared_connector_not_attestation'
     assert rows(db,'alarms')==[]
+
+def test_session_binding_conflict_latches_until_new_boot_and_survives_restart(db,payload):
+    first=sample(payload)
+    ingest_telemetry(db,first,source='REAL',scope='TEST_ONLY',context=context())
+    latest=lambda:pr.latest(db,site_id=first['site_id'],device_id=first['device_id'])
+    assert latest()['soil_calibration']['hardware_verified'] is False
+    assert latest()['soil_calibration']['session_identity']['boot_id']==1
+    changed={'firmware_elf_sha256':'0'*64}
+    ingest_telemetry(db,sample(payload,2),source='REAL',scope='TEST_ONLY',context=changed)
+    assert latest()['soil_calibration']['session_binding_consistent'] is False
+    db.close();db.initialize()
+    ingest_telemetry(db,sample(payload,3),source='REAL',scope='TEST_ONLY',context=context())
+    assert all(v is None for v in latest()['features']['soil_w_rel_pct'].values())
+    assert 'FIRMWARE_DECLARATION_CHANGED_WITHIN_BOOT' in latest()['quality_flags']
+    ingest_telemetry(db,sample(payload,1,boot=2),source='REAL',scope='TEST_ONLY',context=context())
+    assert latest()['soil_calibration']['applicable'] is True
+    assert latest()['soil_calibration']['hardware_verified'] is False
+    assert rows(db,'alarms')==[]
+
+def test_duplicate_does_not_relabel_existing_calibration(db,payload):
+    p=sample(payload)
+    ingest_telemetry(db,p,source='REAL',scope='TEST_ONLY')
+    old=pr.latest(db,site_id=p['site_id'],device_id=p['device_id'])
+    receipt=ingest_telemetry(db,p,source='REAL',scope='TEST_ONLY',context=context())
+    assert receipt['status']=='duplicate'
+    assert pr.latest(db,site_id=p['site_id'],device_id=p['device_id'])==old
+
+def test_unverified_old_session_cannot_be_promoted_by_filling_hash(db,payload):
+    p=sample(payload)
+    ingest_telemetry(db,p,source='REAL',scope='TEST_ONLY')
+    ingest_telemetry(db,sample(payload,2),source='REAL',scope='TEST_ONLY',context=context())
+    r=pr.latest(db,site_id=p['site_id'],device_id=p['device_id'])
+    assert r['soil_calibration']['parameter_match'] is True
+    assert r['soil_calibration']['applicable'] is False
+    assert r['soil_calibration']['hardware_verified'] is False

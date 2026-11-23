@@ -16,5 +16,7 @@ def evaluate(soil, context=None):
         flags.extend(f"soil.{name}:{flag}" for flag in result["quality_flags"])
     return values, flags, {"version": parameters["version"], "unit": parameters["unit"],
         "firmware_elf_sha256": firmware, "applicable": firmware == parameters["firmware_elf_sha256"],
+        "parameter_match": firmware == parameters["firmware_elf_sha256"],
+        "hardware_verified": False, "verification_status": "UNVERIFIED_OPERATOR_DECLARATION",
         "evidence": context.get("firmware_evidence", "not_provided"),
         "vwc_calibrated": False, "risk_eligible": False, "fusion_eligible": False}

@@ -1,3 +1,4 @@
+from contextlib import closing
 """Presentation regressions using synthetic WP2 registrations; stdlib runnable."""
 import hashlib
 import json
@@ -110,7 +111,7 @@ class ResearchDisplayTests(unittest.TestCase):
     def test_unrelated_tables_rejected(self):
         with TemporaryDirectory() as tmp:
             path = Path(tmp) / "other.sqlite3"
-            with sqlite3.connect(path) as connection:
+            with closing(sqlite3.connect(path)) as connection, connection:
                 connection.execute("CREATE TABLE alarms (id TEXT)")
             with self.assertRaises(ResearchDisplayError):
                 ResearchDisplay(path, Path(tmp) / "prod.sqlite3").sessions()
@@ -147,7 +148,7 @@ class ResearchDisplayTests(unittest.TestCase):
         with TemporaryDirectory() as tmp:
             root = Path(tmp)
             registry, _ = register_synthetic(root)
-            with sqlite3.connect(registry) as connection:
+            with closing(sqlite3.connect(registry)) as connection, connection:
                 m = json.loads(connection.execute("SELECT metadata_json FROM research_sd_sessions").fetchone()[0])
                 m["scope"] = "OPERATIONAL"
                 connection.execute("UPDATE research_sd_sessions SET metadata_json=?", (json.dumps(m),))

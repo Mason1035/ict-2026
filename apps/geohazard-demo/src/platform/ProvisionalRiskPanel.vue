@@ -23,7 +23,7 @@ function soilPoints(key: string): HistoryPoint[] {
       <p v-else>未触发 IMU 演示阈值或数据不足；土壤相对指标仅展示，不参与本次分级。</p>
       <div class="feature-grid"><div>Air–Water 相对湿度（0–100%，非体积含水率）<p data-testid="air-water-values">AIN0 {{ reading(latest.features.soil_w_rel_pct?.top ?? null, 2) }}% · AIN1 {{ reading(latest.features.soil_w_rel_pct?.middle ?? null, 2) }}% · AIN2 {{ reading(latest.features.soil_w_rel_pct?.toe ?? null, 2) }}%</p></div>
         <div v-for="(metrics, sensor) in latest.features.imu" :key="sensor">IMU {{ sensor }}<p>倾角 {{ reading(metrics.tilt_deg, 2) }}° · 相对初始方向 {{ reading(metrics.direction_angle_deg, 2) }}°</p><p>振动 RMS {{ reading(metrics.vibration_rms_mps2, 4) }} m/s² · 陀螺 RMS {{ reading(metrics.gyro_rms_dps, 3) }} °/s</p></div></div>
-      <p v-if="latest.soil_calibration">相对标定版本 {{ latest.soil_calibration.version }} · {{ latest.soil_calibration.applicable ? "固件声明匹配（非设备认证）" : "缺少固件依据或版本不适用，保持空值" }}</p><p v-else>历史旧版本结果，未按新端点重算。</p>
+      <p v-if="latest.soil_calibration">相对标定版本 {{ latest.soil_calibration.version }} · {{ latest.soil_calibration.applicable ? "参数匹配，实板及会话尚未验收" : "固件声明缺失、不适用或会话冲突，保持空值" }}</p><p v-else>历史旧版本结果，未按新端点重算。</p>
       <details><summary>质量标记 / 预热状态</summary><p>{{ latest.quality_flags.join(' · ') }}</p></details>
     </template>
     <p v-else>所选最新遥测暂无临时风险结果；设备上报正式风险时保留其原值。</p>

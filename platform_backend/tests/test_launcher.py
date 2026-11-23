@@ -10,6 +10,8 @@ import time
 import pytest
 
 
+pytestmark = pytest.mark.skipif(os.name == "nt", reason="POSIX bash launcher requires Linux; covered by the Linux CI job")
+
 LAUNCHER = Path(__file__).resolve().parents[2] / "scripts" / "run-platform.sh"
 TOOL = '''#!__PYTHON__
 from pathlib import Path
