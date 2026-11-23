@@ -26,8 +26,12 @@ jobs:
       - name: Full backend suite
         run: python -B -m pytest platform_backend/tests -ra -o addopts= --junitxml=work/ci/backend.xml
       - name: Algorithm software tests
+        if: always()
         working-directory: algorithm/B_revised
         run: python -B -m unittest discover -s data_intake -t . -p 'test_*.py'
+      - name: Publish failure details for review
+        if: always()
+        run: python -B scripts/report_junit_ci.py work/ci/backend.xml
       - name: Preserve reproducible environment
         if: always()
         shell: bash
