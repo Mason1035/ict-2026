@@ -76,7 +76,7 @@ const path = computed(() => {
       <path
         :d="path"
         fill="none"
-        :stroke="alert ? '#be9856' : '#74a189'"
+        :stroke="alert ? '#9e6514' : '#2f7a5f'"
         stroke-width="1.5"
         vector-effect="non-scaling-stroke"
       />
