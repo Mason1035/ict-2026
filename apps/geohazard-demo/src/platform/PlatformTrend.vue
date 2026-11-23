@@ -15,7 +15,7 @@ const stamp = (value: string | undefined) => value ? new Date(value).toLocaleTim
 <template>
   <div class="risk-chart platform-chart">
     <div class="chart-axis"><span>100</span><span>50</span><span>0</span></div>
-    <svg viewBox="0 0 320 100" preserveAspectRatio="none" role="img" :aria-label="chartLabel || '后端保存的风险历史趋势；缺测和未标定处不连线'" @mousemove="track" @mouseleave="hover = null"><path d="M0 6H320 M0 50H320 M0 94H320" stroke="#e9ede8" stroke-dasharray="3 4" fill="none" /><path :d="line" :stroke="color" stroke-width="2" fill="none" vector-effect="non-scaling-stroke" stroke-linejoin="round" /><template v-if="current && current.y != null"><path :d="`M${current.x} 0V100`" stroke="#95a097" stroke-dasharray="3 3" /><circle :cx="current.x" :cy="current.y" r="3" :fill="color" /></template></svg>
+    <svg viewBox="0 0 320 100" preserveAspectRatio="none" role="img" :aria-label="chartLabel || '后端保存的风险历史趋势；缺测和未标定处不连线'" @mousemove="track" @mouseleave="hover = null"><path d="M0 6H320 M0 50H320 M0 94H320" stroke="#dce1dc" stroke-dasharray="3 4" fill="none" /><path :d="line" :stroke="color" stroke-width="2" fill="none" vector-effect="non-scaling-stroke" stroke-linejoin="round" /><template v-if="current && current.y != null"><path :d="`M${current.x} 0V100`" stroke="#647169" stroke-dasharray="3 3" /><circle :cx="current.x" :cy="current.y" r="3" :fill="color" /></template></svg>
     <div v-if="!hasScores" class="chart-empty">{{ emptyLabel || (data.length ? '尚无已标定的风险分数' : '等待后端采样') }}</div><div v-if="current" class="chart-tooltip">{{ dateTime(current.time) }}<strong>{{ reading(current.score) }}</strong></div>
     <div class="chart-time"><span>{{ stamp(data[0]?.time) }}</span><span>入库时间</span><span>{{ stamp(data.at(-1)?.time) }}</span></div>
   </div>
