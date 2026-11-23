@@ -95,3 +95,15 @@ def test_unverified_old_session_cannot_be_promoted_by_filling_hash(db,payload):
     assert r['soil_calibration']['parameter_match'] is True
     assert r['soil_calibration']['applicable'] is False
     assert r['soil_calibration']['hardware_verified'] is False
+
+def test_legacy_state_without_binding_uses_original_saved_context(db,payload):
+    p=sample(payload)
+    receipt=ingest_telemetry(db,p,source='REAL',scope='TEST_ONLY')
+    with db.connection() as c:
+        row=c.execute('SELECT state_json FROM provisional_risk WHERE telemetry_id=?',(receipt['telemetry_id'],)).fetchone()
+        state=json.loads(row['state_json']);state.pop('firmware_binding')
+        c.execute('UPDATE provisional_risk SET state_json=? WHERE telemetry_id=?',(json.dumps(state),receipt['telemetry_id']))
+    ingest_telemetry(db,sample(payload,2),source='REAL',scope='TEST_ONLY',context=context())
+    r=pr.latest(db,site_id=p['site_id'],device_id=p['device_id'])
+    assert r['soil_calibration']['parameter_match'] is True
+    assert r['soil_calibration']['applicable'] is False
