@@ -1,0 +1,818 @@
+{
+  "execution_date_local": "2026-10-20",
+  "upstream_commit": "fce74a7027129e721dafe56a5521d1d57b9835f9",
+  "model_path": "CNN/models/model_17_16_32_32.tflite",
+  "model_sha256": "0e1eb00a920ae3daaec7cf142ef8a54373fe1b93b472350e7048b8ae0c1ff1f1",
+  "model_file_bytes": 35760,
+  "test_npz_sha256": "34abb38e09818421a07e4fed307d77386d54b082453d631b13e1212f27976ebd",
+  "environment": {
+    "python": "3.11.9 (v3.11.9:de54cf5be3, Apr  2 2024, 07:12:50) [Clang 13.0.0 (clang-1300.0.29.30)]",
+    "platform": "macOS-27.2-arm64-arm-64bit",
+    "machine": "arm64",
+    "packages": {
+      "tensorflow": "2.16.2",
+      "numpy": "1.26.4",
+      "scipy": "1.13.1",
+      "scikit-learn": "1.5.2"
+    }
+  },
+  "reference_data": {
+    "origin": "Unmodified upstream data/test.npz; prepared STEAD-derived windows, not ICM measurements",
+    "raw_shape": [
+      17716,
+      80,
+      3,
+      1
+    ],
+    "raw_dtype": "float32",
+    "raw_class_counts": [
+      5312,
+      5312,
+      7092
+    ],
+    "raw_absolute_amplitude_range": [
+      1.2975367227596758e-34,
+      0.23941858112812042
+    ],
+    "after_small_amplitude_filter": 17427,
+    "retained": 17427,
+    "retained_class_counts": [
+      5312,
+      5312,
+      6803
+    ],
+    "preprocessed_range": [
+      -18.78841781616211,
+      1.0
+    ],
+    "trace_identifiers_and_station_metadata": "NOT_INCLUDED_IN_UPSTREAM_NPZ"
+  },
+  "classes": [
+    "P-wave",
+    "S-wave",
+    "Noise"
+  ],
+  "model": {
+    "schema_version": 3,
+    "description": "MLIR Converted.",
+    "operators": [
+      {
+        "index": 0,
+        "name": "CONV_2D",
+        "version": 1,
+        "inputs": [
+          0,
+          4,
+          1
+        ],
+        "outputs": [
+          12
+        ],
+        "output_shapes": [
+          [
+            1,
+            78,
+            3,
+            16
+          ]
+        ],
+        "options": {
+          "padding": 1,
+          "stride_h": 1,
+          "stride_w": 1,
+          "dilation_h": 1,
+          "dilation_w": 1,
+          "fused_activation": 1
+        },
+        "macs": 11232
+      },
+      {
+        "index": 1,
+        "name": "MAX_POOL_2D",
+        "version": 1,
+        "inputs": [
+          12
+        ],
+        "outputs": [
+          13
+        ],
+        "output_shapes": [
+          [
+            1,
+            26,
+            3,
+            16
+          ]
+        ],
+        "options": {
+          "padding": 1,
+          "stride_h": 3,
+          "stride_w": 1,
+          "filter_h": 3,
+          "filter_w": 1,
+          "fused_activation": 0
+        }
+      },
+      {
+        "index": 2,
+        "name": "CONV_2D",
+        "version": 1,
+        "inputs": [
+          13,
+          5,
+          2
+        ],
+        "outputs": [
+          14
+        ],
+        "output_shapes": [
+          [
+            1,
+            24,
+            3,
+            32
+          ]
+        ],
+        "options": {
+          "padding": 1,
+          "stride_h": 1,
+          "stride_w": 1,
+          "dilation_h": 1,
+          "dilation_w": 1,
+          "fused_activation": 1
+        },
+        "macs": 110592
+      },
+      {
+        "index": 3,
+        "name": "MAX_POOL_2D",
+        "version": 1,
+        "inputs": [
+          14
+        ],
+        "outputs": [
+          15
+        ],
+        "output_shapes": [
+          [
+            1,
+            8,
+            3,
+            32
+          ]
+        ],
+        "options": {
+          "padding": 1,
+          "stride_h": 3,
+          "stride_w": 1,
+          "filter_h": 3,
+          "filter_w": 1,
+          "fused_activation": 0
+        }
+      },
+      {
+        "index": 4,
+        "name": "CONV_2D",
+        "version": 1,
+        "inputs": [
+          15,
+          6,
+          3
+        ],
+        "outputs": [
+          16
+        ],
+        "output_shapes": [
+          [
+            1,
+            6,
+            3,
+            32
+          ]
+        ],
+        "options": {
+          "padding": 1,
+          "stride_h": 1,
+          "stride_w": 1,
+          "dilation_h": 1,
+          "dilation_w": 1,
+          "fused_activation": 1
+        },
+        "macs": 55296
+      },
+      {
+        "index": 5,
+        "name": "MAX_POOL_2D",
+        "version": 1,
+        "inputs": [
+          16
+        ],
+        "outputs": [
+          17
+        ],
+        "output_shapes": [
+          [
+            1,
+            2,
+            3,
+            32
+          ]
+        ],
+        "options": {
+          "padding": 1,
+          "stride_h": 3,
+          "stride_w": 1,
+          "filter_h": 3,
+          "filter_w": 1,
+          "fused_activation": 0
+        }
+      },
+      {
+        "index": 6,
+        "name": "RESHAPE",
+        "version": 1,
+        "inputs": [
+          17,
+          9
+        ],
+        "outputs": [
+          18
+        ],
+        "output_shapes": [
+          [
+            1,
+            192
+          ]
+        ]
+      },
+      {
+        "index": 7,
+        "name": "FULLY_CONNECTED",
+        "version": 1,
+        "inputs": [
+          18,
+          10,
+          8
+        ],
+        "outputs": [
+          19
+        ],
+        "output_shapes": [
+          [
+            1,
+            16
+          ]
+        ],
+        "options": {
+          "fused_activation": 1,
+          "weights_format": 0,
+          "keep_num_dims": false
+        },
+        "macs": 3072
+      },
+      {
+        "index": 8,
+        "name": "FULLY_CONNECTED",
+        "version": 1,
+        "inputs": [
+          19,
+          11,
+          7
+        ],
+        "outputs": [
+          20
+        ],
+        "output_shapes": [
+          [
+            1,
+            3
+          ]
+        ],
+        "options": {
+          "fused_activation": 0,
+          "weights_format": 0,
+          "keep_num_dims": false
+        },
+        "macs": 48
+      },
+      {
+        "index": 9,
+        "name": "SOFTMAX",
+        "version": 1,
+        "inputs": [
+          20
+        ],
+        "outputs": [
+          21
+        ],
+        "output_shapes": [
+          [
+            1,
+            3
+          ]
+        ],
+        "options": {
+          "beta": 1.0
+        }
+      }
+    ],
+    "operator_counts": {
+      "CONV_2D": 3,
+      "MAX_POOL_2D": 3,
+      "RESHAPE": 1,
+      "FULLY_CONNECTED": 2,
+      "SOFTMAX": 1
+    },
+    "tensors": [
+      {
+        "index": 0,
+        "name": "serving_default_input_28:0",
+        "shape": [
+          1,
+          80,
+          3,
+          1
+        ],
+        "type": "FLOAT32",
+        "constant_buffer_bytes": 0,
+        "scale": [],
+        "zero_point": []
+      },
+      {
+        "index": 1,
+        "name": "sequential_27/conv2d_41/BiasAdd/ReadVariableOp",
+        "shape": [
+          16
+        ],
+        "type": "FLOAT32",
+        "constant_buffer_bytes": 64,
+        "scale": [],
+        "zero_point": []
+      },
+      {
+        "index": 2,
+        "name": "sequential_27/conv2d_42/BiasAdd/ReadVariableOp",
+        "shape": [
+          32
+        ],
+        "type": "FLOAT32",
+        "constant_buffer_bytes": 128,
+        "scale": [],
+        "zero_point": []
+      },
+      {
+        "index": 3,
+        "name": "sequential_27/conv2d_43/BiasAdd/ReadVariableOp",
+        "shape": [
+          32
+        ],
+        "type": "FLOAT32",
+        "constant_buffer_bytes": 128,
+        "scale": [],
+        "zero_point": []
+      },
+      {
+        "index": 4,
+        "name": "sequential_27/conv2d_41/Conv2D",
+        "shape": [
+          16,
+          3,
+          1,
+          1
+        ],
+        "type": "FLOAT32",
+        "constant_buffer_bytes": 192,
+        "scale": [],
+        "zero_point": []
+      },
+      {
+        "index": 5,
+        "name": "sequential_27/conv2d_42/Conv2D",
+        "shape": [
+          32,
+          3,
+          1,
+          16
+        ],
+        "type": "FLOAT32",
+        "constant_buffer_bytes": 6144,
+        "scale": [],
+        "zero_point": []
+      },
+      {
+        "index": 6,
+        "name": "sequential_27/conv2d_43/Conv2D",
+        "shape": [
+          32,
+          3,
+          1,
+          32
+        ],
+        "type": "FLOAT32",
+        "constant_buffer_bytes": 12288,
+        "scale": [],
+        "zero_point": []
+      },
+      {
+        "index": 7,
+        "name": "sequential_27/dense_68/BiasAdd/ReadVariableOp",
+        "shape": [
+          3
+        ],
+        "type": "FLOAT32",
+        "constant_buffer_bytes": 12,
+        "scale": [],
+        "zero_point": []
+      },
+      {
+        "index": 8,
+        "name": "sequential_27/dense_67/BiasAdd/ReadVariableOp",
+        "shape": [
+          16
+        ],
+        "type": "FLOAT32",
+        "constant_buffer_bytes": 64,
+        "scale": [],
+        "zero_point": []
+      },
+      {
+        "index": 9,
+        "name": "sequential_27/flatten_27/Const",
+        "shape": [
+          2
+        ],
+        "type": "INT32",
+        "constant_buffer_bytes": 8,
+        "scale": [],
+        "zero_point": []
+      },
+      {
+        "index": 10,
+        "name": "sequential_27/dense_67/MatMul",
+        "shape": [
+          16,
+          192
+        ],
+        "type": "FLOAT32",
+        "constant_buffer_bytes": 12288,
+        "scale": [],
+        "zero_point": []
+      },
+      {
+        "index": 11,
+        "name": "sequential_27/dense_68/MatMul",
+        "shape": [
+          3,
+          16
+        ],
+        "type": "FLOAT32",
+        "constant_buffer_bytes": 192,
+        "scale": [],
+        "zero_point": []
+      },
+      {
+        "index": 12,
+        "name": "sequential_27/conv2d_41/Relu;sequential_27/conv2d_41/BiasAdd;sequential_27/conv2d_41/Conv2D;sequential_27/conv2d_41/BiasAdd/ReadVariableOp",
+        "shape": [
+          1,
+          78,
+          3,
+          16
+        ],
+        "type": "FLOAT32",
+        "constant_buffer_bytes": 0,
+        "scale": [],
+        "zero_point": []
+      },
+      {
+        "index": 13,
+        "name": "sequential_27/max_pooling2d_41/MaxPool",
+        "shape": [
+          1,
+          26,
+          3,
+          16
+        ],
+        "type": "FLOAT32",
+        "constant_buffer_bytes": 0,
+        "scale": [],
+        "zero_point": []
+      },
+      {
+        "index": 14,
+        "name": "sequential_27/conv2d_42/Relu;sequential_27/conv2d_42/BiasAdd;sequential_27/conv2d_43/Conv2D;sequential_27/conv2d_42/Conv2D;sequential_27/conv2d_42/BiasAdd/ReadVariableOp",
+        "shape": [
+          1,
+          24,
+          3,
+          32
+        ],
+        "type": "FLOAT32",
+        "constant_buffer_bytes": 0,
+        "scale": [],
+        "zero_point": []
+      },
+      {
+        "index": 15,
+        "name": "sequential_27/max_pooling2d_42/MaxPool",
+        "shape": [
+          1,
+          8,
+          3,
+          32
+        ],
+        "type": "FLOAT32",
+        "constant_buffer_bytes": 0,
+        "scale": [],
+        "zero_point": []
+      },
+      {
+        "index": 16,
+        "name": "sequential_27/conv2d_43/Relu;sequential_27/conv2d_43/BiasAdd;sequential_27/conv2d_43/Conv2D;sequential_27/conv2d_43/BiasAdd/ReadVariableOp",
+        "shape": [
+          1,
+          6,
+          3,
+          32
+        ],
+        "type": "FLOAT32",
+        "constant_buffer_bytes": 0,
+        "scale": [],
+        "zero_point": []
+      },
+      {
+        "index": 17,
+        "name": "sequential_27/max_pooling2d_43/MaxPool",
+        "shape": [
+          1,
+          2,
+          3,
+          32
+        ],
+        "type": "FLOAT32",
+        "constant_buffer_bytes": 0,
+        "scale": [],
+        "zero_point": []
+      },
+      {
+        "index": 18,
+        "name": "sequential_27/flatten_27/Reshape",
+        "shape": [
+          1,
+          192
+        ],
+        "type": "FLOAT32",
+        "constant_buffer_bytes": 0,
+        "scale": [],
+        "zero_point": []
+      },
+      {
+        "index": 19,
+        "name": "sequential_27/dense_67/MatMul;sequential_27/dense_67/Relu;sequential_27/dense_67/BiasAdd",
+        "shape": [
+          1,
+          16
+        ],
+        "type": "FLOAT32",
+        "constant_buffer_bytes": 0,
+        "scale": [],
+        "zero_point": []
+      },
+      {
+        "index": 20,
+        "name": "sequential_27/dense_68/MatMul;sequential_27/dense_68/BiasAdd",
+        "shape": [
+          1,
+          3
+        ],
+        "type": "FLOAT32",
+        "constant_buffer_bytes": 0,
+        "scale": [],
+        "zero_point": []
+      },
+      {
+        "index": 21,
+        "name": "StatefulPartitionedCall:0",
+        "shape": [
+          1,
+          3
+        ],
+        "type": "FLOAT32",
+        "constant_buffer_bytes": 0,
+        "scale": [],
+        "zero_point": []
+      }
+    ],
+    "constant_tensor_buffer_bytes": 31508,
+    "float_constant_elements_including_biases": 7875,
+    "logical_nonconstant_float_tensor_bytes_sum": 37144,
+    "largest_logical_nonconstant_float_tensor_bytes": 14976,
+    "multiply_accumulate_count_conv_dense": 180240,
+    "memory_note": "Static tensor accounting only, NOT Tensor Arena usage or peak process/device RAM."
+  },
+  "desktop_allocate_ms": 0.312917,
+  "input": {
+    "name": "serving_default_input_28:0",
+    "index": 0,
+    "shape": [
+      1,
+      80,
+      3,
+      1
+    ],
+    "shape_signature": [
+      -1,
+      80,
+      3,
+      1
+    ],
+    "dtype": "float32",
+    "quantization": [
+      0.0,
+      0
+    ],
+    "quantization_parameters": {
+      "scales": [],
+      "zero_points": [],
+      "quantized_dimension": 0
+    }
+  },
+  "output": {
+    "name": "StatefulPartitionedCall:0",
+    "index": 21,
+    "shape": [
+      1,
+      3
+    ],
+    "shape_signature": [
+      -1,
+      3
+    ],
+    "dtype": "float32",
+    "quantization": [
+      0.0,
+      0
+    ],
+    "quantization_parameters": {
+      "scales": [],
+      "zero_points": [],
+      "quantized_dimension": 0
+    }
+  },
+  "argmax": {
+    "confusion_matrix_rows_truth_columns_prediction": [
+      [
+        5087,
+        212,
+        13
+      ],
+      [
+        174,
+        4976,
+        162
+      ],
+      [
+        34,
+        482,
+        6287
+      ]
+    ],
+    "classification_report": {
+      "P-wave": {
+        "precision": 0.9607176581680831,
+        "recall": 0.9576430722891566,
+        "f1-score": 0.9591779013858772,
+        "support": 5312.0
+      },
+      "S-wave": {
+        "precision": 0.8776014109347443,
+        "recall": 0.9367469879518072,
+        "f1-score": 0.9062101620834092,
+        "support": 5312.0
+      },
+      "Noise": {
+        "precision": 0.9729186010523058,
+        "recall": 0.924151109804498,
+        "f1-score": 0.9479080286468149,
+        "support": 6803.0
+      },
+      "accuracy": 0.938199345842658,
+      "macro avg": {
+        "precision": 0.9370792233850443,
+        "recall": 0.9395137233484873,
+        "f1-score": 0.9377653640387006,
+        "support": 17427.0
+      },
+      "weighted avg": {
+        "precision": 0.9401455292381394,
+        "recall": 0.938199345842658,
+        "f1-score": 0.9386331389242629,
+        "support": 17427.0
+      }
+    }
+  },
+  "fixed_threshold_0_8_not_calibrated": {
+    "rule": "Only P/S scores below 0.8 are zeroed; argmax retains original Noise score, matching upstream decision_threshold.",
+    "confusion_matrix": [
+      [
+        4733,
+        34,
+        545
+      ],
+      [
+        26,
+        4582,
+        704
+      ],
+      [
+        13,
+        187,
+        6603
+      ]
+    ],
+    "classification_report": {
+      "P-wave": {
+        "precision": 0.9918273260687342,
+        "recall": 0.8910015060240963,
+        "f1-score": 0.9387147957159857,
+        "support": 5312.0
+      },
+      "S-wave": {
+        "precision": 0.9539870914012076,
+        "recall": 0.8625753012048193,
+        "f1-score": 0.905981216015818,
+        "support": 5312.0
+      },
+      "Noise": {
+        "precision": 0.8409322465613857,
+        "recall": 0.9706012053505806,
+        "f1-score": 0.9011258955987718,
+        "support": 6803.0
+      },
+      "accuracy": 0.9134102255121364,
+      "macro avg": {
+        "precision": 0.9289155546771092,
+        "recall": 0.9080593375264986,
+        "f1-score": 0.9152739691101918,
+        "support": 17427.0
+      },
+      "weighted avg": {
+        "precision": 0.9213879760691707,
+        "recall": 0.9134102255121364,
+        "f1-score": 0.9140635038777637,
+        "support": 17427.0
+      }
+    }
+  },
+  "desktop_latency": {
+    "num_threads": 1,
+    "runtime": "TensorFlow Lite builtin kernels, default delegates disabled",
+    "warmup_invocations": 50,
+    "measured_windows": 17427,
+    "note": "Host timing only; not ESP32 latency or TFLM timing.",
+    "invoke_ms": {
+      "mean": 0.010788035691742697,
+      "p50": 0.010459,
+      "p95": 0.012,
+      "max": 0.045625
+    },
+    "set_invoke_get_ms": {
+      "mean": 0.011777941699661447,
+      "p50": 0.011417,
+      "p95": 0.01340370000000003,
+      "max": 0.063625
+    }
+  },
+  "first_reference_window_per_class": [
+    {
+      "npz_index": 3,
+      "truth": "P-wave",
+      "prediction": "P-wave",
+      "probabilities": [
+        0.999349057674408,
+        0.0006509871454909444,
+        5.599277486112442e-09
+      ]
+    },
+    {
+      "npz_index": 0,
+      "truth": "S-wave",
+      "prediction": "S-wave",
+      "probabilities": [
+        7.022476347628981e-05,
+        0.9979972243309021,
+        0.001932535320520401
+      ]
+    },
+    {
+      "npz_index": 2,
+      "truth": "Noise",
+      "prediction": "Noise",
+      "probabilities": [
+        4.0764762161416e-06,
+        0.097206249833107,
+        0.9027897119522095
+      ]
+    }
+  ]
+}

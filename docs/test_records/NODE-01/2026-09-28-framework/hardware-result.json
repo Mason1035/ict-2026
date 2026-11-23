@@ -1,0 +1,10 @@
+{
+  "ports": [],
+  "port": "COM7",
+  "baud": 115200,
+  "flash": "NOT_RUN",
+  "serial_boot": "NOT_RUN",
+  "port_accessible": false,
+  "reason": "could not open port 'COM7': FileNotFoundError(2, '系统找不到指定的文件。', None, 2)",
+  "checked_at": "2026-09-28T22:25:06.178082+08:00"
+}

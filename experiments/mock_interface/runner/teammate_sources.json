@@ -1,0 +1,109 @@
+{
+  "scope": "TEST_ONLY / INTEGRATION_ADAPTER",
+  "version": "0.2.0",
+  "targets": {
+    "zhang": {
+      "integration_target": "张鹏飞",
+      "source_branch": "origin/张鹏飞",
+      "source_commit": "568e229aa1d2534ea42a9f5812cdc7d9fa786cbf",
+      "modules": [
+        {
+          "name": "candidate_features",
+          "path": "algorithm/B_revised/candidate_features/__init__.py",
+          "package": true,
+          "sha256": "f8d37fa13ad1fb7c4bcd6e81bb922323f199c5e177307260bdfced9a0f3c1a31",
+          "git_blob": "cb7ad13eedf63db48b012c427d25406f80af85f7"
+        },
+        {
+          "name": "candidate_features.reference",
+          "path": "algorithm/B_revised/candidate_features/reference.py",
+          "package": false,
+          "sha256": "cf7a707c11f429e01f734eaa0dcf4cf04fa7edcb095e28e9bb44fbdc01871022",
+          "git_blob": "72f0eb1201504ef95cfb535c641ed3dee8ff4bd4"
+        },
+        {
+          "name": "telemetry_v2_intake.entry",
+          "path": "algorithm/B_revised/telemetry_v2_intake/entry.py",
+          "package": false,
+          "sha256": "a1d581dd1d6110907dcc2dc5d22eac95582ebcdc21ef4c6c9f03b1c3ca1a96fe",
+          "git_blob": "a1846a19f205244ba3bc4b50b922c79352b517c5"
+        },
+        {
+          "name": "telemetry_v2_intake",
+          "path": "algorithm/B_revised/telemetry_v2_intake/__init__.py",
+          "package": true,
+          "sha256": "ac314596682e468f4278b9421ef91ed93655ad5438a85cc33842c89e44b057e8",
+          "git_blob": "25e2f015fff5509c66600649c932bc563c449057"
+        }
+      ]
+    },
+    "he": {
+      "integration_target": "何宇轩",
+      "source_branch": "origin/何宇轩",
+      "source_commit": "7ada9fb084cc40975a2ef8bba6387635c54ce240",
+      "modules": [
+        {
+          "name": "edge_intake.intake",
+          "path": "edge_intake/intake.py",
+          "package": false,
+          "sha256": "09d9d604e11d6a5b4bdc514dfcc5c8be57311887993c68d196bc9fe489e13f35",
+          "git_blob": "82adb51e151f963bb1233d6840872e1fd70f9017"
+        },
+        {
+          "name": "edge_intake",
+          "path": "edge_intake/__init__.py",
+          "package": true,
+          "sha256": "f62ff1c249221c3bd72b87682fdd586acbb045722ae41c9238d2b16f1d98c3b4",
+          "git_blob": "18b0f4c89a7ce5e07a977af2acc90f9697f842d1"
+        }
+      ]
+    }
+  },
+  "repository_refs": {
+    "HEAD": "25c55ca0ab2e9d0f18e3640833a575102f7e48c6",
+    "origin/李青原": "25c55ca0ab2e9d0f18e3640833a575102f7e48c6",
+    "origin/张鹏飞": "568e229aa1d2534ea42a9f5812cdc7d9fa786cbf",
+    "origin/何宇轩": "7ada9fb084cc40975a2ef8bba6387635c54ce240",
+    "origin/main": "ed4449670a81629b917e8cd177f6a836b0be1b5b"
+  },
+  "remote_refresh": {
+    "status": "REMOTE_SOURCE_VERIFIED",
+    "verified_at_utc": "2026-10-05T15:00:00+08:00",
+    "remote_source_verified": true,
+    "detail": "GitHub Desktop Fetch origin completed; both remote tracking commits exactly match the pinned teammate commits.",
+    "verified_refs": {
+      "zhang_remote": "568e229aa1d2534ea42a9f5812cdc7d9fa786cbf",
+      "zhang_pinned": "568e229aa1d2534ea42a9f5812cdc7d9fa786cbf",
+      "he_remote": "7ada9fb084cc40975a2ef8bba6387635c54ce240",
+      "he_pinned": "7ada9fb084cc40975a2ef8bba6387635c54ce240"
+    },
+    "historical_blocked_auth": {
+      "status": "BLOCKED_AUTH",
+      "checked_at_utc": "2026-10-05T14:55:13.011068+00:00",
+      "remote_source_verified": false,
+      "detail": "Non-interactive fetch failed with SEC_E_NO_CREDENTIALS. Continue with existing pinned local Git objects; GitHub latest is not verified.",
+      "attempt": {
+        "command": [
+          "git",
+          "-c",
+          "safe.directory=C:/Users/LQY/Documents/GitHub/ict-2026",
+          "-c",
+          "credential.interactive=false",
+          "-C",
+          "C:\\Users\\LQY\\Documents\\GitHub\\ict-2026",
+          "fetch",
+          "origin"
+        ],
+        "exit_code": 128,
+        "stdout": "",
+        "stderr": "fatal: unable to access 'https://github.com/Mason1035/ict-2026.git/': schannel: AcquireCredentialsHandle failed: SEC_E_NO_CREDENTIALS (0x8009030e) - 安全包中没有可用的凭证\n",
+        "timed_out": false,
+        "elapsed_seconds": 1.984
+      },
+      "pinned_matches_local_tracking_refs": {
+        "zhang": true,
+        "he": true
+      }
+    }
+  }
+}

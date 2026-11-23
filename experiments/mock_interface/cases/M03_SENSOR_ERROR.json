@@ -1,0 +1,145 @@
+{
+  "source": "MOCK",
+  "case_id": "M03_SENSOR_ERROR",
+  "purpose": "验证采集失败 Error 与没有采集 Unavailable 可区分。",
+  "scenario": "I2C_TIMEOUT：仅人工 Mock 场景；假设尝试读取中间 Soil 失败，不证明 ADS1115/I2C 驱动已接入或真实报错。",
+  "messages": [
+    {
+      "source": "MOCK",
+      "sampling_snapshot": {
+        "imu": [
+          {
+            "acceleration_mps2": [
+              0.02,
+              -0.01,
+              9.8
+            ],
+            "angular_rate_dps": [
+              0,
+              0,
+              0
+            ],
+            "acquired_uptime_us": 1980000,
+            "validity": "Valid"
+          },
+          {
+            "acceleration_mps2": [
+              0,
+              0.01,
+              9.81
+            ],
+            "angular_rate_dps": [
+              0,
+              0,
+              0
+            ],
+            "acquired_uptime_us": 1981000,
+            "validity": "Valid"
+          }
+        ],
+        "soil": [
+          {
+            "raw": 12000,
+            "acquired_uptime_us": 1900000,
+            "validity": "Valid"
+          },
+          {
+            "raw": null,
+            "acquired_uptime_us": null,
+            "validity": "Error"
+          },
+          {
+            "raw": 14000,
+            "acquired_uptime_us": 1920000,
+            "validity": "Valid"
+          }
+        ]
+      },
+      "payload": {
+        "schema": "zhifang.telemetry.v2",
+        "site_id": "MOCK-SITE-01",
+        "device_id": "NODE-01",
+        "boot_id": 1,
+        "seq": 3,
+        "timestamp_ms": null,
+        "uptime_ms": 2000,
+        "time_synced": false,
+        "imu": [
+          {
+            "id": "top",
+            "ax": 0.02,
+            "ay": -0.01,
+            "az": 9.8,
+            "gx": 0,
+            "gy": 0,
+            "gz": 0,
+            "tilt_deg": null,
+            "tilt_rate_dps": null,
+            "vibration_rms": null,
+            "valid": true
+          },
+          {
+            "id": "toe",
+            "ax": 0,
+            "ay": 0.01,
+            "az": 9.81,
+            "gx": 0,
+            "gy": 0,
+            "gz": 0,
+            "tilt_deg": null,
+            "tilt_rate_dps": null,
+            "vibration_rms": null,
+            "valid": true
+          }
+        ],
+        "soil": {
+          "top_raw": 12000,
+          "middle_raw": null,
+          "toe_raw": 14000,
+          "top_pct": null,
+          "middle_pct": null,
+          "toe_pct": null,
+          "avg_pct": null,
+          "growth_pct_min": null
+        },
+        "experiment": {
+          "run_id": null,
+          "rain_level": null
+        },
+        "risk": {
+          "sensor_score": null,
+          "level": null,
+          "reason_mask": null
+        },
+        "system": {
+          "wifi_up": false,
+          "mqtt_up": false,
+          "lora_ready": false,
+          "sd_ok": false,
+          "edge_online": false,
+          "sensor_degraded": true
+        }
+      }
+    }
+  ],
+  "expected_behavior": {
+    "source_preserved": "MOCK",
+    "middle_raw": null,
+    "sampling_validity": "Error",
+    "normal_processing_count": 1,
+    "interface_gaps": [
+      "G03",
+      "G05"
+    ],
+    "notes": [
+      "保留中间 raw/time=null 与 Error，不改为 Unavailable 或有效 0。",
+      "I2C_TIMEOUT 只保留在测试说明，不向 Telemetry 添加 error_code。",
+      "Risk 保持 null；不伪造采集恢复、硬件 PASS 或正常评分。"
+    ]
+  },
+  "pass_criteria": [
+    "未来记录能区分 M02/M03 的快照状态并保留错误场景说明。",
+    "失败样本不作为有效值进入计算，原有有效通道不被抹除。",
+    "裸 payload 无法区分错误类型时暴露 INTERFACE_GAP，不能宣称错误上报已通过。"
+  ]
+}

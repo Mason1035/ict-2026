@@ -1,0 +1,617 @@
+{
+  "A_adapter_status": "WAITING_FOR_A_UPDATE_TO_NEW_EDGE_ENTRY",
+  "A_source_commit": "25c55ca0ab2e9d0f18e3640833a575102f7e48c6",
+  "A_source_file_sha256": {
+    "cases/M01_NORMAL.json": "2ff9215cfe0f1f33df77e510b275c7eb7f621e04a987ffda966426850762121a",
+    "cases/M02_MISSING_SENSOR.json": "9c526998df496902bcbe0c69bac92f9c6469b7d499e0f13ab7ae0630d2af756c",
+    "cases/M07_RISK_NOT_CALIBRATED.json": "9ef567172db19ca1cf9fda00a176a2a470d347ff2f2bf21952a1220e4a0397b6",
+    "cases/M08_INVALID_SCHEMA.json": "6a0d6d3cefb2d9adab8dcabea47a96e742f25f849858c876d05989be2ada81a1",
+    "runner/mock_loader.py": "c70c6b4649f02fbef3f0414183f8f08ef6a278433555ccfa414313ff45c2eda2",
+    "runner/mock_v2_validator.py": "f0c6ca2cc5feb607c92f398efacbdcd43e7f64d59c4db0ecd81247f2ea393064"
+  },
+  "B_risk_consumer": "NOT_CALLED",
+  "C_intake_source_sha256": {
+    "__init__.py": "f62ff1c249221c3bd72b87682fdd586acbb045722ae41c9238d2b16f1d98c3b4",
+    "intake.py": "09d9d604e11d6a5b4bdc514dfcc5c8be57311887993c68d196bc9fe489e13f35"
+  },
+  "cases": [
+    {
+      "case_id": "M01_NORMAL",
+      "edge_call_count": 1,
+      "input_sha256": "2ff9215cfe0f1f33df77e510b275c7eb7f621e04a987ffda966426850762121a",
+      "messages": [
+        {
+          "checks": {
+            "accepted_by_edge": true,
+            "caller_payload_unchanged": true,
+            "context_preserved": true,
+            "downstream_unimplemented": true,
+            "identity_preserved": true,
+            "not_durable_ack": true,
+            "payload_hash_matches_A": true,
+            "payload_preserved": true,
+            "source_preserved_as_sidecar": true
+          },
+          "edge_called": true,
+          "edge_result": {
+            "context": {
+              "case_id": "M01_NORMAL",
+              "sampling_snapshot": {
+                "imu": [
+                  {
+                    "acceleration_mps2": [
+                      0.02,
+                      -0.01,
+                      9.8
+                    ],
+                    "acquired_uptime_us": 980000,
+                    "angular_rate_dps": [
+                      0,
+                      0,
+                      0
+                    ],
+                    "validity": "Valid"
+                  },
+                  {
+                    "acceleration_mps2": [
+                      0,
+                      0.01,
+                      9.81
+                    ],
+                    "acquired_uptime_us": 981000,
+                    "angular_rate_dps": [
+                      0,
+                      0,
+                      0
+                    ],
+                    "validity": "Valid"
+                  }
+                ],
+                "soil": [
+                  {
+                    "acquired_uptime_us": 900000,
+                    "raw": 12000,
+                    "validity": "Valid"
+                  },
+                  {
+                    "acquired_uptime_us": 910000,
+                    "raw": 13000,
+                    "validity": "Valid"
+                  },
+                  {
+                    "acquired_uptime_us": 920000,
+                    "raw": 14000,
+                    "validity": "Valid"
+                  }
+                ]
+              },
+              "scope": "TEST_ONLY",
+              "source": "MOCK"
+            },
+            "downstream": "NOT_IMPLEMENTED",
+            "downstream_status": "DOWNSTREAM_NOT_IMPLEMENTED",
+            "durable": false,
+            "identity": {
+              "boot_id": 1,
+              "device_id": "NODE-01",
+              "seq": 1
+            },
+            "intake_version": "0.1.0",
+            "payload": {
+              "boot_id": 1,
+              "device_id": "NODE-01",
+              "experiment": {
+                "rain_level": null,
+                "run_id": null
+              },
+              "imu": [
+                {
+                  "ax": 0.02,
+                  "ay": -0.01,
+                  "az": 9.8,
+                  "gx": 0,
+                  "gy": 0,
+                  "gz": 0,
+                  "id": "top",
+                  "tilt_deg": null,
+                  "tilt_rate_dps": null,
+                  "valid": true,
+                  "vibration_rms": null
+                },
+                {
+                  "ax": 0,
+                  "ay": 0.01,
+                  "az": 9.81,
+                  "gx": 0,
+                  "gy": 0,
+                  "gz": 0,
+                  "id": "toe",
+                  "tilt_deg": null,
+                  "tilt_rate_dps": null,
+                  "valid": true,
+                  "vibration_rms": null
+                }
+              ],
+              "risk": {
+                "level": null,
+                "reason_mask": null,
+                "sensor_score": null
+              },
+              "schema": "zhifang.telemetry.v2",
+              "seq": 1,
+              "site_id": "MOCK-SITE-01",
+              "soil": {
+                "avg_pct": null,
+                "growth_pct_min": null,
+                "middle_pct": null,
+                "middle_raw": 13000,
+                "toe_pct": null,
+                "toe_raw": 14000,
+                "top_pct": null,
+                "top_raw": 12000
+              },
+              "system": {
+                "edge_online": false,
+                "lora_ready": false,
+                "mqtt_up": false,
+                "sd_ok": false,
+                "sensor_degraded": true,
+                "wifi_up": false
+              },
+              "time_synced": false,
+              "timestamp_ms": null,
+              "uptime_ms": 1000
+            },
+            "payload_sha256": "45f8c734ad12e85b1189882ce49d5987b0a51236e95005c500b8cb5eaf064e03",
+            "source": "MOCK",
+            "status": "ACCEPTED_BY_EDGE_INTAKE"
+          },
+          "edge_status": "ACCEPTED_BY_EDGE_INTAKE",
+          "message_index": 0,
+          "payload_sha256_before": "45f8c734ad12e85b1189882ce49d5987b0a51236e95005c500b8cb5eaf064e03",
+          "sampling_snapshot_check": {
+            "errors": []
+          },
+          "validator": {
+            "errors": [],
+            "scope": "TEST_ONLY / MOCK_ONLY / NOT_PRODUCTION_VALIDATOR",
+            "status": "ACCEPT"
+          }
+        }
+      ],
+      "status": "PASS",
+      "violations": []
+    },
+    {
+      "case_id": "M02_MISSING_SENSOR",
+      "edge_call_count": 1,
+      "input_sha256": "9c526998df496902bcbe0c69bac92f9c6469b7d499e0f13ab7ae0630d2af756c",
+      "messages": [
+        {
+          "checks": {
+            "accepted_by_edge": true,
+            "caller_payload_unchanged": true,
+            "context_preserved": true,
+            "downstream_unimplemented": true,
+            "identity_preserved": true,
+            "missing_soil_remains_null": true,
+            "not_durable_ack": true,
+            "payload_hash_matches_A": true,
+            "payload_preserved": true,
+            "source_preserved_as_sidecar": true,
+            "validity_remains_sidecar": true
+          },
+          "edge_called": true,
+          "edge_result": {
+            "context": {
+              "case_id": "M02_MISSING_SENSOR",
+              "sampling_snapshot": {
+                "imu": [
+                  {
+                    "acceleration_mps2": [
+                      0.02,
+                      -0.01,
+                      9.8
+                    ],
+                    "acquired_uptime_us": 1480000,
+                    "angular_rate_dps": [
+                      0,
+                      0,
+                      0
+                    ],
+                    "validity": "Valid"
+                  },
+                  {
+                    "acceleration_mps2": [
+                      0,
+                      0.01,
+                      9.81
+                    ],
+                    "acquired_uptime_us": 1481000,
+                    "angular_rate_dps": [
+                      0,
+                      0,
+                      0
+                    ],
+                    "validity": "Valid"
+                  }
+                ],
+                "soil": [
+                  {
+                    "acquired_uptime_us": 1400000,
+                    "raw": 12000,
+                    "validity": "Valid"
+                  },
+                  {
+                    "acquired_uptime_us": null,
+                    "raw": null,
+                    "validity": "Unavailable"
+                  },
+                  {
+                    "acquired_uptime_us": 1420000,
+                    "raw": 14000,
+                    "validity": "Valid"
+                  }
+                ]
+              },
+              "scope": "TEST_ONLY",
+              "source": "MOCK"
+            },
+            "downstream": "NOT_IMPLEMENTED",
+            "downstream_status": "DOWNSTREAM_NOT_IMPLEMENTED",
+            "durable": false,
+            "identity": {
+              "boot_id": 1,
+              "device_id": "NODE-01",
+              "seq": 2
+            },
+            "intake_version": "0.1.0",
+            "payload": {
+              "boot_id": 1,
+              "device_id": "NODE-01",
+              "experiment": {
+                "rain_level": null,
+                "run_id": null
+              },
+              "imu": [
+                {
+                  "ax": 0.02,
+                  "ay": -0.01,
+                  "az": 9.8,
+                  "gx": 0,
+                  "gy": 0,
+                  "gz": 0,
+                  "id": "top",
+                  "tilt_deg": null,
+                  "tilt_rate_dps": null,
+                  "valid": true,
+                  "vibration_rms": null
+                },
+                {
+                  "ax": 0,
+                  "ay": 0.01,
+                  "az": 9.81,
+                  "gx": 0,
+                  "gy": 0,
+                  "gz": 0,
+                  "id": "toe",
+                  "tilt_deg": null,
+                  "tilt_rate_dps": null,
+                  "valid": true,
+                  "vibration_rms": null
+                }
+              ],
+              "risk": {
+                "level": null,
+                "reason_mask": null,
+                "sensor_score": null
+              },
+              "schema": "zhifang.telemetry.v2",
+              "seq": 2,
+              "site_id": "MOCK-SITE-01",
+              "soil": {
+                "avg_pct": null,
+                "growth_pct_min": null,
+                "middle_pct": null,
+                "middle_raw": null,
+                "toe_pct": null,
+                "toe_raw": 14000,
+                "top_pct": null,
+                "top_raw": 12000
+              },
+              "system": {
+                "edge_online": false,
+                "lora_ready": false,
+                "mqtt_up": false,
+                "sd_ok": false,
+                "sensor_degraded": true,
+                "wifi_up": false
+              },
+              "time_synced": false,
+              "timestamp_ms": null,
+              "uptime_ms": 1500
+            },
+            "payload_sha256": "b237d3947d8a1185fc25d561552bd5ce36aa64aea392608d93f472dfb1653b3b",
+            "source": "MOCK",
+            "status": "ACCEPTED_BY_EDGE_INTAKE"
+          },
+          "edge_status": "ACCEPTED_BY_EDGE_INTAKE",
+          "message_index": 0,
+          "payload_sha256_before": "b237d3947d8a1185fc25d561552bd5ce36aa64aea392608d93f472dfb1653b3b",
+          "sampling_snapshot_check": {
+            "errors": []
+          },
+          "validator": {
+            "errors": [],
+            "scope": "TEST_ONLY / MOCK_ONLY / NOT_PRODUCTION_VALIDATOR",
+            "status": "ACCEPT"
+          }
+        }
+      ],
+      "status": "PASS",
+      "violations": []
+    },
+    {
+      "case_id": "M07_RISK_NOT_CALIBRATED",
+      "edge_call_count": 1,
+      "input_sha256": "9ef567172db19ca1cf9fda00a176a2a470d347ff2f2bf21952a1220e4a0397b6",
+      "messages": [
+        {
+          "checks": {
+            "accepted_by_edge": true,
+            "caller_payload_unchanged": true,
+            "context_preserved": true,
+            "downstream_unimplemented": true,
+            "identity_preserved": true,
+            "not_durable_ack": true,
+            "payload_hash_matches_A": true,
+            "payload_preserved": true,
+            "source_preserved_as_sidecar": true,
+            "uncalibrated_risk_remains_null": true
+          },
+          "edge_called": true,
+          "edge_result": {
+            "context": {
+              "case_id": "M07_RISK_NOT_CALIBRATED",
+              "sampling_snapshot": {
+                "imu": [
+                  {
+                    "acceleration_mps2": [
+                      0.02,
+                      -0.01,
+                      9.8
+                    ],
+                    "acquired_uptime_us": 3980000,
+                    "angular_rate_dps": [
+                      0,
+                      0,
+                      0
+                    ],
+                    "validity": "Valid"
+                  },
+                  {
+                    "acceleration_mps2": [
+                      0,
+                      0.01,
+                      9.81
+                    ],
+                    "acquired_uptime_us": 3981000,
+                    "angular_rate_dps": [
+                      0,
+                      0,
+                      0
+                    ],
+                    "validity": "Valid"
+                  }
+                ],
+                "soil": [
+                  {
+                    "acquired_uptime_us": 3900000,
+                    "raw": 12000,
+                    "validity": "Valid"
+                  },
+                  {
+                    "acquired_uptime_us": 3910000,
+                    "raw": 13000,
+                    "validity": "Valid"
+                  },
+                  {
+                    "acquired_uptime_us": 3920000,
+                    "raw": 14000,
+                    "validity": "Valid"
+                  }
+                ]
+              },
+              "scope": "TEST_ONLY",
+              "source": "MOCK"
+            },
+            "downstream": "NOT_IMPLEMENTED",
+            "downstream_status": "DOWNSTREAM_NOT_IMPLEMENTED",
+            "durable": false,
+            "identity": {
+              "boot_id": 1,
+              "device_id": "NODE-01",
+              "seq": 7
+            },
+            "intake_version": "0.1.0",
+            "payload": {
+              "boot_id": 1,
+              "device_id": "NODE-01",
+              "experiment": {
+                "rain_level": null,
+                "run_id": null
+              },
+              "imu": [
+                {
+                  "ax": 0.02,
+                  "ay": -0.01,
+                  "az": 9.8,
+                  "gx": 0,
+                  "gy": 0,
+                  "gz": 0,
+                  "id": "top",
+                  "tilt_deg": null,
+                  "tilt_rate_dps": null,
+                  "valid": true,
+                  "vibration_rms": null
+                },
+                {
+                  "ax": 0,
+                  "ay": 0.01,
+                  "az": 9.81,
+                  "gx": 0,
+                  "gy": 0,
+                  "gz": 0,
+                  "id": "toe",
+                  "tilt_deg": null,
+                  "tilt_rate_dps": null,
+                  "valid": true,
+                  "vibration_rms": null
+                }
+              ],
+              "risk": {
+                "level": null,
+                "reason_mask": null,
+                "sensor_score": null
+              },
+              "schema": "zhifang.telemetry.v2",
+              "seq": 7,
+              "site_id": "MOCK-SITE-01",
+              "soil": {
+                "avg_pct": null,
+                "growth_pct_min": null,
+                "middle_pct": null,
+                "middle_raw": 13000,
+                "toe_pct": null,
+                "toe_raw": 14000,
+                "top_pct": null,
+                "top_raw": 12000
+              },
+              "system": {
+                "edge_online": false,
+                "lora_ready": false,
+                "mqtt_up": false,
+                "sd_ok": false,
+                "sensor_degraded": true,
+                "wifi_up": false
+              },
+              "time_synced": false,
+              "timestamp_ms": null,
+              "uptime_ms": 4000
+            },
+            "payload_sha256": "1a1c96003f2d9f4c2db4b226bc6ffa5808eaead29d39fb1a6dc92d3c5388371e",
+            "source": "MOCK",
+            "status": "ACCEPTED_BY_EDGE_INTAKE"
+          },
+          "edge_status": "ACCEPTED_BY_EDGE_INTAKE",
+          "message_index": 0,
+          "payload_sha256_before": "1a1c96003f2d9f4c2db4b226bc6ffa5808eaead29d39fb1a6dc92d3c5388371e",
+          "sampling_snapshot_check": {
+            "errors": []
+          },
+          "validator": {
+            "errors": [],
+            "scope": "TEST_ONLY / MOCK_ONLY / NOT_PRODUCTION_VALIDATOR",
+            "status": "ACCEPT"
+          }
+        }
+      ],
+      "status": "PASS",
+      "violations": []
+    },
+    {
+      "case_id": "M08_INVALID_SCHEMA",
+      "edge_call_count": 0,
+      "input_sha256": "6a0d6d3cefb2d9adab8dcabea47a96e742f25f849858c876d05989be2ada81a1",
+      "messages": [
+        {
+          "edge_called": false,
+          "edge_result": null,
+          "edge_status": "NOT_CALLED",
+          "message_index": 0,
+          "payload_sha256_before": "5afd7797eee540da4e126e3ed01558196e617d7b478fe9fb78418ca2b13b3f26",
+          "sampling_snapshot_check": "NOT_CALLED",
+          "validator": {
+            "errors": [
+              {
+                "code": "SCHEMA_NAME",
+                "detail": "expected zhifang.telemetry.v2",
+                "path": "payload.schema"
+              }
+            ],
+            "scope": "TEST_ONLY / MOCK_ONLY / NOT_PRODUCTION_VALIDATOR",
+            "status": "REJECT"
+          }
+        },
+        {
+          "edge_called": false,
+          "edge_result": null,
+          "edge_status": "NOT_CALLED",
+          "message_index": 1,
+          "payload_sha256_before": "1f2c7c9c577940acabd610405d75672b5f0f61ec7c767c00bc67e5e400cd030b",
+          "sampling_snapshot_check": "NOT_CALLED",
+          "validator": {
+            "errors": [
+              {
+                "code": "TYPE",
+                "detail": "expected integer",
+                "path": "payload.boot_id"
+              }
+            ],
+            "scope": "TEST_ONLY / MOCK_ONLY / NOT_PRODUCTION_VALIDATOR",
+            "status": "REJECT"
+          }
+        },
+        {
+          "edge_called": false,
+          "edge_result": null,
+          "edge_status": "NOT_CALLED",
+          "message_index": 2,
+          "payload_sha256_before": "9bc3dca65b23c52c2ab0885ac741cc4d3d8c9e9c48e8f85c493308c9588ecf5a",
+          "sampling_snapshot_check": "NOT_CALLED",
+          "validator": {
+            "errors": [
+              {
+                "code": "REQUIRED",
+                "detail": "missing required field",
+                "path": "payload.seq"
+              }
+            ],
+            "scope": "TEST_ONLY / MOCK_ONLY / NOT_PRODUCTION_VALIDATOR",
+            "status": "REJECT"
+          }
+        },
+        {
+          "edge_called": false,
+          "edge_result": null,
+          "edge_status": "NOT_CALLED",
+          "message_index": 3,
+          "payload_sha256_before": "e53f85eee1069096c5aa1fec123bf97d5316612fff4049bc0675e1b6c4a4f1da",
+          "sampling_snapshot_check": "NOT_CALLED",
+          "validator": {
+            "errors": [
+              {
+                "code": "TYPE",
+                "detail": "expected integer or null",
+                "path": "payload.soil.middle_raw"
+              }
+            ],
+            "scope": "TEST_ONLY / MOCK_ONLY / NOT_PRODUCTION_VALIDATOR",
+            "status": "REJECT"
+          }
+        }
+      ],
+      "status": "PASS",
+      "violations": []
+    }
+  ],
+  "downstream": "NOT_IMPLEMENTED",
+  "durable_storage": "NOT_IMPLEMENTED",
+  "edge_call_count": 3,
+  "edge_check_status": "PASS",
+  "intake_version": "0.1.0",
+  "production_validator": "NOT_IMPLEMENTED",
+  "scope": "TEST_ONLY / MOCK_ONLY / NOT_REAL_DATA / NOT_PROJECT_TRAINING_DATA",
+  "source_mode": "PINNED_A_CHECKOUT",
+  "three_person_integration": "NOT_RUN"
+}

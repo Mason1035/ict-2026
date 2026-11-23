@@ -1,0 +1,144 @@
+{
+  "source": "MOCK",
+  "case_id": "M07_RISK_NOT_CALIBRATED",
+  "purpose": "验证原始数据均有效时，没有合法 Risk 结果仍必须保持 null，不能默认 0 或 NORMAL。",
+  "scenario": "双 IMU 与三 Soil 的 Mock 原始值均 Valid，但无正式标定及合法 Risk 运行结果；System 保持既有未就绪默认值。",
+  "messages": [
+    {
+      "source": "MOCK",
+      "sampling_snapshot": {
+        "imu": [
+          {
+            "acceleration_mps2": [
+              0.02,
+              -0.01,
+              9.8
+            ],
+            "angular_rate_dps": [
+              0,
+              0,
+              0
+            ],
+            "acquired_uptime_us": 3980000,
+            "validity": "Valid"
+          },
+          {
+            "acceleration_mps2": [
+              0,
+              0.01,
+              9.81
+            ],
+            "angular_rate_dps": [
+              0,
+              0,
+              0
+            ],
+            "acquired_uptime_us": 3981000,
+            "validity": "Valid"
+          }
+        ],
+        "soil": [
+          {
+            "raw": 12000,
+            "acquired_uptime_us": 3900000,
+            "validity": "Valid"
+          },
+          {
+            "raw": 13000,
+            "acquired_uptime_us": 3910000,
+            "validity": "Valid"
+          },
+          {
+            "raw": 14000,
+            "acquired_uptime_us": 3920000,
+            "validity": "Valid"
+          }
+        ]
+      },
+      "payload": {
+        "schema": "zhifang.telemetry.v2",
+        "site_id": "MOCK-SITE-01",
+        "device_id": "NODE-01",
+        "boot_id": 1,
+        "seq": 7,
+        "timestamp_ms": null,
+        "uptime_ms": 4000,
+        "time_synced": false,
+        "imu": [
+          {
+            "id": "top",
+            "ax": 0.02,
+            "ay": -0.01,
+            "az": 9.8,
+            "gx": 0,
+            "gy": 0,
+            "gz": 0,
+            "tilt_deg": null,
+            "tilt_rate_dps": null,
+            "vibration_rms": null,
+            "valid": true
+          },
+          {
+            "id": "toe",
+            "ax": 0,
+            "ay": 0.01,
+            "az": 9.81,
+            "gx": 0,
+            "gy": 0,
+            "gz": 0,
+            "tilt_deg": null,
+            "tilt_rate_dps": null,
+            "vibration_rms": null,
+            "valid": true
+          }
+        ],
+        "soil": {
+          "top_raw": 12000,
+          "middle_raw": 13000,
+          "toe_raw": 14000,
+          "top_pct": null,
+          "middle_pct": null,
+          "toe_pct": null,
+          "avg_pct": null,
+          "growth_pct_min": null
+        },
+        "experiment": {
+          "run_id": null,
+          "rain_level": null
+        },
+        "risk": {
+          "sensor_score": null,
+          "level": null,
+          "reason_mask": null
+        },
+        "system": {
+          "wifi_up": false,
+          "mqtt_up": false,
+          "lora_ready": false,
+          "sd_ok": false,
+          "edge_online": false,
+          "sensor_degraded": true
+        }
+      }
+    }
+  ],
+  "expected_behavior": {
+    "source_preserved": "MOCK",
+    "interface_gaps": [],
+    "risk_output": {
+      "sensor_score": null,
+      "level": null,
+      "reason_mask": null
+    },
+    "notes": [
+      "risk.sensor_score、risk.level、risk.reason_mask 均为 null；张鹏飞或何宇轩的下游不得自动转换为 0/NORMAL，也不得根据 Mock raw 自行计算 Risk。",
+      "没有合法 Risk 结果不等于 Risk=0，不等于 NORMAL；sensor_degraded 保持 true，不能因所有原始输入 Valid 自动改 false。",
+      "本用例双 IMU、三 Soil 原始输入全部 Valid，没有缺测或无效输入；risk=null 的直接原因是 Risk 尚未正式标定、没有合法运行结果。G09 仍是项目开放的缺测/无效输入策略问题，但不是本用例 risk=null 的直接原因；相关 Missing Policy、minimum valid inputs、degraded behavior、score 是否继续计算及 reason_mask 仍由张鹏飞定义。"
+    ]
+  },
+  "pass_criteria": [
+    "未来交接证据显示三个 Risk null 原样保留，无默认零值、NORMAL 或伪造 reason_mask。",
+    "所有输入 Valid 未触发无依据的评分或 sensor_degraded=false；未新增正式字段。",
+    "未来核对不得把全部原始输入 Valid 等同于 Risk 已正式就绪；未实现下游接入时标 NOT_IMPLEMENTED，不将本轮定义标为实际 PASS。"
+  ]
+}

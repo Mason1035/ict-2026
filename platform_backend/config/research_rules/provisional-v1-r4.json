@@ -1,0 +1,324 @@
+{
+  "channels": {
+    "imu_toe": {
+      "method_version": "PROVISIONAL-v1",
+      "metrics": {
+        "direction_angle_deg": {
+          "count": 1139,
+          "frozen_value": 0.290243119,
+          "mad": 0.0171000297,
+          "maximum": 0.138128095,
+          "median": 0.0399092888,
+          "method": "max(abs(R4)) + max(6 * 1.4826 * MAD(abs(R4)), minimum_margin)",
+          "minimum_margin": 1e-06,
+          "p95": 0.0738520451,
+          "p99": 0.0768648279
+        },
+        "gyro_rms_dps": {
+          "count": 1139,
+          "frozen_value": 1.02583662,
+          "mad": 0.00256327357,
+          "maximum": 1.00303476,
+          "median": 0.31352833,
+          "method": "max(abs(R4)) + max(6 * 1.4826 * MAD(abs(R4)), minimum_margin)",
+          "minimum_margin": 1e-06,
+          "p95": 0.342059797,
+          "p99": 0.86798245
+        },
+        "lta_energy": {
+          "count": 1139,
+          "frozen_value": 0.0065961512,
+          "mad": 2.67980905e-05,
+          "maximum": 0.0063577661,
+          "median": 0.000123710587,
+          "method": "max(abs(R4)) + max(6 * 1.4826 * MAD(abs(R4)), minimum_margin)",
+          "minimum_margin": 1e-12,
+          "p95": 0.00551900893,
+          "p99": 0.00633337003
+        },
+        "sta_lta": {
+          "count": 1139,
+          "frozen_value": 291.225574,
+          "mad": 0.183916633,
+          "maximum": 289.589525,
+          "median": 0.9062734,
+          "method": "max(abs(R4)) + max(6 * 1.4826 * MAD(abs(R4)), minimum_margin)",
+          "minimum_margin": 1e-06,
+          "p95": 2.58988013,
+          "p99": 13.6836851
+        },
+        "tilt_rate_deg_s": {
+          "count": 1139,
+          "frozen_value": 0.30717663,
+          "mad": 0.00259701858,
+          "maximum": 0.284074592,
+          "median": 0.00454792485,
+          "method": "max(abs(R4)) + max(6 * 1.4826 * MAD(abs(R4)), minimum_margin)",
+          "minimum_margin": 1e-06,
+          "p95": 0.012558359,
+          "p99": 0.0198896331
+        },
+        "vibration_rms_mps2": {
+          "count": 1139,
+          "frozen_value": 0.185417608,
+          "mad": 0.00111483972,
+          "maximum": 0.17550044,
+          "median": 0.010879331,
+          "method": "max(abs(R4)) + max(6 * 1.4826 * MAD(abs(R4)), minimum_margin)",
+          "minimum_margin": 1e-09,
+          "p95": 0.0221165432,
+          "p99": 0.157046747
+        }
+      },
+      "source_experiment_id": "NODE01-2e379f02688fd631-N0000005.CSV"
+    },
+    "imu_top": {
+      "method_version": "PROVISIONAL-v1",
+      "metrics": {
+        "direction_angle_deg": {
+          "count": 1133,
+          "frozen_value": 0.199799696,
+          "mad": 0.0061712919,
+          "maximum": 0.144902352,
+          "median": 0.0328888368,
+          "method": "max(abs(R4)) + max(6 * 1.4826 * MAD(abs(R4)), minimum_margin)",
+          "minimum_margin": 1e-06,
+          "p95": 0.0446626782,
+          "p99": 0.0560689498
+        },
+        "gyro_rms_dps": {
+          "count": 1133,
+          "frozen_value": 4.65905994,
+          "mad": 0.00701701866,
+          "maximum": 4.59663935,
+          "median": 1.06228703,
+          "method": "max(abs(R4)) + max(6 * 1.4826 * MAD(abs(R4)), minimum_margin)",
+          "minimum_margin": 1e-06,
+          "p95": 1.17103716,
+          "p99": 4.04739381
+        },
+        "lta_energy": {
+          "count": 1133,
+          "frozen_value": 0.0111537488,
+          "mad": 3.66751625e-05,
+          "maximum": 0.0108275012,
+          "median": 0.000155025244,
+          "method": "max(abs(R4)) + max(6 * 1.4826 * MAD(abs(R4)), minimum_margin)",
+          "minimum_margin": 1e-12,
+          "p95": 0.00816075047,
+          "p99": 0.0107681818
+        },
+        "sta_lta": {
+          "count": 1133,
+          "frozen_value": 351.935813,
+          "mad": 0.225020565,
+          "maximum": 349.93412,
+          "median": 0.868218547,
+          "method": "max(abs(R4)) + max(6 * 1.4826 * MAD(abs(R4)), minimum_margin)",
+          "minimum_margin": 1e-06,
+          "p95": 3.20415073,
+          "p99": 20.0095905
+        },
+        "tilt_rate_deg_s": {
+          "count": 1133,
+          "frozen_value": 0.448203193,
+          "mad": 0.00283345785,
+          "maximum": 0.422997886,
+          "median": 0.00502469004,
+          "method": "max(abs(R4)) + max(6 * 1.4826 * MAD(abs(R4)), minimum_margin)",
+          "minimum_margin": 1e-06,
+          "p95": 0.0161234403,
+          "p99": 0.0396243827
+        },
+        "vibration_rms_mps2": {
+          "count": 1133,
+          "frozen_value": 0.242709851,
+          "mad": 0.00151035113,
+          "maximum": 0.229274372,
+          "median": 0.01171937,
+          "method": "max(abs(R4)) + max(6 * 1.4826 * MAD(abs(R4)), minimum_margin)",
+          "minimum_margin": 1e-09,
+          "p95": 0.0279021892,
+          "p99": 0.186910171
+        }
+      },
+      "source_experiment_id": "NODE01-2e379f02688fd631-N0000005.CSV"
+    },
+    "soil_middle": {
+      "method_version": "PROVISIONAL-v1",
+      "metrics": {
+        "adc_rate_code_s": {
+          "count": 579,
+          "frozen_value": 25.1423027,
+          "mad": 1.94384168,
+          "maximum": 7.85066466,
+          "median": 1.97818067,
+          "method": "max(abs(R4)) + max(6 * 1.4826 * MAD(abs(R4)), minimum_margin)",
+          "minimum_margin": 1e-06,
+          "p95": 3.99860849,
+          "p99": 5.9816412
+        },
+        "adjacent_delta_adc_code": {
+          "count": 580,
+          "frozen_value": 12.8956,
+          "mad": 1.0,
+          "maximum": 4.0,
+          "median": 1.0,
+          "method": "max(abs(R4)) + max(6 * 1.4826 * MAD(abs(R4)), minimum_margin)",
+          "minimum_margin": 1.0,
+          "p95": 2.0,
+          "p99": 3.0
+        },
+        "relative_change_fraction": {
+          "count": 580,
+          "frozen_value": 0.0153829881,
+          "mad": 0.0011289132,
+          "maximum": 0.00534062785,
+          "median": 0.00369067778,
+          "method": "max(abs(R4)) + max(6 * 1.4826 * MAD(abs(R4)), minimum_margin)",
+          "minimum_margin": 1e-06,
+          "p95": 0.00508445139,
+          "p99": 0.00516694889
+        }
+      },
+      "source_experiment_id": "NODE01-2e379f02688fd631-N0000005.CSV"
+    },
+    "soil_toe": {
+      "method_version": "PROVISIONAL-v1",
+      "metrics": {
+        "adc_rate_code_s": {
+          "count": 578,
+          "frozen_value": 322.746308,
+          "mad": 0.0,
+          "maximum": 322.746307,
+          "median": 0.0,
+          "method": "max(abs(R4)) + max(6 * 1.4826 * MAD(abs(R4)), minimum_margin)",
+          "minimum_margin": 1e-06,
+          "p95": 228.029358,
+          "p99": 254.001783
+        },
+        "adjacent_delta_adc_code": {
+          "count": 599,
+          "frozen_value": 616.78,
+          "mad": 50.0,
+          "maximum": 172.0,
+          "median": 81.0,
+          "method": "max(abs(R4)) + max(6 * 1.4826 * MAD(abs(R4)), minimum_margin)",
+          "minimum_margin": 1.0,
+          "p95": 151.7,
+          "p99": 170.0
+        },
+        "relative_change_fraction": {
+          "count": 579,
+          "frozen_value": 0.0604722108,
+          "mad": 0.00454207614,
+          "maximum": 0.0200677182,
+          "median": 0.0110661491,
+          "method": "max(abs(R4)) + max(6 * 1.4826 * MAD(abs(R4)), minimum_margin)",
+          "minimum_margin": 1e-06,
+          "p95": 0.0194978941,
+          "p99": 0.019985135
+        }
+      },
+      "source_experiment_id": "NODE01-2e379f02688fd631-N0000005.CSV"
+    },
+    "soil_top": {
+      "method_version": "PROVISIONAL-v1",
+      "metrics": {
+        "adc_rate_code_s": {
+          "count": 579,
+          "frozen_value": 193.248846,
+          "mad": 3.83619976,
+          "maximum": 159.123548,
+          "median": 5.83116446,
+          "method": "max(abs(R4)) + max(6 * 1.4826 * MAD(abs(R4)), minimum_margin)",
+          "minimum_margin": 1e-06,
+          "p95": 37.7102966,
+          "p99": 75.2633904
+        },
+        "adjacent_delta_adc_code": {
+          "count": 580,
+          "frozen_value": 97.7912,
+          "mad": 2.0,
+          "maximum": 80.0,
+          "median": 3.0,
+          "method": "max(abs(R4)) + max(6 * 1.4826 * MAD(abs(R4)), minimum_margin)",
+          "minimum_margin": 1.0,
+          "p95": 19.0,
+          "p99": 38.0
+        },
+        "relative_change_fraction": {
+          "count": 580,
+          "frozen_value": 0.0756384529,
+          "mad": 0.00484554815,
+          "maximum": 0.0325343947,
+          "median": 0.00787401575,
+          "method": "max(abs(R4)) + max(6 * 1.4826 * MAD(abs(R4)), minimum_margin)",
+          "minimum_margin": 1e-06,
+          "p95": 0.029345851,
+          "p99": 0.0321199273
+        }
+      },
+      "source_experiment_id": "NODE01-2e379f02688fd631-N0000005.CSV"
+    }
+  },
+  "config_sha256": "edf695f3479d210d19466460a0d2f3e51ba6bd8690dc56b5d979adb740ca4065",
+  "generated_at": "2026-11-02T14:33:50.196601+00:00",
+  "interpretation": "R4 is post-rain static, not a dry/calibrated baseline. Self-check is in-sample only.",
+  "method_version": "PROVISIONAL-v1",
+  "parameters": {
+    "ain2_adjacent_guard_adc": 616.78,
+    "ain2_median_samples": 5,
+    "baseline_window_us": 10000000,
+    "evaluation_step_us": 250000,
+    "gravity_tau_s": 1.0,
+    "imu_expected_interval_us": 10000,
+    "imu_max_gap_us": 30000,
+    "lta_window_us": 10000000,
+    "minimum_coverage": 0.9,
+    "noise_floor_energy": {
+      "imu_toe": 1.23710587e-05,
+      "imu_top": 1.55025244e-05
+    },
+    "orientation_dwell_us": 3000000,
+    "recovery_dwell_us": 1000000,
+    "recovery_ratio": 0.8,
+    "rms_window_us": 2000000,
+    "soil_dwell_us": 3000000,
+    "soil_max_gap_us": 1500000,
+    "sta_window_us": 1000000,
+    "vibration_dwell_us": 1000000
+  },
+  "reason_bits": {
+    "ORIENTATION_IMU_TOE": 2,
+    "ORIENTATION_IMU_TOP": 1,
+    "SOIL_MIDDLE": 8,
+    "SOIL_TOE": 16,
+    "SOIL_TOP": 4,
+    "VIBRATION_IMU_TOE": 64,
+    "VIBRATION_IMU_TOP": 32
+  },
+  "reason_definition_version": "PROVISIONAL-platform-reason-v1-awaiting-B",
+  "reference_version": "r4-post-rain-static-provisional-v1",
+  "rule_version": "research-causal-rules-v1",
+  "schema_version": "research-rule-config-v1",
+  "scope": "RESEARCH",
+  "source": {
+    "adapter_version": "node01-sd-longtable-v1",
+    "experiment_id": "NODE01-2e379f02688fd631-N0000005.CSV",
+    "file_sha256": {
+      "beg": "593fc9981a580be61a921387744e314d84d6486803935bb990da50396a12d73b",
+      "csv": "715f7edcaccd21d1db341c34ffe0094a797a380cd82aaa72f7b1b83e06073104",
+      "end": "8270f23c41ebc37aa47a05cf7e8638e51e78f3c6da9199cfa2cc18af83f4fdbd"
+    },
+    "quality_flags": [
+      "UNCALIBRATED",
+      "FIRMWARE_IDENTITY_DECLARED_ONLY",
+      "AIN2_JITTER_REVIEW",
+      "POST_RAIN_NOT_DRY_BASELINE"
+    ],
+    "replay_id": "sd-replay-fa85c260-a033-451c-9963-edfb2a10335b",
+    "session_type": "post_rain_static"
+  },
+  "uncalibrated": true
+}

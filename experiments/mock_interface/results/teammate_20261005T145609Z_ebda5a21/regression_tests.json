@@ -1,0 +1,30 @@
+{
+  "execution_time": "2026-10-05T14:55:42.348280+00:00",
+  "syntax_checked_files": [
+    "edge_handoff.py",
+    "he_adapter.py",
+    "mock_loader.py",
+    "mock_v2_validator.py",
+    "risk_handoff.py",
+    "run_mock_integration.py",
+    "teammate_source.py",
+    "test_runner.py",
+    "test_teammate_integration.py",
+    "zhang_adapter.py"
+  ],
+  "command": [
+    "C:\\Users\\LQY\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+    "-B",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "experiments/mock_interface/runner",
+    "-p",
+    "test_*.py",
+    "-v"
+  ],
+  "exit_code": 0,
+  "stdout": "",
+  "stderr": "test_invalid_sidecar_fails_after_valid_payload_without_repair (test_runner.RunnerTests.test_invalid_sidecar_fails_after_valid_payload_without_repair) ... ok\r\ntest_m08_rejected_before_mapping_or_either_consumer (test_runner.RunnerTests.test_m08_rejected_before_mapping_or_either_consumer) ... ok\r\ntest_positive_consumers_share_immutable_payload_and_preserve_nulls (test_runner.RunnerTests.test_positive_consumers_share_immutable_payload_and_preserve_nulls) ... ok\r\ntest_risk_consumer_failure_does_not_route_or_block_edge_via_risk_output (test_runner.RunnerTests.test_risk_consumer_failure_does_not_route_or_block_edge_via_risk_output) ... ok\r\ntest_source_loss_rejects_before_handoffs (test_runner.RunnerTests.test_source_loss_rejects_before_handoffs) ... ok\r\ntest_validator_is_format_gate_not_missing_policy (test_runner.RunnerTests.test_validator_is_format_gate_not_missing_policy) ... ok\r\ntest_hash_mismatch_blocks_before_any_teammate_call (test_teammate_integration.TeammateIntegrationTests.test_hash_mismatch_blocks_before_any_teammate_call) ... ok\r\ntest_he_returns_blocked_handoff_on_loading_or_invocation_exception (test_teammate_integration.TeammateIntegrationTests.test_he_returns_blocked_handoff_on_loading_or_invocation_exception) ... ok\r\ntest_he_returns_handoff_with_real_edge_receipt (test_teammate_integration.TeammateIntegrationTests.test_he_returns_handoff_with_real_edge_receipt) ... ok\r\ntest_loader_does_not_shadow_second_namespace (test_teammate_integration.TeammateIntegrationTests.test_loader_does_not_shadow_second_namespace) ... ok\r\ntest_m08_never_loads_or_calls_real_teammate_code (test_teammate_integration.TeammateIntegrationTests.test_m08_never_loads_or_calls_real_teammate_code) ... ok\r\ntest_missing_git_source_cannot_be_reported_as_reached (test_teammate_integration.TeammateIntegrationTests.test_missing_git_source_cannot_be_reported_as_reached) ... ok\r\ntest_positive_cases_reach_real_functions_without_fabricating_results (test_teammate_integration.TeammateIntegrationTests.test_positive_cases_reach_real_functions_without_fabricating_results) ... ok\r\ntest_receipt_corruption_cannot_be_reported_as_acceptance (test_teammate_integration.TeammateIntegrationTests.test_receipt_corruption_cannot_be_reported_as_acceptance) ... ok\r\n\r\n----------------------------------------------------------------------\r\nRan 14 tests in 0.339s\r\n\r\nOK\r\n"
+}

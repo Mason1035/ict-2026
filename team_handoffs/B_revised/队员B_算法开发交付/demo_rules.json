@@ -1,0 +1,17 @@
+{
+  "algorithm_version": "demo-rules-1.0.0",
+  "demo_only": true,
+  "baseline_start_sequence": 1,
+  "baseline_samples": 3,
+  "baseline_max_tilt_spread_deg": 0.3,
+  "window_samples": 3,
+  "max_gap_seconds": 20.0,
+  "min_duration_seconds": 20.0,
+  "moisture_attention_delta_pp": 2.0,
+  "moisture_attention_rate_pp_per_min": 3.0,
+  "moisture_warning_delta_pp": 5.0,
+  "moisture_warning_rate_pp_per_min": 9.0,
+  "tilt_attention_deg": 1.0,
+  "tilt_warning_deg": 3.0,
+  "low_battery_pct": 20.0
+}

@@ -1,0 +1,421 @@
+{
+  "status_schema_version": "zhifang.repository-status.v1",
+  "as_of": "2026-10-20",
+  "scope": "Local platform historical scope retained; added independent public-data soil/motion research training and rule evidence fusion; added isolated pretrained TinyQuake evaluation and ESP32 reference/platform integration",
+  "ssot": "docs/00_TEAM_SHARED_CONTRACT.pdf",
+  "report": "PROJECT_STATUS_AND_READINESS.md",
+  "project_status": "BLOCKED",
+  "formal_training_ready": false,
+  "real_world_validated": false,
+  "source_code_revision": "019a03a53336790a1439485754afdaaf3c34c9c1",
+  "source_revision_note": "source_code_revision remains the historical 2026-10-05 intake baseline; current local platform scope is recorded under local_platform and module source/CHANGELOG files",
+  "team_revision_snapshot": {
+    "as_of": "2026-10-05",
+    "A": "25c55ca0ab2e9d0f18e3640833a575102f7e48c6",
+    "B": "4d635759f4b9e222609938ef5e6d829463d40024",
+    "C_base": "019a03a53336790a1439485754afdaaf3c34c9c1",
+    "B_review_scope": "Revision only; existing local B audit is not promoted to a review of this new branch"
+  },
+  "versions": {
+    "shared_contract_version": "1.0",
+    "generator_version": "0.1.1",
+    "observation_schema_version": "physics_sim.observation.v0.1.1",
+    "b_delivery_version": "B-adaptation-0.1",
+    "b_rule_contract_version": "1.0-test-only",
+    "b_fixture_generator_version": "1.0.0-test-only",
+    "b_formal_contract_version": "0.1-draft",
+    "training_framework_version": "0.1.1",
+    "edge_intake_version": "0.1.0",
+    "model_version": null,
+    "formal_dataset_version": null,
+    "formal_feature_version": null,
+    "calibration_version": null,
+    "platform_backend_version": "0.3.0",
+    "web_app_version": "1.2.0",
+    "multimodal_research_version": "0.1.0"
+  },
+  "hardware": {
+    "owner": "A",
+    "status": "PARTIAL",
+    "evidence": "docs/04_硬件资产采购与兼容性管理.xlsx",
+    "experimental_topology": {
+      "imu": 2,
+      "soil": 3
+    },
+    "existing_boards_documented": [
+      "NODE-01",
+      "GW-01",
+      "CAM-01"
+    ],
+    "sensor_acceptance_evidence": null,
+    "hil_evidence": null,
+    "waiting_for": [
+      "WAITING_FOR_A"
+    ]
+  },
+  "real_data": {
+    "owner": "A",
+    "status": "WAITING_FOR_A",
+    "delivered_dataset": null
+  },
+  "A_remote_progress": {
+    "source_revision": "25c55ca0ab2e9d0f18e3640833a575102f7e48c6",
+    "firmware_build": "PASS_RECORDED_BY_A",
+    "host_semantic_tests": "PASS_RECORDED_BY_A",
+    "flash_serial_boot": "NOT_RUN",
+    "mock_runner": "LOCAL_RUNNER_PASS_RECORDED_BY_A",
+    "prior_C_entry": "RealAdapter.to_dataset",
+    "prior_C_result": "INTERFACE_MISMATCH / EDGE_INTAKE_NOT_IMPLEMENTED"
+  },
+  "physics_sim": {
+    "owner": "C",
+    "version": "0.1.1",
+    "status": "DONE",
+    "status_scope": "First-stage synthetic simulation software only",
+    "contract_status": "PRE_B_TRAINING_CONTRACT",
+    "formal_validation": false,
+    "calibration_status": "TODO_CALIBRATION",
+    "artifact_kind": "simulator_observation_csv",
+    "formal_training_dataset": false,
+    "tests_passed": 54
+  },
+  "synthetic_data": {
+    "owner": "C",
+    "status": "PARTIAL",
+    "physics_observation_artifacts_available": true,
+    "formal_feature_dataset_available": false,
+    "calibrated_against_real_train": false
+  },
+  "b_risk_algorithm": {
+    "owner": "B",
+    "status": "DEMO_ONLY",
+    "production_v2_compatible": false,
+    "formal_sensor_risk_implementation_delivered": false,
+    "tests_passed": 24,
+    "subtests_passed": 12
+  },
+  "b_rule_fixture": {
+    "owner": "B",
+    "status": "TEST_ONLY",
+    "dataset_role": "TEST_ONLY_RULE_DISTILLATION_FIXTURE",
+    "formal_training_dataset": false,
+    "physics_inspired": false,
+    "contract_version": "1.0-test-only",
+    "row_counts": {
+      "dataset_all": 180,
+      "train": 126,
+      "validation": 27,
+      "test": 27,
+      "excluded_unknown": 18
+    },
+    "run_id": null,
+    "parent_run": null,
+    "parameter_hash": null
+  },
+  "b_formal_training_contract": {
+    "owner": "B",
+    "status": "DRAFT",
+    "version": "0.1-draft",
+    "training_ready": false,
+    "validator_status": "NOT_READY_FOR_FORMAL_TRAINING",
+    "unresolved_field_count": 20,
+    "blocking_statuses": [
+      "WAITING_FOR_A",
+      "WAITING_FOR_B",
+      "TODO_CALIBRATION"
+    ]
+  },
+  "ai_training_framework": {
+    "owner": "C",
+    "version": "0.1.1",
+    "status": "SKELETON",
+    "contract_status": "PRE_B_TRAINING_CONTRACT",
+    "formal_training_ready": false,
+    "test_only_trainer_resume_verified": true,
+    "b_fixture_reader_status": "READY_FOR_TEST_ONLY_INTEGRATION",
+    "b_fixture_model_fitting": "NOT_RUN",
+    "tests_passed": 114,
+    "integration_tests_included": 31
+  },
+  "dataset_adapters": {
+    "owner": "C",
+    "status": "PARTIAL",
+    "b_rule_reader": "TEST_ONLY",
+    "physics_lineage_inspector": "DONE",
+    "formal_physics_feature_adapter": "WAITING_FOR_B",
+    "real_adapter": "WAITING_FOR_A",
+    "real_adapter_also_requires_B_contract": true
+  },
+  "formal_model_training": {
+    "owner": "C",
+    "status": "NOT_STARTED",
+    "model_version": null
+  },
+  "edge_intake": {
+    "owner": "C",
+    "version": "0.1.0",
+    "status": "MINIMAL_INTAKE_MOCK_VERIFIED",
+    "entry": "edge_intake.receive_validated_telemetry",
+    "upstream_validation_required": true,
+    "reception": "DETACHED_IN_MEMORY_JSON_SNAPSHOT",
+    "durable": false,
+    "production_validator": "NOT_IMPLEMENTED",
+    "downstream": "NOT_IMPLEMENTED",
+    "tests_passed": 37,
+    "three_person_integration": "NOT_RUN",
+    "A_adapter": "WAITING_FOR_A_UPDATE_TO_NEW_EDGE_ENTRY",
+    "B_consumer_in_this_validation": "NOT_CALLED"
+  },
+  "evaluation": {
+    "owner": "C",
+    "status": "SKELETON",
+    "toy_validation_verified": true,
+    "independent_real_test": "NOT_RUN",
+    "real_only_experiment": "NOT_RUN",
+    "real_plus_synthetic_experiment": "NOT_RUN",
+    "real_world_metrics": null
+  },
+  "onnx": {
+    "owner": "C",
+    "status": "NOT_STARTED",
+    "interface_status": "SKELETON",
+    "export_status": "NOT_RUN",
+    "parity_status": "NOT_RUN",
+    "onnx_hash": null
+  },
+  "ascend": {
+    "owner": "C",
+    "status": "NOT_STARTED",
+    "atc": "NOT_RUN",
+    "om_hash": null,
+    "acl": "NOT_RUN"
+  },
+  "atlas": {
+    "owner": "C/A",
+    "status": "NOT_STARTED",
+    "real_device_validation": "NOT_RUN",
+    "environment_lock": null
+  },
+  "vision": {
+    "owner": "C",
+    "status": "OPENCV_BASELINE_IMPLEMENTED",
+    "path": "platform_backend/src/geohazard_platform/vision.py",
+    "calibrated": false,
+    "vision_score": null,
+    "model_version": null,
+    "continuous_camera_capture": "NOT_IMPLEMENTED"
+  },
+  "cloud": {
+    "owner": "C",
+    "status": "NOT_STARTED"
+  },
+  "web": {
+    "owner": "C",
+    "status": "LOCAL_BACKEND_CONNECTED",
+    "path": "apps/geohazard-demo",
+    "version": "1.1.0",
+    "standalone_simulator": "EXPLICIT_LOCAL_MODE",
+    "real_device_end_to_end": "NOT_VERIFIED"
+  },
+  "end_to_end": {
+    "owner": "A/B/C",
+    "status": "BLOCKED",
+    "real_hil": "NOT_RUN"
+  },
+  "blockers": [
+    {
+      "owner": "A",
+      "status": "WAITING_FOR_A",
+      "missing": [
+        "Real Experiment CSV",
+        "Calibration Metadata",
+        "per-channel Validity",
+        "run/time/device metadata",
+        "noise/bias/drift/missingness evidence",
+        "sensor response",
+        "pump/rain mapping"
+      ],
+      "blocks": [
+        "real adapter",
+        "scientific calibration",
+        "formal training"
+      ]
+    },
+    {
+      "owner": "B",
+      "status": "WAITING_FOR_B",
+      "missing": [
+        "Formal Ordered Features",
+        "Label",
+        "Window",
+        "Split Manifest",
+        "Leakage Rules",
+        "Normalization Contract",
+        "Metrics",
+        "Synthetic Constraints",
+        "Independent Real Test protocol",
+        "formal risk reference package"
+      ],
+      "blocks": [
+        "formal contract interpreter",
+        "canonical project dataset",
+        "formal training/evaluation",
+        "NODE algorithm parity"
+      ]
+    },
+    {
+      "owner": "A/B/C",
+      "status": "TODO_CALIBRATION",
+      "missing": [
+        "physical and sensor calibration",
+        "train-domain parameter evidence"
+      ],
+      "blocks": [
+        "calibrated synthetic data",
+        "real-world claims"
+      ]
+    },
+    {
+      "owner": "A/B/C",
+      "status": "WAITING_FOR_A/B_INTEGRATION",
+      "missing": [
+        "A he_adapter pinned source and status update",
+        "B new algorithm entry wiring",
+        "actual sibling M01/M02/M07/M08 rerun"
+      ],
+      "blocks": [
+        "three-person mock integration"
+      ]
+    },
+    {
+      "owner": "C",
+      "status": "PARTIAL_LOCAL_SOFTWARE",
+      "missing": [
+        "production device identity/authentication",
+        "NODE-authorized durable receipt and spool/cloud acknowledgement",
+        "Atlas and cloud deployment",
+        "calibrated vision score and complete risk fusion",
+        "real hardware end-to-end verification"
+      ],
+      "blocks": [
+        "reliable end-to-edge",
+        "end-to-end"
+      ]
+    }
+  ],
+  "verification": {
+    "as_of": "2026-09-25",
+    "before": {
+      "passed": 179,
+      "failed": 0,
+      "skipped": 0,
+      "subtests_passed": 20
+    },
+    "after": {
+      "passed": 210,
+      "failed": 0,
+      "skipped": 0,
+      "subtests_passed": 20
+    },
+    "compile_files": 65,
+    "imported_ai_training_modules": 28,
+    "fixture_hash_validation": "DONE",
+    "deterministic_toy_repeat_and_resume": "DONE",
+    "physics_scenarios_and_plots": "DONE",
+    "formal_training_rejection": "DONE",
+    "protected_existing_files": 164,
+    "protected_changed": 0,
+    "evidence": "ai_training/outputs/PROJECT_AUDIT_7rasdry4/verification.json"
+  },
+  "edge_verification": {
+    "as_of": "2026-10-05",
+    "passed": 37,
+    "failed": 0,
+    "skipped": 0,
+    "syntax_compile_files": 8,
+    "mock_edge_calls": {
+      "M01_NORMAL": 1,
+      "M02_MISSING_SENSOR": 1,
+      "M07_RISK_NOT_CALIBRATED": 1,
+      "M08_INVALID_SCHEMA": 0
+    },
+    "M08_upstream_rejected": 4,
+    "repeat": "IDENTICAL_REPORT",
+    "protected_existing_files": 150,
+    "protected_changed": 0,
+    "evidence": "docs/test_records/integration/2026-10-05_edge_intake_v0.1.0/verification.json",
+    "full_historical_regression_this_round": "NOT_RUN; taskbook limits this round to intake-related tests"
+  },
+  "next_recommended_step": {
+    "owner": "A/B/C",
+    "task": "Confirm the exact ESP32 board and firmware, connect an isolated node through a LAN-accessible MQTT Broker using v2 telemetry, then validate real sensor metadata and the existing B/C intake integration before Atlas/cloud deployment",
+    "automatically_started": false
+  },
+  "local_platform": {
+    "as_of": "2026-10-20",
+    "status": "LOCAL_SOFTWARE_INTEGRATED",
+    "backend_version": "0.3.0",
+    "web_version": "1.2.0",
+    "storage": "SQLITE_WAL",
+    "telemetry_schema": "zhifang.telemetry.v2",
+    "mqtt": "IMPLEMENTED",
+    "http_device_ingress": "TEST_ONLY",
+    "node_cleanup_authorized": false,
+    "esp32_flashable_firmware": "ISOLATED_TINYQUAKE_REFERENCE_IMAGE_ONLY",
+    "esp32_hardware_integration": "NOT_VERIFIED",
+    "atlas": "NOT_CONNECTED",
+    "cloud": "NOT_CONNECTED",
+    "formal_model": null,
+    "full_risk_fusion": "NOT_IMPLEMENTED",
+    "instructions": "platform_backend/README.md",
+    "verification": {
+      "as_of": "2026-10-20",
+      "python_tests_passed": 139,
+      "frontend_http_tests_passed": 2,
+      "frontend_browser_regressions_passed": 7,
+      "typescript": "PASS",
+      "production_build": "PASS",
+      "real_hardware": "NOT_RUN",
+      "test_services_left_running": false,
+      "tinyquake_browser_checks_passed": 6
+    }
+  },
+  "public_sensor_research": {
+    "status": "PUBLIC_SENSOR_MODELS_TRAINED",
+    "implementation": "ai_training/src/ai_training/multimodal",
+    "documentation": "ai_training/MULTIMODAL.md",
+    "artifacts": "ai_training/pretrained/public_sensor_v1",
+    "soil_task": "next recorded VWC observation regression",
+    "motion_task": "next recorded six-axis native observation regression",
+    "local_experiment_data_supplied": false,
+    "formal_project_model_trained": false,
+    "fusion_status": "WAITING_FOR_LOCAL_CALIBRATION_AND_PAIRED_RUNS",
+    "production_risk_engine_replaced": false,
+    "independent_motion_test_available": false,
+    "deployment_ready": false
+  },
+  "tinyquake_experiment": {
+    "as_of": "2026-10-20",
+    "status": "EXPERIMENTAL",
+    "model": "CNN/models/model_17_16_32_32.tflite",
+    "model_sha256": "0e1eb00a920ae3daaec7cf142ef8a54373fe1b93b472350e7048b8ae0c1ff1f1",
+    "model_retrained": false,
+    "desktop_reference_windows": 17427,
+    "desktop_argmax_accuracy": 0.938199345842658,
+    "reference_accuracy_applies_to_local_imu": false,
+    "serial_build": "PASS",
+    "mqtt_enabled_build": "PASS",
+    "esp_idf": "5.5.1",
+    "esp_tflite_micro": "1.4.1",
+    "esp_nn": "1.4.1",
+    "flash_and_boot": "NOT_RUN",
+    "board_reference_parity": "NOT_RUN",
+    "arena_used_bytes": null,
+    "board_inference_latency_us": null,
+    "real_icm_input": "NOT_CONNECTED",
+    "scope": "TEST_ONLY",
+    "risk_eligible": false,
+    "production_firmware_modified": false,
+    "documentation": "docs/team_handoffs/TINYQUAKE_PROGRESS_2026-10-20.md"
+  }
+}

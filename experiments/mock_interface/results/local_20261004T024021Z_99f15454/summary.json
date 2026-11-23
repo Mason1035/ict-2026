@@ -1,0 +1,74 @@
+{
+  "scope": "TEST_ONLY / MOCK_ONLY",
+  "execution_time": "2026-10-04T02:40:21.648055+00:00",
+  "execution": {
+    "runner_version": "0.1.0",
+    "git_commit": "b77d1943e92d3bb5455294277dad418d718b990a",
+    "git_branch": "李青原",
+    "git_status_before_run": "?? experiments/mock_interface/runner/",
+    "runner_source_sha256": {
+      "edge_handoff.py": "5898c10a9dc345a86946ea09d2adf3c6d8b7ae651bda9a09cd07ca88288a02a7",
+      "mock_loader.py": "c70c6b4649f02fbef3f0414183f8f08ef6a278433555ccfa414313ff45c2eda2",
+      "mock_v2_validator.py": "f0c6ca2cc5feb607c92f398efacbdcd43e7f64d59c4db0ecd81247f2ea393064",
+      "README.md": "ea37b71a60e2ad6cfb8043344219de04204be2593190ed7ae6c93a815f324507",
+      "risk_handoff.py": "df2d9295c4adede546c610e11720e0f4b96f400d46fca238a19e053049ddef6f",
+      "run_mock_integration.py": "a7e78bfa20edaa17c41632c6a174d2b63b258f8c6fe334202140ce61c67f22d1",
+      "test_runner.py": "e53438301c79d1490b85bb8d0cf93eb5786da6b295efb641e14bd23380e0677f"
+    },
+    "python_version": "3.12.14",
+    "python_executable": "C:\\Users\\LQY\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe"
+  },
+  "cases": [
+    {
+      "case_id": "M01_NORMAL",
+      "overall_status": "LOCAL_RUNNER_PASS",
+      "actual": {
+        "message_count": 1,
+        "accepted_message_count": 1,
+        "rejected_message_count": 0,
+        "risk_handoff_call_count": 1,
+        "edge_handoff_call_count": 1
+      },
+      "report": "M01_NORMAL.result.json"
+    },
+    {
+      "case_id": "M02_MISSING_SENSOR",
+      "overall_status": "LOCAL_RUNNER_PASS",
+      "actual": {
+        "message_count": 1,
+        "accepted_message_count": 1,
+        "rejected_message_count": 0,
+        "risk_handoff_call_count": 1,
+        "edge_handoff_call_count": 1
+      },
+      "report": "M02_MISSING_SENSOR.result.json"
+    },
+    {
+      "case_id": "M07_RISK_NOT_CALIBRATED",
+      "overall_status": "LOCAL_RUNNER_PASS",
+      "actual": {
+        "message_count": 1,
+        "accepted_message_count": 1,
+        "rejected_message_count": 0,
+        "risk_handoff_call_count": 1,
+        "edge_handoff_call_count": 1
+      },
+      "report": "M07_RISK_NOT_CALIBRATED.result.json"
+    },
+    {
+      "case_id": "M08_INVALID_SCHEMA",
+      "overall_status": "LOCAL_RUNNER_PASS",
+      "actual": {
+        "message_count": 4,
+        "accepted_message_count": 0,
+        "rejected_message_count": 4,
+        "risk_handoff_call_count": 0,
+        "edge_handoff_call_count": 0
+      },
+      "report": "M08_INVALID_SCHEMA.result.json"
+    }
+  ],
+  "overall_status": "LOCAL_RUNNER_PASS",
+  "three_person_integration": "BLOCKED / NOT_INTEGRATED",
+  "notes": "本轮 Local Mock Runner 的通过不等于完整三人 Mock Integration PASS。"
+}

@@ -1,0 +1,82 @@
+{
+  "results": [
+    {
+      "name": "initial A=18, Wi-Fi online, five telemetry cards, no queue",
+      "passed": true
+    },
+    {
+      "name": "scenario B=46 / C=72 / D=91 and alert deduplication",
+      "passed": true
+    },
+    {
+      "name": "number input and keyboard slider update telemetry, risk and node detail",
+      "passed": true
+    },
+    {
+      "name": "primary, LoRa gateway and downstream service gating",
+      "passed": true
+    },
+    {
+      "name": "offline queue grows while paused stepping, priority recovery is gradual and IDs survive retry",
+      "passed": true
+    },
+    {
+      "name": "history clears while paused, next step samples, reset clears alerts/queue/network",
+      "passed": true
+    },
+    {
+      "name": "visible contribution values sum to visible total",
+      "passed": true
+    },
+    {
+      "name": "native guide traps keyboard focus and Escape closes it",
+      "passed": true
+    },
+    {
+      "name": "alert detail moves/traps keyboard focus and Escape closes it",
+      "passed": true
+    },
+    {
+      "name": "clear-demo dialog moves/traps keyboard focus and Escape cancels it",
+      "passed": true
+    },
+    {
+      "name": "event tabs support roving Arrow/Home/End keyboard selection",
+      "passed": true
+    },
+    {
+      "name": "reset returns terrain mode, camera preset and selected node to initial state",
+      "passed": true
+    },
+    {
+      "name": "responsive 1440×900 has no page overflow",
+      "passed": true
+    },
+    {
+      "name": "responsive 1280×800 has no page overflow",
+      "passed": true
+    },
+    {
+      "name": "responsive 960×800 has no page overflow",
+      "passed": true
+    },
+    {
+      "name": "responsive 390×844 has no page overflow",
+      "passed": true
+    },
+    {
+      "name": "reduced motion preserves sampling and 4× playback controls",
+      "passed": true
+    },
+    {
+      "name": "unsupported WebGL shows interactive SVG fallback without runtime errors",
+      "passed": true
+    },
+    {
+      "name": "browser has no runtime or console errors",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "warnings": []
+}
