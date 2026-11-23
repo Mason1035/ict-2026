@@ -60,7 +60,7 @@ const stamp = (t: number) =>
       </defs>
       <path
         d="M0 6H320 M0 50H320 M0 94H320"
-        stroke="#e9ede8"
+        stroke="#dce1dc"
         stroke-width="1"
         stroke-dasharray="3 4"
         fill="none"

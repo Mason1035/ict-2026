@@ -49,7 +49,7 @@ const switches = [
     <div class="panel-heading">
       <div>
         <h2>通信链路与容灾</h2>
-        <p>每一条数据，都有回家的路。</p>
+        <p>模拟 Wi-Fi 主链路、LoRa 备链与断网离线缓存队列。</p>
       </div>
       <span :class="['tag', online ? 'tag-green' : 'tag-amber']"
         ><i />{{

@@ -89,7 +89,7 @@ const riskColor = computed(() =>
 );
 const detailValue = computed(() => {
   if (!activeNode.value) return "";
-  const format = (value: number | null, unit: string, decimals = 1) => value == null ? "—" : `${value.toFixed(decimals)} ${unit}`;
+  const format = (value: number | null, unit: string, decimals = 1) => value == null ? "—" : `${value.toFixed(decimals)}${unit === "°" ? "" : " "}${unit}`;
   const values: Record<string, string> = {
     soil: format(props.sensors.moisture, "%"),
     imu: format(props.sensors.tilt, "°"),
@@ -1285,7 +1285,7 @@ onBeforeUnmount(() => {
         拖拽旋转 <span>·</span> 滚轮缩放
       </div>
       <span class="terrain-demo"
-        >{{ fallback ? "静态兼容视图" : "DEMO" }} <span>模拟地形</span></span
+        >{{ fallback ? "静态兼容视图" : platform ? "示意" : "DEMO" }} <span>{{ platform ? "非现场 DEM" : "模拟地形" }}</span></span
       >
     </div>
     <div v-if="mode === 'heatmap' && !unknown" class="terrain-legend">

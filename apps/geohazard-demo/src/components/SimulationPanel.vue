@@ -36,7 +36,7 @@ function input(key: keyof SensorValues, e: Event) {
     <div class="panel-heading">
       <div>
         <h2>灾害演化模拟</h2>
-        <p>从一次降雨，观察边坡的每一次变化。</p>
+        <p>切换预置演示场景或手动调节各路模拟参数。</p>
       </div>
       <SlidersHorizontal :size="17" class="muted" />
     </div>

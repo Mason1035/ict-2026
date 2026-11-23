@@ -146,6 +146,31 @@ platform_backend/.venv/bin/python scripts/replay_sd_to_mqtt.py "<50PWM目录>" -
 
 配置密码单独保存在本地数据库，数据库权限为 0600，读取接口只返回是否已配置，不返回密码；省略更新密码时保留原值。TLS 开启时必须验证证书，不能关闭验证。当前是本地管理员模型，生产密钥管理、用户角色和多租户权限需后续实现。
 
+## NODE-01-REAL-TEST raw 验收（等待 Atlas 应用确认）
+
+本候选实现采用保守的**独立专用 SQLite 存储**方案（独立 SQLite 文件与独立连接，待用户书面确认是否采用该更严隔离方案；确认前不声明为已确认可部署方案）：
+- 新增可配置环境变量 `GEOHAZARD_REAL_TEST_DATABASE`，默认路径为 `<GEOHAZARD_DATA_DIR>/real_test.sqlite3`，与主业务库 `platform.sqlite3` 及研究登记库 `GEOHAZARD_RESEARCH_REGISTRY`（默认 `work/replay/research.sqlite3`）物理分离。启动或打开时若配置指向主库或研究库（含软链接），将直接拒绝，不静默共用。
+- 保留身份 `site_id=NODE01-STAGE23-TEST`、`device_id=NODE-01-REAL-TEST` 与精确 Topic `zhifang/v2/NODE01-STAGE23-TEST/NODE-01-REAL-TEST/telemetry` 的连接器保存（`POST/PUT/DELETE /api/v1/connectors`）、MQTT/摄入校验、隔离（quarantine）、回执（intake_receipts）及遥测落盘全部路由至专用实测库；主库 `platform.sqlite3` 不写入该保留身份的任何遥测、告警、事件、连接器、密钥、quarantine、boot_sessions 或 provisional_risk 行。
+- 仓库内 [停用的连接器模板](config/connectors/node-01-real-test.json) 保持 `"enabled": false`，启动时不会自动入库，也不会自动建立 MQTT 连接。
+- 保留 REPLAY-LAB 原配置与 DEMO 模拟器。首页侧栏的「NODE-01 真实测试」或 `/?mode=real-test` 只轮询 `GET /api/v1/real-test/status`。该接口仅从专用实测库读取测试遥测，并在响应 `storage` 字段（及 `/api/v1/health` 的 `storage.real_test_store`）暴露可探测的隔离存储标识；同时对 `platform.sqlite3` 仅做只读探测（`mode=ro` + `PRAGMA query_only=ON`），用于列出既有主库历史 `boot_id`（标明 `store: platform_db` 与 `store: test_store`）并在主库意外已有保留身份行时给出 `platform_db_probe.warning`，**绝不自动迁移、删除或改写主库数据**。
+- 记录按平台首次入库排序，重复包不更新最近有效收包。平台接收和服务端观察时间来自平台主机，浏览器对照时间来自浏览器所在主机。设备时间状态保持原样。
+
+合成夹具由本地 Git 对象 `08b2b14` 的 `V2Serializer` 接收合成输入生成；该对象来自已缓存的板端开发历史。其 `system` 输出六个布尔字段，未计算的百分比、倾角、实验、风险字段与未同步时间保留为 null。正式板的 `SD_R4_1122` 序列化版本仍需用该版本代码或脱敏候选报文核对。土壤仅验收 ADC raw，状态固定为 `INSUFFICIENT_WINDOW`。如后续有按契约定义的 120 秒板端汇总，先核实实现和输出。其余情况单独申请足量连续采样，原标定基准为 2 Hz、每路 240 点。
+
+用户确认应用后，由平台负责人先查询既有 boot（接口 `observed_boot_ids`，或在正确的 Atlas 平台库中只读执行下列查询），并与 A 核对该板已写入 NVS 的 boot、历史实际使用值、已预留但未发送的值及未完成记录。1 / 3 / 4 禁止复用，任何候选都需双方确认。平台负责方记录开始监控时的 Atlas UTC、独立 Windows/用户对照时间、收包和正式告警基线。
+
+```sql
+SELECT boot_id, source, scope, COUNT(*) AS samples
+FROM telemetry
+WHERE device_id = 'NODE-01-REAL-TEST'
+GROUP BY boot_id, source, scope
+ORDER BY boot_id;
+```
+
+权限计划由用户书面选择后执行。优先由负责人安全备份 Mosquitto 配置与账号清单，盘点 `platform`、REPLAY-LAB 旧连接器、可能存在的 `node01` 及其 Topic，完整保留既有授权。给专用测试发布账号授予精确 Topic 写权限，给 `platform` 保留原有读取并加精确 Topic 读取；若采用专用接收账号，只授予精确 Topic 读取。先在隔离环境验证新账号的允许及拒绝路径和旧订阅权限，再在批准的变更窗口核对旧连接在线、新连接的 CONNACK/SUBACK 及 DEMO 刷新。失败时停用新连接器，由负责人恢复已备份配置和账号状态，复核旧连接器与 DEMO。备选路径需用户明确接受「仅密码认证、无 Topic 隔离，不是已隔离」。精确订阅限制平台接收范围，Broker 仍接受其他已认证账号对该 Topic 发布。
+
+在权限方案确认、连接器和日志基线就绪前，给 A 的口径为「保持测试身份，先不写 boot，先不发」。此后由负责人按授权握手，再由 A 发 1～3 条包。记录真实发送证据、持久化回执、raw 与 IMU 单位、保留时间的过期变灰，以及正式告警新增为 0。
+
 ## ESP32 接入状态
 
 已实现 ESP32 可使用的 MQTT 平台接收端，链路为 `ESP32 → Wi-Fi → MQTT Broker → FastAPI → SQLite → 页面`。另有独立 [TinyQuake ESP-IDF 参考固件](../firmware/tinyquake_esp32s3/README.md) 通过构建，尚未进行 ESP32 真板联调；`scripts/mqtt_demo.py` 是电脑端软件实验源。
