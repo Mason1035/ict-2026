@@ -23,7 +23,7 @@ def sample(payload, seq=1, boot=1):
     return p
 
 
-@pytest.mark.parametrize("channel", ["top", "middle"])
+@pytest.mark.parametrize("channel", ["top", "middle", "toe"])
 def test_endpoints_clipping_and_missing(channel):
     dry, wet = cfg.SOIL_ENDPOINTS[channel]
     assert pr.moisture_index(dry, channel) == (0, [])
@@ -33,7 +33,7 @@ def test_endpoints_clipping_and_missing(channel):
     assert pr.moisture_index(dry + 10, channel) == (0, ["SOIL_INDEX_CLIPPED"])
     assert pr.moisture_index(wet - 10, channel) == (1, ["SOIL_INDEX_CLIPPED"])
     assert pr.moisture_index(None, channel)[0] is None
-    assert pr.moisture_index(-32768, "toe") == (None, ["AIN2_EXCLUDED_DIAGNOSTIC_ONLY"])
+    assert pr.moisture_index(1, "unknown") == (None, ["UNKNOWN_SOIL_CHANNEL"])
 
 
 def test_known_gravity_baseline_rms_and_causal_state(payload):
@@ -63,13 +63,11 @@ def test_known_gravity_baseline_rms_and_causal_state(payload):
 def test_levels_and_threshold_provenance(payload):
     p = sample(payload)
     result, _ = pr.compute(p)
-    assert result["level"] == "NORMAL"  # AIN2 cannot trigger.
-    p["soil"]["top_raw"] = 15000
-    assert pr.compute(p)[0]["level"] == "ATTENTION"
-    p["soil"]["top_raw"] = 12510
-    result, _ = pr.compute(p)
-    assert (result["level"], result["score"]) == ("WARNING", 100)
-    assert result["reasons"][0]["threshold_source"] == cfg.VERSION
+    assert result["level"] is None  # IMU warmup; soil display cannot establish a level.
+    p["soil"]["top_raw"] = 13032
+    result, _ = pr.compute(p, context={"firmware_elf_sha256": cfg.load_parameters()["firmware_elf_sha256"]})
+    assert result["features"]["soil_w_rel_pct"]["top"] == 100
+    assert result["level"] is None and result["reasons"] == []
     features = {"soil_index": {}, "imu": {"top": dict(direction_angle_deg=None, vibration_rms_mps2=None, gyro_rms_dps=None)}}
     assert pr.map_level(features) == (None, None, [])
     for metric in features["imu"]["top"]:

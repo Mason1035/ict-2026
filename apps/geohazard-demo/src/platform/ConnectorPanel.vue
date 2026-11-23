@@ -7,7 +7,7 @@ const props = defineProps<{ connectors: Connector[]; statuses: MqttStatus[]; con
 const emit = defineEmits<{ refresh: [] }>();
 const items = ref<Connector[]>([]);
 watch(() => props.connectors, (value) => { items.value = value; }, { immediate: true });
-const defaults = () => ({ name: "", source: "REAL" as "REAL" | "MOCK", enabled: false, scope: "TEST_ONLY" as "TEST_ONLY" | "OPERATIONAL", payload_format: "telemetry_v2" as "telemetry_v2" | "tinyquake_v1", host: "127.0.0.1", port: 1883, topic: "zhifang/v2/{SITE}/+/telemetry", site_id: "SITE01", username: "", password: "", tls: false, client_id: "" });
+const defaults = () => ({ name: "", source: "REAL" as "REAL" | "MOCK", enabled: false, scope: "TEST_ONLY" as "TEST_ONLY" | "OPERATIONAL", payload_format: "telemetry_v2" as "telemetry_v2" | "tinyquake_v1", host: "127.0.0.1", port: 1883, topic: "zhifang/v2/{SITE}/+/telemetry", site_id: "SITE01", username: "", password: "", tls: false, client_id: "", firmware_elf_sha256: "" });
 const form = reactive(defaults());
 watch(() => [form.source, form.payload_format], () => {
   if (form.source !== "REAL" || form.payload_format !== "telemetry_v2") form.scope = "TEST_ONLY";
@@ -32,6 +32,7 @@ async function save() {
   const config: ConnectorWrite["config"] = { payload_format: form.payload_format, scope: form.scope, host: form.host.trim(), port: Number(form.port), topic: form.topic.trim().replaceAll("{SITE}", form.site_id.trim()), site_id: form.site_id.trim(), username: form.username, tls: form.tls };
   if (form.password || !editing.value) config.password = form.password;
   if (form.client_id) config.client_id = form.client_id;
+  config.firmware_elf_sha256 = form.firmware_elf_sha256?.trim() || null;
   const body: ConnectorWrite = { name: form.name.trim(), kind: "mqtt", source: form.source, enabled: form.enabled, config };
   try {
     await api.send(editing.value ? `/connectors/${encodeURIComponent(editing.value)}` : "/connectors", body, editing.value ? "PUT" : "POST");
@@ -84,6 +85,7 @@ function status(item: Connector) {
         <label>订阅 Topic<input v-model="form.topic" required /></label>
         <label>用户名<input v-model="form.username" autocomplete="off" /></label>
         <label>密码<input v-model="form.password" type="password" autocomplete="new-password" :placeholder="existingPassword ? '已配置；留空保留原密码' : '可选'" /></label>
+        <label v-if="form.payload_format === 'telemetry_v2'">已核对的固件 ELF SHA-256（可选）<input v-model="form.firmware_elf_sha256" placeholder="需绑定单设备 Topic；不确定则留空" /></label>
         <label>客户端 ID<input v-model="form.client_id" placeholder="留空由后端生成" /></label>
         <div class="form-checkboxes"><label><input v-model="form.tls" type="checkbox" />启用 TLS</label><label><input v-model="form.enabled" type="checkbox" />启用持续订阅</label></div>
       </div>

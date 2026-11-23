@@ -7,11 +7,12 @@ import math
 from . import provisional_config as cfg
 from .research_features import _angle as angle_between_vectors
 from .dashboard import normalize_time_filter
+from . import soil_calibration
 
 
 def moisture_index(raw, channel):
     if channel not in cfg.SOIL_ENDPOINTS:
-        return None, ["AIN2_EXCLUDED_DIAGNOSTIC_ONLY"]
+        return None, ["UNKNOWN_SOIL_CHANNEL"]
     if raw is None:
         return None, ["SOIL_MISSING"]
     dry, wet = cfg.SOIL_ENDPOINTS[channel]
@@ -28,16 +29,6 @@ def map_level(features):
     reasons = []
     available = False
     severity = 0
-    for channel, index in features["soil_index"].items():
-        if index is None:
-            continue
-        available = True
-        rank = 2 if index >= cfg.SOIL_WARNING_INDEX else 1 if index >= cfg.SOIL_ATTENTION_INDEX else 0
-        if rank:
-            severity = max(severity, rank)
-            reasons.append({"feature": f"soil.{channel}.moisture_index", "value": index,
-                "attention_threshold": cfg.SOIL_ATTENTION_INDEX, "warning_threshold": cfg.SOIL_WARNING_INDEX,
-                "threshold_source": cfg.VERSION, "level": ("NORMAL", "ATTENTION", "WARNING")[rank]})
     reference = cfg.reference_config()
     for sensor, metrics in features["imu"].items():
         for metric in ("direction_angle_deg", "vibration_rms_mps2", "gyro_rms_dps"):
@@ -58,16 +49,16 @@ def map_level(features):
     return level, cfg.LEVEL_SCORES.get(level), reasons
 
 
-def compute(payload, state=None):
+def compute(payload, state=None, *, context=None):
     """Only current/past samples; caller partitions by site/device/boot/source/scope."""
     state = json.loads(json.dumps(state)) if state else {"imus": {}}
     now = payload["uptime_ms"]
-    flags = ["AIN2_EXCLUDED_DIAGNOSTIC_ONLY", "ONE_HZ_SAMPLED_NOT_HIGH_FREQUENCY_VIBRATION"]
+    flags = ["SOIL_SEVERITY_NOT_CALIBRATED", "ONE_HZ_SAMPLED_NOT_HIGH_FREQUENCY_VIBRATION"]
     features = {"soil_index": {}, "imu": {}}
-    for channel in ("top", "middle", "toe"):
-        index, quality = moisture_index(payload["soil"][channel + "_raw"], channel)
-        features["soil_index"][channel] = index
-        flags.extend(f"soil.{channel}:{flag}" for flag in quality)
+    percentages, quality, calibration = soil_calibration.evaluate(payload["soil"], context)
+    features["soil_w_rel_pct"] = percentages
+    features["soil_index"] = {channel: value / 100 if value is not None else None for channel,value in percentages.items()}
+    flags.extend(quality)
     window_ms = cfg.reference_config()["parameters"]["rms_window_us"] / 1000
     for imu in payload["imu"]:
         sensor = imu["id"]
@@ -107,11 +98,11 @@ def compute(payload, state=None):
         "disclaimer": cfg.DISCLAIMER, "fusion_eligible": False, "uncalibrated": True,
         "production_alarm_eligible": False, "level": level, "score": score,
         "features": features, "reasons": reasons, "quality_flags": sorted(set(flags)),
-        "threshold_provenance": cfg.provenance()}
+        "threshold_provenance": cfg.provenance(), "soil_calibration": calibration}
     return result, state
 
 
-def record(db, telemetry_id, payload, *, source, scope, received_at):
+def record(db, telemetry_id, payload, *, source, scope, received_at, context=None):
     """Called under intake transaction, isolated by its own savepoint.
 
     Store bounded rolling state with each result so restarts retain the baseline.
@@ -124,9 +115,9 @@ def record(db, telemetry_id, payload, *, source, scope, received_at):
             AND p.state_json IS NOT NULL ORDER BY t.seq DESC LIMIT 1""",
             (payload["site_id"], payload["device_id"], payload["boot_id"], source, scope)).fetchone()
         late = previous and (payload["seq"] <= previous["seq"] or payload["uptime_ms"] <= previous["uptime_ms"])
-        result, state = compute(payload, json.loads(previous["state_json"]) if previous and not late else None)
+        result, state = compute(payload, json.loads(previous["state_json"]) if previous and not late else None, context=context)
         if late:
-            result.update(level=None, score=None, reasons=[], features={"soil_index": {}, "imu": {}})
+            result.update(level=None, score=None, reasons=[], features={"soil_index": {}, "soil_w_rel_pct": {}, "imu": {}})
             result["quality_flags"].append("OUT_OF_ORDER_NOT_EVALUATED")
         result.update(telemetry_id=telemetry_id, site_id=payload["site_id"], device_id=payload["device_id"],
             boot_id=payload["boot_id"], seq=payload["seq"], uptime_ms=payload["uptime_ms"],

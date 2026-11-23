@@ -6,6 +6,12 @@ const props = defineProps<{ latest: ProvisionalRisk | null; history: Provisional
 const labels = { NORMAL: "NORMAL · 未触发演示阈值", ATTENTION: "ATTENTION · 关注", WARNING: "WARNING · 警示" };
 const color = computed(() => props.latest?.level === "WARNING" ? "#bd514c" : props.latest?.level === "ATTENTION" ? "#b48b30" : "#39866a");
 const points = computed<HistoryPoint[]>(() => props.history.map(r => ({ time: r.received_at, score: r.score, moisture: null, tilt: null, vibration: null, rain: null, crack: null })));
+const soilChannels = [{ key: "top", label: "AIN0", color: "#2b7882" }, { key: "middle", label: "AIN1", color: "#91813c" }, { key: "toe", label: "AIN2", color: "#775c91" }];
+function soilPoints(key: string): HistoryPoint[] {
+  return props.history.map((r, i) => ({ time: r.received_at,
+    score: i > 0 && (r.boot_id !== props.history[i-1]?.boot_id || r.soil_calibration?.version !== props.history[i-1]?.soil_calibration?.version) ? null : r.features.soil_w_rel_pct?.[key] ?? null,
+    moisture: null, tilt: null, vibration: null, rain: null, crack: null }));
+}
 </script>
 <template>
   <section class="panel platform-section provisional-panel" data-testid="provisional-risk">
@@ -14,15 +20,17 @@ const points = computed<HistoryPoint[]>(() => props.history.map(r => ({ time: r.
       <strong :style="{ color }">{{ latest.level ? labels[latest.level] : '数据不足，暂不分级' }}</strong>
       <p>{{ stale ? '历史结果 / 数据已过期' : replay ? '回放采样结果' : '最新采样结果' }} · {{ dateTime(latest.received_at) }} · boot {{ latest.boot_id }}</p>
       <ul v-if="latest.reasons.length"><li v-for="reason in latest.reasons" :key="reason.feature">{{ reason.feature }} = {{ reading(reason.value, 4) }} → {{ reason.level }}</li></ul>
-      <p v-else>当前有效特征未触发演示阈值；缺失通道和预热状态见下方质量标记。</p>
-      <div class="feature-grid"><div>相对湿度指数（0–1，非含水率）<p>AIN0 / TOP {{ reading(latest.features.soil_index.top, 3) }} · AIN1 / MIDDLE {{ reading(latest.features.soil_index.middle, 3) }} · AIN2 排除</p></div>
+      <p v-else>未触发 IMU 演示阈值或数据不足；土壤相对指标仅展示，不参与本次分级。</p>
+      <div class="feature-grid"><div>Air–Water 相对湿度（0–100%，非体积含水率）<p data-testid="air-water-values">AIN0 {{ reading(latest.features.soil_w_rel_pct?.top ?? null, 2) }}% · AIN1 {{ reading(latest.features.soil_w_rel_pct?.middle ?? null, 2) }}% · AIN2 {{ reading(latest.features.soil_w_rel_pct?.toe ?? null, 2) }}%</p></div>
         <div v-for="(metrics, sensor) in latest.features.imu" :key="sensor">IMU {{ sensor }}<p>倾角 {{ reading(metrics.tilt_deg, 2) }}° · 相对初始方向 {{ reading(metrics.direction_angle_deg, 2) }}°</p><p>振动 RMS {{ reading(metrics.vibration_rms_mps2, 4) }} m/s² · 陀螺 RMS {{ reading(metrics.gyro_rms_dps, 3) }} °/s</p></div></div>
+      <p v-if="latest.soil_calibration">相对标定版本 {{ latest.soil_calibration.version }} · {{ latest.soil_calibration.applicable ? "固件声明匹配（非设备认证）" : "缺少固件依据或版本不适用，保持空值" }}</p><p v-else>历史旧版本结果，未按新端点重算。</p>
       <details><summary>质量标记 / 预热状态</summary><p>{{ latest.quality_flags.join(' · ') }}</p></details>
     </template>
     <p v-else>所选最新遥测暂无临时风险结果；设备上报正式风险时保留其原值。</p>
+    <div class="feature-grid" data-testid="air-water-trends"><div v-for="channel in soilChannels" :key="channel.key"><p>{{ channel.label }} 相对湿度历史（%）</p><PlatformTrend :points="soilPoints(channel.key)" :color="channel.color" empty-label="缺少可适用的相对标定数据" :chart-label="`${channel.label} Air–Water 相对湿度百分比，非体积含水率；缺测、会话和标定版本变化处断线`" /></div></div>
     <div class="trend-header"><span>临时风险历史 · 序数分级 0 / 50 / 100，非概率</span><span>{{ history.length }} 条</span></div>
     <PlatformTrend :points="points" :color="color" empty-label="等待临时风险有效特征" chart-label="未标定临时分级历史；0/50/100 为序数，缺测处断线，非正式告警" />
-    <p>1 Hz 采样不能还原高频振动；前 10 个有效 IMU 样本建立初始方向。候选 AIR/WATER 端点尚未冻结，未应用 IMU 标定修正。</p>
+    <p>1 Hz 采样不能还原高频振动；前 10 个有效 IMU 样本建立初始方向。使用 2026-11-22 三路 Air–Water 相对端点，湿度风险阈值未启用；未应用 IMU 标定修正。</p>
   </section>
 </template>
 <style scoped>

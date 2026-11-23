@@ -17,15 +17,15 @@ chmod +x scripts/run-platform.sh
 
 板端现场步骤、PC 构建 dist、Mosquitto 密码、systemd、SD 远程回放与 A 分支 NVS 配网命令见 [板端实时演示速查](../docs/BOARD_LIVE_DEMO.md)。板端 wrapper 使用已准备的 Python 3.11+ 环境及 PC 构建产物，不自动安装依赖或运行 Node。
 
-## 临时风险（未标定，非正式告警）
+## 三路 Air–Water 相对指标与临时风险
 
-所有新接收且 `risk.level=null` 的遥测（REAL/OPERATIONAL、REAL/TEST_ONLY 回放、MOCK）独立生成 `provisional_risk` 记录并关联 telemetry id。原始 `payload.risk`、正式 latest/current、告警规则不变；计算错误仅记录日志、保存点回滚，不阻止入库。每条携带 `status=PROVISIONAL`、`calibration_version=null`、`fusion_eligible=false` 与 `uncalibrated, not a formal alarm`。已有旧遥测不自动回算。
+新接收且risk.level=null的遥测生成独立临时结果，保留原始payload.risk，不触发正式告警。土壤参数统一读取B的air_water_20261122.parameters.json，三路相对端点为20718/13032、20945/13118、20606/13004。界面输出0至100的Air–Water相对百分比，不写VWC字段，不代表灾害概率。
 
-AIN0=top、AIN1=middle 采用 B 的 2026-11-12 AIR/WATER 候选端点线性映射 0–1，越界裁剪并标记；不是土壤含水率，AIN2=toe 仅诊断、排除。双 IMU 计算重力向量对 +Z 的角度、相对最初 10 个有效样本平均方向的变化，以及 `( |accel| - 9.80665 )` 与陀螺向量模长的 2 秒采样 RMS；至少 2 点，间隔超过 2.5 秒清空短窗。状态按站点/设备/boot/来源/用途隔离并持久化，重启恢复，迟到或时间倒退只保存不可评估结果。初始方向固定，不随危险变化漂移。
+在连接器中填写已从设备或原件核对的固件ELF SHA-256；必须绑定单设备Topic。该配置属于操作者声明，不能冒充固件认证。不确定时留空，新指标为空并显示不适用。旧固件不匹配时同样不套用新端点。不得把期望哈希当作实际设备证据填写。
 
-角度计算复用 `research_features.py`；角度、振动与陀螺参考数值读取并校验 `config/research_rules/provisional-v1-r4.json`。B 的离线执行器面向高频采集，1 Hz 不满足其覆盖率/STA-LTA/持续时间规则，因此这里是独立演示适配，不声称执行了完整 B 规则。分级 NORMAL/ATTENTION/WARNING、湿度 0.60/0.85、WARNING 参考倍数 2 等补充常量集中于 `provisional_config.py`，标注 **PROVISIONAL_DEMO**；每条记录附阈值路径、摘要和实际值。序数分数 0/50/100 非概率；NORMAL 不证明安全。未应用候选 IMU 零偏/比例修正。
+新指标仅展示，旧0.60/0.85湿度演示分级停用，AIN2纳入独立三路曲线。IMU保留原有未标定演示逻辑，不代表完整B高频执行。整体calibration_version仍为null，fusion_eligible=false。历史旧结果不自动重算，页面明确提示旧版本，三路新曲线不跨会话或参数版本连线。
 
-`GET /api/v1/provisional-risk/latest?site_id=SITE01&device_id=NODE-01` 返回最新入库临时结果或 null；`/history` 返回 `items`（新到旧），支持 `source`、`scope`、`boot_id`、`limit`（1–500）、带时区的 `before/after`（按入库时间）。独立查询 latest 不代表实时有效性。`/dashboard` 附 `provisional_risk` 与当前显示 boot/scope 的 `provisional_history`（旧到新），只有匹配当前显示遥测的结果才作为临时最新值。前端显示原因、质量标记、特征及独立趋势；过期结果明确标为历史。正式风险卡仍使用生产者上报值。
+GET /api/v1/provisional-risk/latest、/history和/dashboard沿用现有接口，新增soil_calibration来源元信息及features.soil_w_rel_pct。详细配置和验证记录见docs/AIR_WATER_APP_INTEGRATION_20261123.md。
 
 开发模式可以使用两个终端：
 
