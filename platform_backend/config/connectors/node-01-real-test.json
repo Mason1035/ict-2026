@@ -1,0 +1,15 @@
+{
+  "name": "NODE-01-REAL-TEST exact REAL TEST_ONLY",
+  "kind": "mqtt",
+  "source": "REAL",
+  "enabled": false,
+  "config": {
+    "host": "127.0.0.1",
+    "port": 1883,
+    "site_id": "NODE01-STAGE23-TEST",
+    "topic": "zhifang/v2/NODE01-STAGE23-TEST/NODE-01-REAL-TEST/telemetry",
+    "payload_format": "telemetry_v2",
+    "scope": "TEST_ONLY",
+    "qos": 0
+  }
+}

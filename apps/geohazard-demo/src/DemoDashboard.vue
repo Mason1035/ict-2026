@@ -7,8 +7,6 @@ import {
   Network,
   Bell,
   CircleHelp,
-  ChevronRight,
-  ChevronDown,
   Radio,
   Pause,
   Play,
@@ -39,28 +37,28 @@ const levelMeta = {
   low: {
     name: "低风险",
     en: "Low risk",
-    color: "#39866a",
+    color: "#2f7a5f",
     message: "边坡状态稳定",
     description: "多模态指标处于稳定区间，持续监测中。",
   },
   moderate: {
     name: "中风险",
     en: "Moderate risk",
-    color: "#c09a3e",
+    color: "#9e6514",
     message: "降雨影响持续增强",
     description: "关注湿度与倾角变化，建议加强巡检。",
   },
   high: {
     name: "高风险",
     en: "High risk",
-    color: "#d08043",
+    color: "#b95322",
     message: "边坡位移异常",
     description: "本地预警已触发，请关注坡面位移与裂缝。",
   },
   critical: {
     name: "紧急预警",
     en: "Critical risk",
-    color: "#bd514c",
+    color: "#b53f3a",
     message: "滑坡风险显著升高",
     description: "演示紧急预警已触发，请查看告警详情。",
   },
@@ -206,11 +204,10 @@ function navigate(id: string) {
     <div class="workspace">
       <header class="topbar">
         <div class="workspace-brand">
-          智哨防灾 <span>/</span><span class="breadcrumb">指挥中心</span
-          ><ChevronDown :size="13" />
+          智哨防灾 <span>/</span><span class="breadcrumb">本地仿真演示</span>
         </div>
         <div class="topbar-right">
-          <span class="demo-badge">DEMO</span
+          <span class="demo-badge">DEMO · 仅本地仿真</span
           ><span class="topbar-divider" /><span class="live-status"
             ><i :class="['status-dot', { paused: !state.running }]" />{{
               state.running ? "实时仿真" : "仿真已暂停"
@@ -227,17 +224,15 @@ function navigate(id: string) {
       <main id="overview">
         <div class="page-heading">
           <div>
-            <div class="product-name">GEO HAZARD INTELLIGENCE</div>
-            <h1>数字孪生指挥中心<span>监测总览</span></h1>
-            <p>感知细微变化，让预警先于灾害。</p>
+            <h1>本地仿真演示<span>DEMO · 未连接真实设备</span></h1>
+            <p>浏览器端确定性模拟环境，用于验证多模态响应、阈值变化与离线补传，非真实监测结论。</p>
           </div>
           <div class="site-selector">
             <span class="site-icon"><Mountain :size="19" /></span>
             <div>
               <strong>青岚山 · 示范边坡</strong
-              ><small>程序化模拟地形 / NODE-01</small>
+              ><small>程序化示意地形 / NODE-01 模拟</small>
             </div>
-            <ChevronDown :size="14" />
           </div>
         </div>
         <div class="simulation-bar">
@@ -303,13 +298,29 @@ function navigate(id: string) {
             查看事件<ArrowUpRight :size="14" />
           </button>
         </div>
+        <div class="section-label">
+          <h2>多模态传感器遥测</h2>
+          <span
+            ><i class="status-dot" />同源模拟状态，联动更新
+            <span class="label-note">DEMO 模拟值 · 非实测</span></span
+          >
+        </div>
+        <section class="sensor-grid" aria-label="传感器实时读数">
+          <SensorCard
+            v-for="field in fields"
+            :key="field.name"
+            v-bind="field"
+            :value="state.sensors[field.name]"
+            :values="state.sensorHistory.map((p) => p[field.name])"
+          />
+        </section>
         <div class="hero-grid">
           <section class="panel terrain-panel" id="twin">
             <div class="terrain-heading">
               <div>
                 <Box :size="17" />
-                <h2>边坡数字孪生</h2>
-                <span class="mini-badge">3D</span>
+                <h2>边坡示意地形</h2>
+                <span class="mini-badge">3D 示意 / 非现场 DEM</span>
               </div>
               <span class="terrain-online"
                 ><i class="status-dot" />5 路模拟遥测</span
@@ -328,15 +339,18 @@ function navigate(id: string) {
           </section>
           <section class="panel risk-panel">
             <div class="risk-heading">
-              <h2>综合风险评估</h2>
-              <button
-                class="icon-button"
-                aria-label="查看风险评分分解"
-                title="查看演示评分分解"
-                @click="breakdown?.showModal()"
-              >
-                <Info :size="15" />
-              </button>
+              <h2>演示风险评分</h2>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span class="source-badge demo">DEMO · 非正式</span>
+                <button
+                  class="icon-button"
+                  aria-label="查看风险评分分解"
+                  title="查看演示评分分解"
+                  @click="breakdown?.showModal()"
+                >
+                  <Info :size="15" />
+                </button>
+              </div>
             </div>
             <div class="risk-overview">
               <div class="risk-number">
@@ -344,58 +358,20 @@ function navigate(id: string) {
                   >/ 100</span
                 >
               </div>
-              <svg class="risk-orbit" viewBox="0 0 120 120" aria-hidden="true">
-                <circle
-                  cx="60"
-                  cy="60"
-                  r="46"
-                  fill="none"
-                  stroke="#edf1eb"
-                  stroke-width="5"
-                />
-                <circle
-                  cx="60"
-                  cy="60"
-                  r="46"
-                  fill="none"
-                  :stroke="riskMeta.color"
-                  stroke-width="5"
-                  stroke-linecap="round"
-                  :stroke-dasharray="`${(state.risk.score / 100) * 289} 289`"
-                  transform="rotate(-90 60 60)"
-                />
-                <circle cx="60" cy="60" r="34" fill="#f6f8f4" />
-                <path
-                  v-if="state.risk.level === 'low'"
-                  d="m48 60 8 8 17-18"
-                  fill="none"
-                  :stroke="riskMeta.color"
-                  stroke-width="3"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-                <path
-                  v-else
-                  d="M60 44v19m0 10v1"
-                  :stroke="riskMeta.color"
-                  stroke-width="3"
-                  stroke-linecap="round"
-                />
-              </svg>
-            </div>
-            <div class="risk-level">
-              <span
-                :style="{
-                  color: riskMeta.color,
-                  background: riskMeta.color + '12',
-                }"
-                ><i />{{ riskMeta.name }}</span
-              ><small>{{ riskMeta.en }}</small>
+              <div class="risk-level">
+                <span
+                  :style="{
+                    color: riskMeta.color,
+                    background: riskMeta.color + '14',
+                  }"
+                  ><i />{{ riskMeta.name }}</span
+                ><small>{{ time }}</small>
+              </div>
             </div>
             <h3>{{ riskMeta.message }}</h3>
             <p class="risk-description">{{ riskMeta.description }}</p>
             <div class="trend-header">
-              <span>风险历史趋势</span
+              <span>风险历史趋势（0–100 · 模拟）</span
               ><button
                 class="text-button"
                 @click="dispatch({ type: 'clear-history' })"
@@ -405,26 +381,10 @@ function navigate(id: string) {
             </div>
             <RiskTrend :points="state.riskHistory" :color="riskMeta.color" />
             <div class="risk-footnote">
-              <ShieldCheck :size="12" />确定性演示评分 · 非实测预测模型
+              <ShieldCheck :size="12" />确定性演示评分 · 未连接真实设备 · 非正式预测模型
             </div>
           </section>
         </div>
-        <div class="section-label">
-          <h2>多模态传感器遥测</h2>
-          <span
-            ><i class="status-dot" />同源状态，联动更新
-            <span class="label-note">全部为模拟值</span></span
-          >
-        </div>
-        <section class="sensor-grid" aria-label="传感器实时读数">
-          <SensorCard
-            v-for="field in fields"
-            :key="field.name"
-            v-bind="field"
-            :value="state.sensors[field.name]"
-            :values="state.sensorHistory.map((p) => p[field.name])"
-          />
-        </section>
         <div class="operations-grid">
           <NetworkPanel
             :state="state"
@@ -446,7 +406,7 @@ function navigate(id: string) {
         <footer class="page-footer">
           <div>
             <Mountain :size="15" /><span>智哨防灾</span
-            ><span>感知 · 分析 · 预警</span>
+            ><span>本地交互仿真演示</span>
           </div>
           <span>DEMO ONLY · 模拟地形与遥测 · 未连接真实设备或云端</span>
         </footer>
@@ -467,7 +427,7 @@ function navigate(id: string) {
       >
         <X :size="18" /></button
       ><span class="modal-brand"><Mountain :size="25" /></span>
-      <h2>从感知，到预警。</h2>
+      <h2>本地交互演示说明</h2>
       <p>
         这里是智哨防灾的交互演示。尝试四种灾害场景，拖动传感器参数，再切断通信，观察本地计算与恢复补传。
       </p>

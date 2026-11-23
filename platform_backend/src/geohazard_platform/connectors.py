@@ -15,7 +15,7 @@ from urllib.parse import urlsplit
 from uuid import uuid4
 
 from .database import Database, utc_now
-from . import tinyquake
+from . import real_test, tinyquake
 from .telemetry import IngestionError, ingest_telemetry, quarantine_message
 
 
@@ -109,6 +109,10 @@ def _validate(data: dict[str, Any], old: dict[str, Any] | None = None) -> tuple[
         if (len(parts) != expected_len or parts[:len(prefix)] != prefix or parts[-1:] != [suffix]
             or not identities or any(not part.strip() or len(part) > 128 or "#" in part or ("+" in part and part != "+") or "\x00" in part for part in identities)):
             raise ConnectorError(422, "MQTT Topic must match the selected format and site whitelist: " + default_topic)
+        if (site == real_test.SITE_ID or real_test.DEVICE_ID in identities) and (
+            topic != real_test.TOPIC or source != "REAL" or scope != "TEST_ONLY" or experimental
+        ):
+            raise ConnectorError(422, "NODE-01-REAL-TEST requires its exact telemetry topic and REAL / TEST_ONLY")
         try:
             encoded_topic = topic.encode("utf-8")
         except UnicodeEncodeError as exc:
@@ -151,35 +155,78 @@ def _public(row: Any, has_password: bool = False) -> dict[str, Any]:
     return {"id": row["id"], "name": row["name"], "kind": row["kind"], "config": json.loads(row["config_json"]), "enabled": bool(row["enabled"]), "source": row["source"], "version": row["version"], "created_at": row["created_at"], "updated_at": row["updated_at"], "has_password": has_password}
 
 
-def list_connectors(db: Database) -> list[dict[str, Any]]:
-    with db.connection() as connection:
+def _list_from_store(store: Database) -> list[dict[str, Any]]:
+    with store.connection() as connection:
         rows = connection.execute("SELECT c.*, (s.password IS NOT NULL AND s.password<>'') AS has_password FROM connectors c LEFT JOIN connector_secrets s ON s.connector_id=c.id ORDER BY c.created_at,c.id").fetchall()
         return [_public(row, bool(row["has_password"])) for row in rows]
 
 
-def get_connector(db: Database, connector_id: str) -> dict[str, Any]:
-    found = next((row for row in list_connectors(db) if row["id"] == connector_id), None)
-    if found is None:
-        raise ConnectorError(404, "connector not found")
-    return found
+def _get_from_store(store: Database, connector_id: str) -> dict[str, Any] | None:
+    return next((row for row in _list_from_store(store) if row["id"] == connector_id), None)
 
 
-def save_connector(db: Database, data: dict[str, Any], connector_id: str | None = None) -> dict[str, Any]:
-    old = get_connector(db, connector_id) if connector_id else None
+def _resolve_connector_store(db: Database, connector_id: str, real_test_db: Database | None = None) -> tuple[Database, dict[str, Any]]:
+    found = _get_from_store(db, connector_id)
+    if found is not None:
+        return db, found
+    if real_test_db is not None and not real_test.same_sqlite_target(db, real_test_db):
+        found = _get_from_store(real_test_db, connector_id)
+        if found is not None:
+            return real_test_db, found
+    raise ConnectorError(404, "connector not found")
+
+
+def list_connectors(db: Database, *, real_test_db: Database | None = None) -> list[dict[str, Any]]:
+    items = _list_from_store(db)
+    if real_test_db is not None:
+        if real_test.same_sqlite_target(db, real_test_db) and getattr(db, "store_role", "platform") != "real_test":
+            raise ConnectorError(503, "NODE-01-REAL-TEST store must be separate from platform database")
+        if not real_test.same_sqlite_target(db, real_test_db):
+            items.extend(_list_from_store(real_test_db))
+    return items
+
+
+def get_connector(db: Database, connector_id: str, *, real_test_db: Database | None = None) -> dict[str, Any]:
+    return _resolve_connector_store(db, connector_id, real_test_db)[1]
+
+
+def save_connector(db: Database, data: dict[str, Any], connector_id: str | None = None, *, real_test_db: Database | None = None) -> dict[str, Any]:
+    owner_db, old = _resolve_connector_store(db, connector_id, real_test_db) if connector_id else (None, None)
     item, password_changed, password = _validate(data, old)
+    reserved = real_test.is_reserved_connector(item)
+    if reserved:
+        if owner_db is not None and getattr(owner_db, "store_role", "platform") != "real_test":
+            raise ConnectorError(422, "cannot repurpose a platform connector for NODE-01-REAL-TEST")
+        if real_test_db is not None:
+            if real_test.same_sqlite_target(db, real_test_db) and getattr(db, "store_role", "platform") != "real_test":
+                raise ConnectorError(503, "NODE-01-REAL-TEST store must be separate from platform database")
+            target_db = real_test_db
+        elif getattr(db, "store_role", "platform") == "real_test":
+            target_db = db
+        else:
+            raise ConnectorError(422, "NODE-01-REAL-TEST connector requires dedicated real-test store and cannot be stored in platform database")
+    else:
+        if owner_db is not None and getattr(owner_db, "store_role", "platform") == "real_test":
+            raise ConnectorError(422, "cannot repurpose a NODE-01-REAL-TEST connector into a platform connector")
+        if getattr(db, "store_role", "platform") == "real_test":
+            raise ConnectorError(422, "dedicated real-test store only accepts the NODE-01-REAL-TEST connector")
+        target_db = db
     identifier = connector_id or str(uuid4())
     now = utc_now()
-    with db.connection() as connection:
+    with target_db.connection() as connection:
         connection.execute("INSERT INTO connectors(id,name,kind,config_json,enabled,source,version,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name,kind=excluded.kind,config_json=excluded.config_json,enabled=excluded.enabled,source=excluded.source,version=excluded.version,updated_at=excluded.updated_at", (identifier, item["name"], item["kind"], json.dumps(item["config"]), int(item["enabled"]), item["source"], (old["version"] + 1) if old else 1, old["created_at"] if old else now, now))
         if password_changed:
             connection.execute("INSERT INTO connector_secrets(connector_id,password) VALUES(?,?) ON CONFLICT(connector_id) DO UPDATE SET password=excluded.password", (identifier, password or None))
         if item["kind"] != "mqtt":
             connection.execute("DELETE FROM connector_secrets WHERE connector_id=?", (identifier,))
-    return get_connector(db, identifier)
+    saved = _get_from_store(target_db, identifier)
+    assert saved is not None
+    return saved
 
 
-def delete_connector(db: Database, connector_id: str) -> None:
-    with db.connection() as connection:
+def delete_connector(db: Database, connector_id: str, *, real_test_db: Database | None = None) -> None:
+    owner_db, _ = _resolve_connector_store(db, connector_id, real_test_db)
+    with owner_db.connection() as connection:
         cursor = connection.execute("DELETE FROM connectors WHERE id=?", (connector_id,))
         if cursor.rowcount == 0:
             raise ConnectorError(404, "connector not found")
@@ -196,9 +243,9 @@ def _code(value: Any) -> int:
 
 
 class _MQTTSession:
-    def __init__(self, db: Database, item: dict[str, Any], *, probe: bool = False, ingest=ingest_telemetry):
+    def __init__(self, db: Database, item: dict[str, Any], *, probe: bool = False, ingest=ingest_telemetry, real_test_db: Database | None = None):
         self._ingest = ingest
-        self.db, self.item, self.probe = db, item, probe
+        self.db, self.item, self.probe, self.real_test_db = db, item, probe, real_test_db
         self.ready = Event()
         self.stopped = False
         self.state: dict[str, Any] = {"connector_id": item["id"], "state": "connecting", "connected": False, "messages_received": 0, "messages_accepted": 0, "messages_rejected": 0, "duplicates": 0, "last_message_at": None, "last_durable_at": None, "intake_healthy": True, "last_error": None, "updated_at": utc_now()}
@@ -274,6 +321,19 @@ class _MQTTSession:
         source = self.item["source"]
         scope = "TEST_ONLY" if source == "MOCK" or self.item["config"].get("payload_format") == "tinyquake_v1" else self.item["config"].get("scope", "TEST_ONLY")
         metadata = {"source": source, "scope": scope, "transport": "mqtt", "connector_id": self.item["id"], "topic": message.topic}
+        reserved_msg = real_test.is_reserved_topic(message.topic) or real_test.is_reserved_connector(self.item)
+
+        def quarantine_target() -> Database | None:
+            if not reserved_msg:
+                return self.db
+            if self.real_test_db is not None:
+                if real_test.same_sqlite_target(self.db, self.real_test_db) and getattr(self.db, "store_role", "platform") != "real_test":
+                    return None
+                return self.real_test_db
+            if getattr(self.db, "store_role", "platform") == "real_test":
+                return self.db
+            return None
+
         try:
             if getattr(message, "retain", False):
                 raise ValueError("Retained telemetry is prohibited by the shared contract; retained messages cannot update realtime state")
@@ -288,6 +348,8 @@ class _MQTTSession:
                     result[key] = value
                 return result
             payload = json.loads(text, object_pairs_hook=reject_duplicate_keys)
+            if real_test.is_reserved_payload(payload):
+                reserved_msg = True
             whitelist = self.item["config"]["topic"].split("/")
             received_parts = message.topic.split("/")
             if len(received_parts) != len(whitelist) or any(expected != "+" and actual != expected for expected, actual in zip(whitelist, received_parts)):
@@ -295,7 +357,18 @@ class _MQTTSession:
             if self.item["config"].get("payload_format") == "tinyquake_v1":
                 receipt = tinyquake.ingest(self.db, payload, **metadata)
             else:
-                receipt = self._ingest(self.db, payload, **metadata, context={"firmware_elf_sha256": self.item["config"].get("firmware_elf_sha256"), "firmware_evidence": "operator_declared_connector_not_attestation"})
+                # Firmware context belongs on every telemetry ingest callback,
+                # including the wrapper assembled by create_app(). The previous
+                # `self._ingest is ingest_telemetry` identity check dropped
+                # firmware_elf_sha256 on the production composition path.
+                ingest_kwargs = dict(metadata)
+                ingest_kwargs["context"] = {
+                    "firmware_elf_sha256": self.item["config"].get("firmware_elf_sha256"),
+                    "firmware_evidence": "operator_declared_connector_not_attestation",
+                }
+                if self._ingest is ingest_telemetry and self.real_test_db is not None:
+                    ingest_kwargs["real_test_db"] = self.real_test_db
+                receipt = self._ingest(self.db, payload, **ingest_kwargs)
             with self._lock:
                 self.state["messages_accepted"] += 1
                 self.state["duplicates"] += int(receipt["status"] == "duplicate")
@@ -303,7 +376,10 @@ class _MQTTSession:
         except IngestionError as exc:
             if self.item["config"].get("payload_format") == "tinyquake_v1":
                 try:
-                    quarantine_message(self.db, message.payload, **metadata, reason=exc.detail["message"])
+                    q_db = quarantine_target()
+                    if q_db is None:
+                        raise RuntimeError("dedicated real-test store unavailable")
+                    quarantine_message(q_db, message.payload, **metadata, reason=exc.detail["message"])
                 except Exception:
                     with self._lock:
                         self.state["messages_rejected"] += 1
@@ -316,7 +392,10 @@ class _MQTTSession:
             with self._lock:
                 self.state["messages_rejected"] += 1
             try:
-                quarantine_message(self.db, message.payload, **metadata, reason=str(exc))
+                q_db = quarantine_target()
+                if q_db is None:
+                    raise RuntimeError("dedicated real-test store unavailable")
+                quarantine_message(q_db, message.payload, **metadata, reason=str(exc))
             except Exception:
                 self._storage_failure()
             else:
@@ -340,11 +419,11 @@ class _MQTTSession:
         self._update(state="stopped", connected=False)
 
 
-def test_connector(db: Database, connector_id: str, timeout: float = 5.0) -> dict[str, Any]:
-    item = get_connector(db, connector_id)
+def test_connector(db: Database, connector_id: str, timeout: float = 5.0, *, real_test_db: Database | None = None) -> dict[str, Any]:
+    owner_db, item = _resolve_connector_store(db, connector_id, real_test_db)
     if item["kind"] != "mqtt":
         return {"success": False, "state": "not_implemented", "message": "HTTP polling adapter is reserved; no connection claimed"}
-    probe = _MQTTSession(db, item, probe=True)
+    probe = _MQTTSession(owner_db, item, probe=True, real_test_db=real_test_db)
     try:
         probe.start()
         probe.ready.wait(min(max(float(timeout), 0.1), 10))
@@ -360,9 +439,10 @@ test_connector.__test__ = False
 
 
 class MQTTManager:
-    def __init__(self, db: Database, *, ingest=ingest_telemetry):
+    def __init__(self, db: Database, *, ingest=ingest_telemetry, real_test_db: Database | None = None):
         self._ingest = ingest
         self.db = db
+        self.real_test_db = real_test_db
         self._sessions: dict[str, _MQTTSession] = {}
         self._lock = RLock()
         self._running = False
@@ -371,19 +451,25 @@ class MQTTManager:
         self._running = True
         self.reload()
 
+    def _all_connectors_with_store(self) -> list[tuple[Database, dict[str, Any]]]:
+        entries = [(self.db, item) for item in _list_from_store(self.db)]
+        if self.real_test_db is not None and not real_test.same_sqlite_target(self.db, self.real_test_db):
+            entries.extend((self.real_test_db, item) for item in _list_from_store(self.real_test_db))
+        return entries
+
     def reload(self) -> None:
         with self._lock:
-            items = {item["id"]: item for item in list_connectors(self.db)}
+            entries = {item["id"]: (store, item) for store, item in self._all_connectors_with_store()}
             for identifier, session in list(self._sessions.items()):
-                item = items.get(identifier)
-                if item is None or not item["enabled"] or item["kind"] != "mqtt" or item["version"] != session.item["version"]:
+                entry = entries.get(identifier)
+                if entry is None or not entry[1]["enabled"] or entry[1]["kind"] != "mqtt" or entry[1]["version"] != session.item["version"]:
                     session.stop()
                     del self._sessions[identifier]
             if not self._running:
                 return
-            for identifier, item in items.items():
+            for identifier, (store, item) in entries.items():
                 if item["enabled"] and item["kind"] == "mqtt" and identifier not in self._sessions:
-                    session = _MQTTSession(self.db, item, ingest=self._ingest)
+                    session = _MQTTSession(store, item, ingest=self._ingest, real_test_db=self.real_test_db)
                     self._sessions[identifier] = session
                     try:
                         session.start()
@@ -393,7 +479,7 @@ class MQTTManager:
     def statuses(self) -> list[dict[str, Any]]:
         with self._lock:
             statuses = []
-            for item in list_connectors(self.db):
+            for item in list_connectors(self.db, real_test_db=self.real_test_db):
                 session = self._sessions.get(item["id"])
                 if session:
                     statuses.append(session.snapshot())

@@ -16,7 +16,7 @@ from uuid import uuid4
 from edge_intake import receive_validated_telemetry
 from edge_intake.intake import EdgeIntakeError
 from .database import Database, utc_now
-from . import provisional_risk
+from . import provisional_risk, real_test
 
 logger = logging.getLogger(__name__)
 
@@ -196,19 +196,38 @@ def _live_observation(payload: dict[str, Any], context: dict[str, Any], *,
     return True
 
 
-def ingest_telemetry(db: Database, payload: Any, *, source: str = "MOCK", scope: str = "TEST_ONLY", transport: str = "http_test", connector_id: str | None = None, topic: str | None = None, context: dict[str, Any] | None = None, freshness_seconds: int = 30) -> dict[str, Any]:
+def ingest_telemetry(db: Database, payload: Any, *, source: str = "MOCK", scope: str = "TEST_ONLY", transport: str = "http_test", connector_id: str | None = None, topic: str | None = None, context: dict[str, Any] | None = None, freshness_seconds: int = 30, real_test_db: Database | None = None) -> dict[str, Any]:
     if source not in {"MOCK", "REAL"}:
         raise IngestionError(422, "backend provenance must be MOCK or REAL")
     if not isinstance(scope, str) or scope not in {"OPERATIONAL", "TEST_ONLY"}:
         raise IngestionError(422, "backend scope must be OPERATIONAL or TEST_ONLY")
+    reserved_test = real_test.is_reserved_intake(payload, topic=topic)
+    target_db = db
+    if reserved_test:
+        if real_test_db is not None:
+            if real_test.same_sqlite_target(db, real_test_db) and getattr(db, "store_role", "platform") != "real_test":
+                raise IngestionError(503, "NODE-01-REAL-TEST store must be separate from platform database")
+            target_db = real_test_db
+        elif getattr(db, "store_role", "platform") == "real_test":
+            target_db = db
+        else:
+            raise IngestionError(503, "NODE-01-REAL-TEST requires dedicated real-test store; refusing to write to platform database")
+    elif getattr(db, "store_role", "platform") == "real_test":
+        raise IngestionError(422, "Dedicated real-test store only accepts NODE-01-REAL-TEST telemetry")
     errors = validate_telemetry(payload, topic=topic)
+    if reserved_test and (
+        not isinstance(payload, dict)
+        or (payload.get("site_id"), payload.get("device_id"), topic) != (real_test.SITE_ID, real_test.DEVICE_ID, real_test.TOPIC)
+        or (source, scope, transport) != ("REAL", "TEST_ONLY", "mqtt") or not connector_id
+    ):
+        errors.append({"path": "intake", "message": "NODE-01-REAL-TEST requires its exact MQTT connector with REAL / TEST_ONLY"})
     if errors:
-        quarantine_id = quarantine_message(db, payload, source=source, scope=scope, transport=transport, connector_id=connector_id, topic=topic, reason=json.dumps(errors, ensure_ascii=False))
+        quarantine_id = quarantine_message(target_db, payload, source=source, scope=scope, transport=transport, connector_id=connector_id, topic=topic, reason=json.dumps(errors, ensure_ascii=False))
         raise IngestionError(422, {"message": "Telemetry v2 validation failed", "errors": errors, "quarantine_id": quarantine_id})
     try:
         receipt = receive_validated_telemetry(payload, context={**(context or {}), "source": source, "scope": scope, "transport": transport, "connector_id": connector_id, "topic": topic})
     except EdgeIntakeError as exc:
-        quarantine_id = quarantine_message(db, payload, source=source, scope=scope, transport=transport, connector_id=connector_id, topic=topic, reason=str(exc))
+        quarantine_id = quarantine_message(target_db, payload, source=source, scope=scope, transport=transport, connector_id=connector_id, topic=topic, reason=str(exc))
         raise IngestionError(422, {"message": "Telemetry payload and context must contain finite UTF-8 JSON values", "quarantine_id": quarantine_id}) from exc
     snapshot = receipt["payload"]
     original = json.dumps(snapshot, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False)
@@ -226,7 +245,7 @@ def ingest_telemetry(db: Database, payload: Any, *, source: str = "MOCK", scope:
     sidecar_json = json.dumps(receipt["context"], ensure_ascii=False)
     conflict: str | None = None
     result: dict[str, Any] | None = None
-    with db.connection() as connection:
+    with target_db.connection() as connection:
         old = connection.execute("SELECT * FROM telemetry WHERE device_id=? AND boot_id=? AND seq=?", (snapshot["device_id"], snapshot["boot_id"], snapshot["seq"])).fetchone()
         if old:
             if old["payload_json"] == original and old["source"] == source and old["scope"] == scope:
@@ -272,14 +291,14 @@ def ingest_telemetry(db: Database, payload: Any, *, source: str = "MOCK", scope:
                 connection.execute("INSERT INTO alarms(id,site_id,device_id,source,scope,level,score,reason,source_message_id,created_at) VALUES(?,?,?,?,?,?,?,?,?,?)", (alarm_id, snapshot["site_id"], snapshot["device_id"], source, scope, level, snapshot["risk"]["sensor_score"], reason, identifier, now))
                 connection.execute("INSERT INTO events(id,kind,message,site_id,device_id,source,details_json,created_at) VALUES(?,?,?,?,?,?,?,?)", (str(uuid4()), "risk_escalation", reason, snapshot["site_id"], snapshot["device_id"], source, json.dumps({"telemetry_id": identifier, "alarm_id": alarm_id, "scope": scope, "risk": snapshot["risk"]}), now))
             result = {"receipt_id": receipt_id, "status": "accepted", "telemetry_id": identifier, "identity": identity, "source": source, "scope": scope, "durable": True, "node_cleanup_authorized": False, "risk": snapshot["risk"], "is_current": current, "is_backfill": not current, "alarm_id": alarm_id}
-            if level is None:
+            if level is None and not reserved_test:
                 try:
-                    provisional_risk.record(db, identifier, snapshot, source=source, scope=scope, received_at=now, context=provenance)
+                    provisional_risk.record(target_db, identifier, snapshot, source=source, scope=scope, received_at=now, context=provenance)
                 except Exception:
                     # Optional display processing must never roll back durable intake.
                     logger.exception("Provisional risk failed for telemetry %s", identifier)
     if conflict is not None:
-        quarantine_id = quarantine_message(db, payload, source=source, scope=scope, transport=transport, connector_id=connector_id, topic=topic, reason=conflict)
+        quarantine_id = quarantine_message(target_db, payload, source=source, scope=scope, transport=transport, connector_id=connector_id, topic=topic, reason=conflict)
         raise IngestionError(409, {"message": conflict, "quarantine_id": quarantine_id})
     assert result is not None
     return result

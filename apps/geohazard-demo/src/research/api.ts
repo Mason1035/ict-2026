@@ -35,7 +35,12 @@ export interface Rules extends Boundary {
 export function researchUrl(path: string): URL {
   const url = new URL(connectionSettings.base, window.location.origin);
   if (!/\/api\/v1\/?$/.test(url.pathname)) throw new Error("后端地址须以 /api/v1 结尾，以定位独立研究 API");
-  url.pathname = url.pathname.replace(/\/api\/v1\/?$/, "/api/research") + path;
+  // Query strings must not be assigned to url.pathname: the URL API percent-encodes
+  // "?" as %3F, so GET /sessions/{id}?max_points=600 would become a literal path
+  // /sessions/{id}%3Fmax_points=600 and miss the detail route (list and /rules have no query).
+  const suffix = new URL(path, "https://research.invalid");
+  url.pathname = url.pathname.replace(/\/api\/v1\/?$/, "/api/research") + suffix.pathname;
+  url.search = suffix.search;
   return url;
 }
 export async function researchGet<T extends Boundary>(path: string, signal?: AbortSignal): Promise<T> {
