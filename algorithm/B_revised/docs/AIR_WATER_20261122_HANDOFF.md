@@ -21,7 +21,7 @@
 Python3.11+，仅标准库。工作目录`algorithm/B_revised`，下面的E盘原始数据不入Git；运行时选择全新输出目录。
 
 ```powershell
-python -B data_intake/air_water_20261122.py --archive 'E:\华为ict大赛\NODE01_标定数据合集_20261122.zip' --output 'E:\华为ict大赛\标定接入重跑_01'
+python -B data_intake/air_water_20261122.py --archive 'E:\华为ict大赛\01_原始数据\NODE01_标定数据合集_20261122.zip' --output 'E:\华为ict大赛\标定接入重跑_01'
 python -B data_intake/review_20261122_followup.py --root 'E:\华为ict大赛' --output 'E:\华为ict大赛\标定后续重跑_01'
 python -B -m unittest data_intake.test_air_water_20261122
 ```

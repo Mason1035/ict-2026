@@ -8,7 +8,8 @@ def run(root,output):
     if output.exists():raise FileExistsError('请使用新的输出目录，保留历史结果')
     b=Path(__file__).resolve().parent
     plan=json.loads((b/'calibration_batch_2026-11-12.json').read_text(encoding='utf-8'))
-    old=root/'标定数据.zip';new=root/'NODE01_标定数据合集_20261122.zip'
+    data_root=root/'01_原始数据' if (root/'01_原始数据').is_dir() else root
+    old=data_root/'标定数据.zip';new=data_root/'NODE01_标定数据合集_20261122.zip'
     if sha(old.read_bytes())!=plan['archive_sha256']:raise ValueError('旧参考包哈希不匹配')
     selected=[plan['gyro']]+[p for paths in plan['faces'].values() for p in paths]
     checks=[]
@@ -21,6 +22,7 @@ def run(root,output):
                 checks.append({'old_member':op,'new_member':np,'identical':a.read(op)==z.read(np),
                                'old_sha256':sha(a.read(op)),'new_sha256':sha(z.read(np))})
     prior=root/'标定离线复核_2026-11-12/offline_review.json'
+    if not prior.exists():prior=root/'03_分析结果/历史分析/标定离线复核_2026-11-12/offline_review.json'
     imu=json.loads(prior.read_text(encoding='utf-8')) if prior.exists() else None
     reuse=all(c['identical'] for c in checks)
     blockers=[

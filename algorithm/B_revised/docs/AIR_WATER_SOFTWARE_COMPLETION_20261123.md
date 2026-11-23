@@ -20,7 +20,7 @@ result = evaluate_observation(channel=2, raw=16000, valid=True,
 其余6场土样的18个通道汇总已根据原件重算：4320行，样本数、中位数、极值与相对指标两位小数均匹配。包括此前未接入的W01串口提取表；其中seq明确标记为串口记录序号，不冒充Telemetry序号。跨固件值仅是诊断参考投影，不批准作为运行时标定；全部问题土样继续排除拟合与训练。
 
 ```powershell
-python -B -m data_intake.verify_air_water_summary --archive 'E:\华为ict大赛\NODE01_标定数据合集_20261122.zip' --output 'E:\华为ict大赛\八场核验重跑_01'
+python -B -m data_intake.verify_air_water_summary --archive 'E:\华为ict大赛\01_原始数据\NODE01_标定数据合集_20261122.zip' --output 'E:\华为ict大赛\八场核验重跑_01'
 python -B -m unittest discover -s data_intake -t . -p 'test_*.py'
 ```
 
