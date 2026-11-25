@@ -35,7 +35,7 @@ export const sensorFields: { key: SensorKey; label: string; unit: string; decima
   { key: "crack", label: "裂缝变化", unit: "mm", decimals: 2 },
 ];
 export const levelNames: Record<Level, string> = { low: "低风险", moderate: "中风险", high: "高风险", critical: "紧急预警", unknown: "未标定" };
-export const levelColors: Record<Level, string> = { low: "#39866a", moderate: "#b48b30", high: "#ce7548", critical: "#bd514c", unknown: "#87938c" };
+export const levelColors: Record<Level, string> = { low: "#2f7a5f", moderate: "#9e6514", high: "#b95322", critical: "#b53f3a", unknown: "#647169" };
 export function reading(value: number | null | undefined, decimals = 1) { return value == null || !Number.isFinite(value) ? "—" : value.toFixed(decimals); }
 export function dateTime(value?: string | number | null) { if (!value) return "—"; const date = new Date(value); return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString("zh-CN", { hour12: false }); }
 export function deviceKey(device: Device) { return [device.site_id, device.device_id, device.source].join("|"); }

@@ -29,6 +29,7 @@ try {
     if (path.endsWith("/health")) return json({ status: "ok", version: "test", storage: { durable: true }, demo: true, auth_mode: "test", mqtt: [] });
     if (path.endsWith("/devices")) return json({ items: devices });
     if (path.endsWith("/dashboard")) return json(dashboard(owner));
+    if (path.endsWith("/inference/results")) return json({ items: [], next_cursor: null, total: 0 });
     if (path.endsWith("/telemetry")) {
       const id = decodeURIComponent(path.split("/").at(-2));
       if (url.searchParams.has("cursor")) { if (deferHistory) { const position = historyQueue.length; historyQueue.push({ resolve: () => json({ items: [{ ...rows(id)[0], id: `${id}-stale-${position}` }], next_cursor: null }) }); return; } return json({ items: [{ ...rows(id)[0], id: `${id}-older` }], next_cursor: null }); }

@@ -70,18 +70,39 @@ onBeforeUnmount(cancel);
     <div v-if="!connected" class="platform-empty"><Radio :size="28" /><h3>后端数据不可用</h3><p>恢复连接后重新读取已保存的实验结果。</p></div>
     <div v-else-if="!latest" class="platform-empty"><Radio :size="28" /><h3>{{ loading ? '正在读取模型结果' : '尚未收到 TinyQuake 结果' }}</h3><p>在配置与接入中新增 MQTT 连接器，消息格式选择 TinyQuake。参考固件使用 MOCK 来源。</p><code>zhifang/experimental/tinyquake/v1/{站点}/{设备}/{传感器}/result</code></div>
     <template v-else>
-      <div class="platform-context"><div><span :class="['source-badge', latest.source.toLowerCase()]">{{ latest.source }}</span><strong>{{ latest.payload.input_source === 'REFERENCE' ? '参考波形 · 非实采' : '传感器波形 · 尚未现场验证' }}</strong><span>TEST_ONLY</span><span>{{ !fresh ? `接收已过期 · ${Math.max(0,Math.floor(age))} 秒` : '最近接收 '+dateTime(latest.received_at) }}</span></div></div>
+      <div class="platform-context"><div><span :class="['source-badge', latest.source.toLowerCase()]">{{ latest.source }}</span><span class="source-badge test-only">TEST_ONLY</span><strong>{{ latest.payload.input_source === 'REFERENCE' ? '参考波形 · 非实采' : '传感器波形 · 尚未现场验证' }}</strong><span :class="{ 'stale-tag': !fresh }">{{ !fresh ? `接收已过期 · ${Math.max(0,Math.floor(age))} 秒` : '最近接收 '+dateTime(latest.received_at) }}</span></div></div>
       <div class="tq-summary"><div><span>窗口分类</span><strong>{{ !fresh ? '数据已过期' : latest.payload.quality_valid ? classes[latest.prediction || ''] || '—' : '窗口不可用' }}</strong><small>{{ latest.payload.input_source === 'REFERENCE' ? `官方 NPZ 参考行号 ${latest.payload.reference_index}` : `坐标 ${latest.payload.frame_id || '待确认'} · 校准 ${latest.payload.calibration_version || '未提供'}` }}</small></div><div><span>设备上报推理耗时</span><strong>{{ fresh ? reading(latest.payload.inference_us/1000,3) : '—' }} <small>ms</small></strong><small>不含采样等待与前处理</small></div></div>
       <div class="tq-probabilities"><article v-for="(label,index) in labels" :key="label"><span>{{ label }}</span><strong>{{ fresh && latest.payload.probabilities ? reading(latest.payload.probabilities[index]! * 100,2)+'%' : '—' }}</strong><progress max="1" :value="fresh ? latest.payload.probabilities?.[index] || 0 : 0" :aria-label="label+'分类分数'" /></article></div>
       <p class="connection-note">40 Hz · 每轴 80 点 · 三分量 · float32。分数为 softmax 输出，未做现场概率校准。新鲜度仅按后端接收时间判断。</p>
       <details><summary>模型与输入信息</summary><p class="tq-hash">模型 SHA-256：<code>{{ latest.payload.model_sha256 }}</code></p><p>预处理：{{ latest.payload.preprocessing_id }} · 质量：{{ latest.payload.quality_reason }} · boot {{ latest.payload.boot_id }} / seq {{ latest.payload.seq }}</p></details>
-      <h3 class="tq-history-title">接收历史</h3><div class="platform-table-scroll"><table class="platform-table"><thead><tr><th>接收时间</th><th>输入</th><th>分类</th><th>推理耗时</th><th>序号</th></tr></thead><tbody><tr v-for="row in rows" :key="row.id"><td>{{ dateTime(row.received_at) }}</td><td>{{ row.payload.input_source === 'REFERENCE' ? '参考波形' : '传感器波形' }}</td><td>{{ row.payload.quality_valid ? classes[row.prediction || ''] || '—' : '窗口无效' }}</td><td>{{ reading(row.payload.inference_us/1000,3) }} ms</td><td>{{ row.payload.boot_id }} / {{ row.payload.seq }}</td></tr></tbody></table></div><div v-if="cursor" class="history-more"><button class="secondary-button" :disabled="loading" @click="load(true)">加载更早模型结果</button></div>
+      <h3 class="tq-history-title">接收历史</h3><div class="platform-table-scroll"><table class="platform-table"><thead><tr><th>接收时间</th><th>输入</th><th>分类</th><th class="num">推理耗时</th><th class="num">序号</th></tr></thead><tbody><tr v-for="row in rows" :key="row.id"><td>{{ dateTime(row.received_at) }}</td><td>{{ row.payload.input_source === 'REFERENCE' ? '参考波形' : '传感器波形' }}</td><td>{{ row.payload.quality_valid ? classes[row.prediction || ''] || '—' : '窗口无效' }}</td><td class="num">{{ reading(row.payload.inference_us/1000,3) }} ms</td><td class="num">{{ row.payload.boot_id }} / {{ row.payload.seq }}</td></tr></tbody></table></div><div v-if="cursor" class="history-more"><button class="secondary-button" :disabled="loading" @click="load(true)">加载更早模型结果</button></div>
     </template>
     </div>
   </section>
 </template>
 <style scoped>
-+.tq-body{padding:22px}.platform-panel-heading{flex-wrap:wrap}.platform-panel-heading>div{min-width:0;flex:1}.platform-panel-heading>div>svg{flex-shrink:0}.platform-panel-heading>button{flex-shrink:0}.tq-body .connection-note{padding-left:0;padding-right:0}.tq-body .backend-alert{margin:0 0 18px}.tq-body .platform-table-scroll{max-width:100%}@media(max-width:600px){.tq-body{padding:16px}.platform-panel-heading>div{flex-basis:100%}.platform-panel-heading>button{margin-left:auto}}
-
-.tq-selector{display:grid;gap:8px;max-width:600px;margin:22px 0;font-size:13px}.tq-selector select{width:100%;padding:10px;border:1px solid #dfe6e0;border-radius:8px;background:white}.tq-summary{display:flex;flex-wrap:wrap;gap:30px;justify-content:space-between;margin:25px 0}.tq-summary>div{display:grid;gap:8px}.tq-summary span,.tq-summary small{font-size:12px;color:#738076}.tq-summary strong{font-size:24px;font-weight:500}.tq-probabilities{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin:22px 0}.tq-probabilities article{display:grid;gap:10px}.tq-probabilities span{font-size:13px;color:#738076}.tq-probabilities strong{font-size:24px;font-weight:500}.tq-probabilities progress{width:100%;height:7px;accent-color:#39866a}.tq-hash{overflow-wrap:anywhere;max-width:100%}.tq-history-title{font-size:15px;margin:26px 0 12px}details{font-size:12px;margin:20px 0}summary{cursor:pointer}.platform-empty code{overflow-wrap:anywhere;max-width:100%}@media(max-width:600px){.tq-probabilities{gap:12px}.tq-probabilities strong{font-size:20px}}
+.tq-body { padding: 16px; }
+.tq-body .connection-note { padding: 10px 12px; border: 1px solid var(--border-subtle); border-radius: var(--radius-control); }
+.tq-body .backend-alert { margin: 0 0 14px; }
+.tq-body .platform-table-scroll { max-width: 100%; }
+.tq-selector { display: grid; gap: 6px; max-width: 560px; margin: 14px 0; font-size: 13px; }
+.tq-summary { display: flex; flex-wrap: wrap; gap: 16px 28px; justify-content: space-between; margin: 16px 0; padding: 12px 14px; border: 1px solid var(--border-subtle); border-radius: var(--radius-control); background: var(--surface-subtle); }
+.tq-summary > div { display: grid; gap: 4px; }
+.tq-summary span, .tq-summary small { font-size: 12px; color: var(--text-secondary); }
+.tq-summary strong { font-size: 22px; font-weight: 600; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.tq-probabilities { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 14px 0; }
+.tq-probabilities article { display: grid; gap: 6px; padding: 10px 12px; border: 1px solid var(--border-subtle); border-radius: var(--radius-control); background: var(--surface); }
+.tq-probabilities span { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+.tq-probabilities strong { font-size: 22px; font-weight: 600; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.tq-probabilities progress { width: 100%; height: 6px; accent-color: var(--accent); }
+.tq-hash { overflow-wrap: anywhere; max-width: 100%; }
+.tq-history-title { font-size: 15px; font-weight: 600; margin: 18px 0 8px; }
+details { font-size: 12px; margin: 14px 0; color: var(--text-secondary); }
+summary { cursor: pointer; font-weight: 500; color: var(--text-primary); }
+.platform-empty code { overflow-wrap: anywhere; max-width: 100%; font-size: 12px; }
+@media (max-width: 600px) {
+  .tq-body { padding: 12px; }
+  .tq-probabilities { gap: 8px; }
+  .tq-probabilities strong { font-size: 18px; }
+}
 </style>

@@ -27,6 +27,7 @@ from starlette.concurrency import run_in_threadpool
 from . import __version__, tinyquake
 from .settings import Settings, REPO_ROOT, loopback_host
 from . import provisional_risk
+from . import real_test
 from .database import Database, utc_now
 from .telemetry import IngestionError, ingest_telemetry, validate_telemetry
 from .connectors import ConnectorError, MQTTManager, list_connectors, get_connector, save_connector, delete_connector, test_connector
@@ -83,23 +84,41 @@ class AckInput(StrictModel):
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or Settings()
     db = Database(settings.database_path)
+    real_test_db = real_test.RealTestDatabase(
+        settings.real_test_database_path,
+        platform_db_path=settings.database_path,
+        research_db_path=settings.research_registry_path,
+        path_kind=settings.real_test_database_path_kind,
+    )
     inference = InferenceService(db, settings)
 
-    def ingest(db, payload, **metadata):
-        receipt = ingest_telemetry(db, payload, freshness_seconds=settings.freshness_seconds, **metadata)
-        if receipt["status"] == "accepted" and receipt.get("is_current"):
+    def ingest(target_db, payload, **metadata):
+        receipt = ingest_telemetry(
+            target_db,
+            payload,
+            freshness_seconds=settings.freshness_seconds,
+            real_test_db=real_test_db,
+            **metadata,
+        )
+        if (
+            receipt["status"] == "accepted"
+            and receipt.get("is_current")
+            and not real_test.is_reserved_intake(payload, topic=metadata.get("topic"))
+        ):
             with suppress(Exception):
                 inference.observe({**payload, "source": receipt["source"], "scope": receipt["scope"]})
         return receipt
 
-    mqtt = MQTTManager(db, ingest=ingest)
+    mqtt = MQTTManager(db, ingest=ingest, real_test_db=real_test_db)
     started = time.monotonic()
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         settings.data_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
         db.initialize()
+        real_test_db.initialize()
         app.state.db = db
+        app.state.real_test_db = real_test_db
         app.state.vision = VisionService(db, settings.media_dir)
         app.state.demo = BackendDemo(db, settings.demo_enabled, ingest=ingest)
         app.state.settings = settings
@@ -126,11 +145,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                     await worker
             await run_in_threadpool(mqtt.stop)
             await run_in_threadpool(inference.close)
+            real_test_db.close()
             db.close()
 
     app = FastAPI(title="智哨防灾 · 多模态平台 API", version=__version__, lifespan=lifespan,
                   description="Local software integration. MOCK and operational sources are isolated; OpenCV observations are uncalibrated.")
     app.state.inference = inference
+    app.state.mqtt = mqtt
     lan_mode = not loopback_host(settings.host)
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"] if lan_mode else ["127.0.0.1", "localhost", "[::1]"])
     app.add_middleware(CORSMiddleware, allow_origins=list(settings.allowed_origins),
@@ -172,8 +193,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     api = APIRouter(prefix="/api/v1", dependencies=[Depends(authorize)])
     app.include_router(research_router(ResearchDisplay(settings.research_registry_path, settings.database_path), authorize))
 
-    def audit(kind, message, *, site_id=None, device_id=None, source="SYSTEM", details=None):
-        with db.connection() as c:
+    def audit(kind, message, *, site_id=None, device_id=None, source="SYSTEM", details=None, target_db: Database | None = None):
+        with (target_db or db).connection() as c:
             c.execute("INSERT INTO events(id,kind,message,site_id,device_id,source,details_json,created_at) VALUES(?,?,?,?,?,?,?,?)",
                       (str(uuid4()),kind,message,site_id,device_id,source,json.dumps(details or {},ensure_ascii=False),utc_now()))
 
@@ -203,7 +224,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             counts = {name:c.execute(f"SELECT count(*) FROM {table}").fetchone()[0]
                       for name,table in (("telemetry","telemetry"),("alarms","alarms"),("evidence","vision_evidence"),("quarantine","quarantine"))}
         return {"status":"ok", "version":__version__, "uptime_seconds":round(time.monotonic()-started),
-                "storage":{"durable":True,"engine":"sqlite_wal","node_cleanup_authorized":False},
+                "storage":{"durable":True,"engine":"sqlite_wal","node_cleanup_authorized":False,
+                           "real_test_store":real_test_db.storage_descriptor()},
                 "auth_mode":"bearer" if settings.api_token else "local_loopback", "counts":counts,
                 "demo":app.state.demo.state(),"mqtt":mqtt.statuses(), "demo_error":getattr(app.state,"demo_error",None),
                 "capabilities":{"mqtt":"implemented", "http_device_ingress":"test_only", "lora_binary":"not_configured",
@@ -247,6 +269,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         except ValueError as exc:
             raise HTTPException(422,str(exc)) from exc
 
+    @api.get("/real-test/status")
+    def real_test_status():
+        return real_test.status(real_test_db, platform_db=db, freshness_seconds=settings.freshness_seconds)
+
     @api.get("/provisional-risk/latest")
     def provisional_latest(site_id:str, device_id:str, source:Literal["REAL","MOCK"]|None=None,
                            scope:Literal["OPERATIONAL","TEST_ONLY"]|None=None, boot_id:int|None=None):
@@ -266,6 +292,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def inject_test(body:TestInjection):
         if not settings.demo_enabled:
             raise HTTPException(403,"测试注入已禁用")
+        if real_test.is_reserved_payload(body.payload):
+            raise HTTPException(422,"NODE-01-REAL-TEST 保留身份不允许通过测试注入接口写入主库")
         if not str(body.payload.get("device_id","")).startswith(("MOCK-","DEMO-")):
             raise HTTPException(422,"测试入口仅接受独立 MOCK-/DEMO- 设备 ID；不会改写原始身份")
         return ingest(db,body.payload,source="MOCK",scope="TEST_ONLY",transport="http_test",context=body.context)
@@ -273,32 +301,36 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @api.get("/connectors")
     def connector_list():
         statuses={r["connector_id"]:r for r in mqtt.statuses()}
-        return {"items":[{**r,"status":statuses.get(r["id"],{"state":"disabled","connected":False})} for r in list_connectors(db)]}
+        return {"items":[{**r,"status":statuses.get(r["id"],{"state":"disabled","connected":False})} for r in list_connectors(db,real_test_db=real_test_db)]}
 
     @api.post("/connectors",status_code=201)
     def connector_create(body:ConnectorInput):
-        row=save_connector(db,body.model_dump())
+        row=save_connector(db,body.model_dump(),real_test_db=real_test_db)
         mqtt.reload()
-        audit("configuration","已创建连接器",details={"connector_id":row["id"],"version":row["version"]})
+        audit("configuration","已创建连接器",details={"connector_id":row["id"],"version":row["version"]},
+              target_db=real_test_db if real_test.is_reserved_connector(row) else db)
         return row
 
     @api.put("/connectors/{connector_id}")
     def connector_update(connector_id:str,body:ConnectorInput):
-        row=save_connector(db,body.model_dump(),connector_id=connector_id)
+        row=save_connector(db,body.model_dump(),connector_id=connector_id,real_test_db=real_test_db)
         mqtt.reload()
-        audit("configuration","已更新连接器",details={"connector_id":row["id"],"version":row["version"]})
+        audit("configuration","已更新连接器",details={"connector_id":row["id"],"version":row["version"]},
+              target_db=real_test_db if real_test.is_reserved_connector(row) else db)
         return row
 
     @api.delete("/connectors/{connector_id}")
     def connector_delete(connector_id:str):
-        delete_connector(db,connector_id)
+        existing=get_connector(db,connector_id,real_test_db=real_test_db)
+        delete_connector(db,connector_id,real_test_db=real_test_db)
         mqtt.reload()
-        audit("configuration","已删除连接器",details={"connector_id":connector_id})
+        audit("configuration","已删除连接器",details={"connector_id":connector_id},
+              target_db=real_test_db if real_test.is_reserved_connector(existing) else db)
         return {"deleted":True}
 
     @api.post("/connectors/{connector_id}/test")
     def connector_test(connector_id:str):
-        return test_connector(db,connector_id,timeout=4)
+        return test_connector(db,connector_id,timeout=4,real_test_db=real_test_db)
 
     @api.get("/alarms")
     def alarm_list(site_id:str|None=None,device_id:str|None=None,source:Literal["REAL","MOCK"]|None=None,
