@@ -1,0 +1,29 @@
+test_baseline_does_not_follow_abnormal_tail (test_algorithm.AlgorithmTests.test_baseline_does_not_follow_abnormal_tail) ... ok
+test_battery_does_not_change_risk (test_algorithm.AlgorithmTests.test_battery_does_not_change_risk) ... ok
+test_canonical_timestamp_duplicate (test_algorithm.AlgorithmTests.test_canonical_timestamp_duplicate) ... ok
+test_configurable_baseline_and_bad_config (test_algorithm.AlgorithmTests.test_configurable_baseline_and_bad_config) ... ok
+test_conflicting_duplicate (test_algorithm.AlgorithmTests.test_conflicting_duplicate) ... ok
+test_exact_tilt_thresholds (test_algorithm.AlgorithmTests.test_exact_tilt_thresholds) ... ok
+test_historic_null_outside_assessed_segments (test_algorithm.AlgorithmTests.test_historic_null_outside_assessed_segments) ... ok
+test_humidity_alone_never_warning (test_algorithm.AlgorithmTests.test_humidity_alone_never_warning) ... ok
+test_insufficient_and_missing_baseline (test_algorithm.AlgorithmTests.test_insufficient_and_missing_baseline) ... ok
+test_invalid_records (test_algorithm.AlgorithmTests.test_invalid_records) ... ok
+test_late_data_repairs_current_window (test_algorithm.AlgorithmTests.test_late_data_repairs_current_window) ... ok
+test_long_gap_and_short_duration (test_algorithm.AlgorithmTests.test_long_gap_and_short_duration) ... ok
+test_missing_required_measurements (test_algorithm.AlgorithmTests.test_missing_required_measurements) ... ok
+test_mixed_node_and_source (test_algorithm.AlgorithmTests.test_mixed_node_and_source) ... ok
+test_moisture_nonmonotonic_and_exact_threshold (test_algorithm.AlgorithmTests.test_moisture_nonmonotonic_and_exact_threshold) ... ok
+test_no_mutation (test_algorithm.AlgorithmTests.test_no_mutation) ... ok
+test_old_data_does_not_become_latest (test_algorithm.AlgorithmTests.test_old_data_does_not_become_latest) ... ok
+test_sequence_gap (test_algorithm.AlgorithmTests.test_sequence_gap) ... ok
+test_shuffle_and_duplicates_invariant (test_algorithm.AlgorithmTests.test_shuffle_and_duplicates_invariant) ... ok
+test_single_spike_and_alternating_direction (test_algorithm.AlgorithmTests.test_single_spike_and_alternating_direction) ... ok
+test_three_scenarios (test_algorithm.AlgorithmTests.test_three_scenarios) ... ok
+test_tilt_alone_and_negative_direction (test_algorithm.AlgorithmTests.test_tilt_alone_and_negative_direction) ... ok
+test_time_reversal_and_equal (test_algorithm.AlgorithmTests.test_time_reversal_and_equal) ... ok
+test_unstable_baseline (test_algorithm.AlgorithmTests.test_unstable_baseline) ... ok
+
+----------------------------------------------------------------------
+Ran 24 tests in 0.020s
+
+OK

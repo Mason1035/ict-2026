@@ -1,0 +1,79 @@
+{
+  "contract_id": "B_FORMAL_TRAINING_CONTRACT",
+  "contract_version": "0.1-draft",
+  "status": "DRAFT",
+  "owner": "B",
+  "consumer": "C",
+  "training_scope": "FORMAL_PROJECT_TRAINING_UNRESOLVED",
+  "training_ready": false,
+  "formal_training_ready": false,
+  "real_data_ready": false,
+  "formal_feature_contract_ready": false,
+  "formal_label_contract_ready": false,
+  "formal_split_ready": false,
+  "platform_context": {
+    "experimental_imu_sites": ["imu_top", "imu_toe"],
+    "experimental_soil_sites": ["soil_top", "soil_middle", "soil_toe"],
+    "imu_part": "ICM-42688-P",
+    "context_only": true
+  },
+  "feature_contract": {
+    "feature_version": null,
+    "ordered_features": null,
+    "units": null,
+    "dtype": null,
+    "mask_semantics": null,
+    "coordinate_semantics": null,
+    "sampling_alignment": null,
+    "validity_requirements": null
+  },
+  "window_contract": {
+    "window_length": null,
+    "stride": null,
+    "causal": true,
+    "warmup_policy": null,
+    "gap_policy": null,
+    "padding_policy": null
+  },
+  "label_contract": null,
+  "split_contract": {
+    "strategy": "GROUP_BASED_PENDING_B_DETAILS",
+    "group_keys": ["run_id", "parent_run"],
+    "manifest": null,
+    "independent_real_test_protocol": null
+  },
+  "leakage_rules": {
+    "causal_inputs": true,
+    "no_test_fit_or_tuning": true,
+    "provenance_not_model_features": true,
+    "formal_field_rules": null
+  },
+  "normalization_contract": null,
+  "metrics_contract": null,
+  "synthetic_constraints": null,
+  "real_data_requirements": {
+    "status": "WAITING_FOR_A_REAL_DATA",
+    "experiment_csv": null,
+    "calibration_metadata": null,
+    "validity": null,
+    "run_metadata": null,
+    "sampling_and_alignment_evidence": null
+  },
+  "candidate_feature_families": [
+    "tilt", "tilt_rate", "vibration_rms", "moisture", "moisture_growth",
+    "dual_imu_consistency", "spatial_soil_difference"
+  ],
+  "candidate_status": "PENDING_FORMALIZATION_NOT_ORDERED_FEATURES",
+  "unresolved_items": [
+    {"field": "real_data_requirements", "owner": "A", "status": "WAITING_FOR_A"},
+    {"field": "feature_contract", "owner": "B", "status": "WAITING_FOR_B"},
+    {"field": "window_contract", "owner": "B", "status": "WAITING_FOR_B"},
+    {"field": "label_contract", "owner": "B", "status": "WAITING_FOR_B"},
+    {"field": "split_contract.manifest", "owner": "B", "status": "WAITING_FOR_B"},
+    {"field": "leakage_rules.formal_field_rules", "owner": "B", "status": "WAITING_FOR_B"},
+    {"field": "normalization_contract", "owner": "B", "status": "WAITING_FOR_B"},
+    {"field": "metrics_contract", "owner": "B", "status": "WAITING_FOR_B"},
+    {"field": "synthetic_constraints", "owner": "B", "status": "WAITING_FOR_B"},
+    {"field": "physical_and_sensor_calibration", "owner": "A/B/C", "status": "TODO_CALIBRATION"}
+  ]
+}

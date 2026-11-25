@@ -1,0 +1,26 @@
+{
+  "version": "NODE01_AIR_WATER_20261122_REVIEW",
+  "source_archive_sha256": "9e6e60e33d4fc687ed382718162fb8d09b5599f0f3588f2b7e2f2effe053c3b8",
+  "parameters": {
+    "0": {
+      "raw_air": 20718.0,
+      "raw_water": 13032.0,
+      "span": 7686.0
+    },
+    "1": {
+      "raw_air": 20945.0,
+      "raw_water": 13118.0,
+      "span": 7827.0
+    },
+    "2": {
+      "raw_air": 20606.0,
+      "raw_water": 13004.0,
+      "span": 7602.0
+    }
+  },
+  "unit": "air_water_relative_percent",
+  "vwc_calibrated": false,
+  "risk_eligible": false,
+  "firmware_elf_sha256": "85ebda1670084fa3a4fe62f3c636ff2b47e2a2dee6ddc0a50c5bc11ebda6be1f",
+  "status": "OFFLINE_REVIEW_ONLY"
+}

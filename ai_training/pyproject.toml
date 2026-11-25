@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "zhifang-ai-training"
+version = "0.1.1"
+description = "Contract-driven training infrastructure skeleton; no project model"
+requires-python = ">=3.11"
+dependencies = ["numpy==2.4.3"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = "--import-mode=importlib"

@@ -1,0 +1,35 @@
+menu "TinyQuake experimental reference runner"
+config TINYQUAKE_ARENA_BYTES
+    int "Initial arena capacity (not a measured requirement)"
+    range 32768 262144
+    default 131072
+config TINYQUAKE_MQTT_ENABLE
+    bool "Publish REFERENCE results over Wi-Fi/MQTT"
+    default n
+config TINYQUAKE_WIFI_SSID
+    string "Wi-Fi SSID"
+    default ""
+    depends on TINYQUAKE_MQTT_ENABLE
+config TINYQUAKE_WIFI_PASSWORD
+    string "Wi-Fi password (do not commit sdkconfig)"
+    default ""
+    depends on TINYQUAKE_MQTT_ENABLE
+config TINYQUAKE_BROKER_URI
+    string "LAN MQTT Broker URI"
+    default "mqtt://192.168.1.100:1883"
+    depends on TINYQUAKE_MQTT_ENABLE
+config TINYQUAKE_MQTT_USERNAME
+    string "MQTT username"
+    default ""
+    depends on TINYQUAKE_MQTT_ENABLE
+config TINYQUAKE_MQTT_PASSWORD
+    string "MQTT password (do not commit sdkconfig)"
+    default ""
+    depends on TINYQUAKE_MQTT_ENABLE
+config TINYQUAKE_SITE_ID
+    string "Site ID (letters, digits, hyphen, underscore)"
+    default "TQ-LAB"
+config TINYQUAKE_DEVICE_ID
+    string "Isolated experimental device ID"
+    default "ESP32-TQ-01"
+endmenu

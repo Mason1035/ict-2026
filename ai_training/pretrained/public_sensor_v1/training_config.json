@@ -1,0 +1,24 @@
+{
+  "schema": "zhifang.multimodal-research-config.v1",
+  "purpose": "PUBLIC_DATA_RESEARCH",
+  "seed": 20261019,
+  "soil": {
+    "history_length": 4,
+    "train_fraction": 0.7,
+    "validation_fraction": 0.15,
+    "ridge_alphas": [
+      0.001,
+      0.01,
+      0.1,
+      1.0
+    ],
+    "allow_fit_without_holdout": false
+  },
+  "motion": {
+    "history_length": 8,
+    "ridge_alphas": [
+      0.1
+    ],
+    "allow_fit_without_holdout": true
+  }
+}

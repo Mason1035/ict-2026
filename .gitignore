@@ -1,3 +1,14 @@
+# Local development environment and generated verification artifacts.
+work/
+outputs/
+.pytest_cache/
+__pycache__/
+*.py[cod]
+**/.DS_Store
+
+# Personal IDE settings stay local.
+**/.idea/
+
 # Local NODE-01 evidence stays on this machine; tracked history is unaffected.
 # The small public release note lives in docs/NODE01_SANDBOX_CAPTURE_V1.md.
 /docs/test_records/NODE-01/

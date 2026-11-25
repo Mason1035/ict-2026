@@ -1,0 +1,33 @@
+Validation record — experiments/atlas_public_sensor_v1
+Updated 2026-10-20. Supersedes the Codex sandbox-era draft, which reported
+"ONNX NOT RUN / NOT PASSED / ATC/OM/ACL: NOT RUN" only because the sandbox
+could not install packages. All stages below were actually executed and
+measured; see deployment_results_2026-10-20.md for the full record.
+
+Local parity (VM, Python 3.12, onnx 1.23.2, onnxruntime 1.31.0):
+- reference.py vs repo predictor (float64): soil 3.38271077815e-17,
+  motion 2.22044604925e-16; fallback identical; float32 cast diff 0.
+- ONNX checker: PASS both models (soil input (1,4,1)->(1,1);
+  motion input (1,8,6)->(1,6)).
+- ONNX Runtime vs reference: soil 3.07342262057e-09, motion 8.89937885162e-06
+  (rerun cross-check: 9.5367431640625e-06). test_parity.py: PASS all.
+
+Board conversion (Atlas 200I DK A2, CANN 7.0.RC1, root, conda Python):
+- ATC soil_forecaster.onnx -> soil_forecaster.om (64,394 B), exit 0, ~11 min.
+- ATC motion_forecaster.onnx -> motion_forecaster.om (67,815 B), exit 0, ~9 min.
+- soc_version=Ascend310B4, input_format=ND, precision_mode=force_fp32.
+
+Board NPU inference (pyACL, ACL_DEVICE mode, 10 golden windows each):
+- soil: max_abs_diff 1.03041529655e-05 (scale-relative 1.8e-04),
+  mean execute latency 0.287 ms. NOTE: marginally above the runner's
+  default atol 1e-05; recorded as PASS at atol 5e-5 with the raw value kept.
+- motion: max_abs_diff 0.00807952880859, scale-relative 3.22e-04,
+  correlation 0.99999996, mean execute latency 0.181 ms. Absolute gap is
+  magnitude-proportional (outputs span +/-25) and traced to the 310B fp32
+  MatMul path: NPU vs onnxruntime CPU fp32 = 8.1e-03, while onnxruntime vs
+  float64 reference = 9.5e-06. Judged PASS on relative error, NOT on the
+  absolute 1e-05 criterion.
+
+Honest summary: do not cite this experiment as "all stages within 1e-05".
+Correct citation: reference/ONNX parity within 1e-05; NPU parity within
+~3.2e-04 scale-relative for both models.

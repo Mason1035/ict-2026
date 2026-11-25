@@ -1,0 +1,22 @@
+{
+  "schema": "B.run_handoff.draft.v1",
+  "source": null,
+  "run_id": null,
+  "identity": {"site_id": null, "device_id": null, "boot_id": null},
+  "firmware_version": null,
+  "frame_id": null,
+  "calibration_version": null,
+  "odr_hz": {"imu": null, "soil": null},
+  "sensor_ids": {
+    "imu": {"top": null, "toe": null},
+    "soil": {"top": null, "middle": null, "toe": null}
+  },
+  "csv": {"path": null, "sha256": null},
+  "sidecars": {
+    "timing": {"path": null, "sha256": null},
+    "validity": {"path": null, "sha256": null},
+    "sensor_calibration": {"path": null, "sha256": null},
+    "experiment_log": {"path": null, "sha256": null},
+    "label_evidence": {"path": null, "sha256": null}
+  }
+}

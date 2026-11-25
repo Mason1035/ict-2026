@@ -1,0 +1,6 @@
+[project]
+name = "zhishao-pre-b-training-contract"
+version = "1.0.0"
+description = "Legacy TEST_ONLY rule-distillation fixture source; no formal training contract"
+requires-python = ">=3.11"
+dependencies = []

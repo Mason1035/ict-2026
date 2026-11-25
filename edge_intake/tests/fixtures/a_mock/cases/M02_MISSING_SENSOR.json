@@ -1,0 +1,145 @@
+{
+  "source": "MOCK",
+  "case_id": "M02_MISSING_SENSOR",
+  "purpose": "验证 middle Soil 缺测不被当成有效零值。",
+  "scenario": "模拟中间 Soil 没有采集到；Unavailable 不表示已观察到硬件故障。",
+  "messages": [
+    {
+      "source": "MOCK",
+      "sampling_snapshot": {
+        "imu": [
+          {
+            "acceleration_mps2": [
+              0.02,
+              -0.01,
+              9.8
+            ],
+            "angular_rate_dps": [
+              0,
+              0,
+              0
+            ],
+            "acquired_uptime_us": 1480000,
+            "validity": "Valid"
+          },
+          {
+            "acceleration_mps2": [
+              0,
+              0.01,
+              9.81
+            ],
+            "angular_rate_dps": [
+              0,
+              0,
+              0
+            ],
+            "acquired_uptime_us": 1481000,
+            "validity": "Valid"
+          }
+        ],
+        "soil": [
+          {
+            "raw": 12000,
+            "acquired_uptime_us": 1400000,
+            "validity": "Valid"
+          },
+          {
+            "raw": null,
+            "acquired_uptime_us": null,
+            "validity": "Unavailable"
+          },
+          {
+            "raw": 14000,
+            "acquired_uptime_us": 1420000,
+            "validity": "Valid"
+          }
+        ]
+      },
+      "payload": {
+        "schema": "zhifang.telemetry.v2",
+        "site_id": "MOCK-SITE-01",
+        "device_id": "NODE-01",
+        "boot_id": 1,
+        "seq": 2,
+        "timestamp_ms": null,
+        "uptime_ms": 1500,
+        "time_synced": false,
+        "imu": [
+          {
+            "id": "top",
+            "ax": 0.02,
+            "ay": -0.01,
+            "az": 9.8,
+            "gx": 0,
+            "gy": 0,
+            "gz": 0,
+            "tilt_deg": null,
+            "tilt_rate_dps": null,
+            "vibration_rms": null,
+            "valid": true
+          },
+          {
+            "id": "toe",
+            "ax": 0,
+            "ay": 0.01,
+            "az": 9.81,
+            "gx": 0,
+            "gy": 0,
+            "gz": 0,
+            "tilt_deg": null,
+            "tilt_rate_dps": null,
+            "vibration_rms": null,
+            "valid": true
+          }
+        ],
+        "soil": {
+          "top_raw": 12000,
+          "middle_raw": null,
+          "toe_raw": 14000,
+          "top_pct": null,
+          "middle_pct": null,
+          "toe_pct": null,
+          "avg_pct": null,
+          "growth_pct_min": null
+        },
+        "experiment": {
+          "run_id": null,
+          "rain_level": null
+        },
+        "risk": {
+          "sensor_score": null,
+          "level": null,
+          "reason_mask": null
+        },
+        "system": {
+          "wifi_up": false,
+          "mqtt_up": false,
+          "lora_ready": false,
+          "sd_ok": false,
+          "edge_online": false,
+          "sensor_degraded": true
+        }
+      }
+    }
+  ],
+  "expected_behavior": {
+    "source_preserved": "MOCK",
+    "middle_raw": null,
+    "sampling_validity": "Unavailable",
+    "normal_processing_count": 1,
+    "interface_gaps": [
+      "G03",
+      "G04"
+    ],
+    "notes": [
+      "保持中间 raw/time 为 null，其余有效通道保留。",
+      "不补零进入 Feature/Risk；未配置风险维持 null。",
+      "裸 Telemetry 无 Soil validity，不能据 null 声称三态已无损传输。"
+    ]
+  },
+  "pass_criteria": [
+    "未来实际交接保留 null 并可追溯附带快照的 Unavailable。",
+    "middle_raw 的 null 不能替换为 0；在张鹏飞发布正式 Missing Policy 前，本用例不假定部分有效输入是否允许评分或 degraded scoring，当前 risk.sensor_score / level / reason_mask 保持 null，这不代表已冻结部分输入禁止评分的规则。数据层负责表达缺了什么，算法层负责决定缺失后怎么计算，Mock 不替算法层做决定。",
+    "若下游仅收裸 payload 而丢失三态，报告 INTERFACE_GAP，不宣称端到端 PASS。"
+  ]
+}

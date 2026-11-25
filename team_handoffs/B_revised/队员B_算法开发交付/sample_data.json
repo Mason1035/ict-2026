@@ -1,0 +1,170 @@
+{
+  "normal": [
+    {
+      "node_id": "SIM-ALGO-001",
+      "timestamp": "2026-09-23T12:00:00Z",
+      "soil_moisture_pct": 32.0,
+      "tilt_deg": 0.2,
+      "battery_pct": 85,
+      "sequence": 1,
+      "source": "simulated"
+    },
+    {
+      "node_id": "SIM-ALGO-001",
+      "timestamp": "2026-09-23T12:00:10Z",
+      "soil_moisture_pct": 32.0,
+      "tilt_deg": 0.2,
+      "battery_pct": 85,
+      "sequence": 2,
+      "source": "simulated"
+    },
+    {
+      "node_id": "SIM-ALGO-001",
+      "timestamp": "2026-09-23T12:00:20Z",
+      "soil_moisture_pct": 32.0,
+      "tilt_deg": 0.2,
+      "battery_pct": 85,
+      "sequence": 3,
+      "source": "simulated"
+    },
+    {
+      "node_id": "SIM-ALGO-001",
+      "timestamp": "2026-09-23T12:00:30Z",
+      "soil_moisture_pct": 32.0,
+      "tilt_deg": 0.2,
+      "battery_pct": 85,
+      "sequence": 4,
+      "source": "simulated"
+    },
+    {
+      "node_id": "SIM-ALGO-001",
+      "timestamp": "2026-09-23T12:00:40Z",
+      "soil_moisture_pct": 32.0,
+      "tilt_deg": 0.2,
+      "battery_pct": 85,
+      "sequence": 5,
+      "source": "simulated"
+    },
+    {
+      "node_id": "SIM-ALGO-001",
+      "timestamp": "2026-09-23T12:00:50Z",
+      "soil_moisture_pct": 32.0,
+      "tilt_deg": 0.2,
+      "battery_pct": 85,
+      "sequence": 6,
+      "source": "simulated"
+    }
+  ],
+  "abnormal": [
+    {
+      "node_id": "SIM-ALGO-001",
+      "timestamp": "2026-09-23T12:00:00Z",
+      "soil_moisture_pct": 32,
+      "tilt_deg": 0.2,
+      "battery_pct": 85,
+      "sequence": 1,
+      "source": "simulated"
+    },
+    {
+      "node_id": "SIM-ALGO-001",
+      "timestamp": "2026-09-23T12:00:10Z",
+      "soil_moisture_pct": 32,
+      "tilt_deg": 0.2,
+      "battery_pct": 85,
+      "sequence": 2,
+      "source": "simulated"
+    },
+    {
+      "node_id": "SIM-ALGO-001",
+      "timestamp": "2026-09-23T12:00:20Z",
+      "soil_moisture_pct": 32,
+      "tilt_deg": 0.2,
+      "battery_pct": 85,
+      "sequence": 3,
+      "source": "simulated"
+    },
+    {
+      "node_id": "SIM-ALGO-001",
+      "timestamp": "2026-09-23T12:00:30Z",
+      "soil_moisture_pct": 34,
+      "tilt_deg": 1.5,
+      "battery_pct": 85,
+      "sequence": 4,
+      "source": "simulated"
+    },
+    {
+      "node_id": "SIM-ALGO-001",
+      "timestamp": "2026-09-23T12:00:40Z",
+      "soil_moisture_pct": 37,
+      "tilt_deg": 1.6,
+      "battery_pct": 85,
+      "sequence": 5,
+      "source": "simulated"
+    },
+    {
+      "node_id": "SIM-ALGO-001",
+      "timestamp": "2026-09-23T12:00:50Z",
+      "soil_moisture_pct": 40,
+      "tilt_deg": 1.7,
+      "battery_pct": 85,
+      "sequence": 6,
+      "source": "simulated"
+    }
+  ],
+  "missing": [
+    {
+      "node_id": "SIM-ALGO-001",
+      "timestamp": "2026-09-23T12:00:00Z",
+      "soil_moisture_pct": 32.0,
+      "tilt_deg": 0.2,
+      "battery_pct": 85,
+      "sequence": 1,
+      "source": "simulated"
+    },
+    {
+      "node_id": "SIM-ALGO-001",
+      "timestamp": "2026-09-23T12:00:10Z",
+      "soil_moisture_pct": 32.0,
+      "tilt_deg": 0.2,
+      "battery_pct": 85,
+      "sequence": 2,
+      "source": "simulated"
+    },
+    {
+      "node_id": "SIM-ALGO-001",
+      "timestamp": "2026-09-23T12:00:20Z",
+      "soil_moisture_pct": 32.0,
+      "tilt_deg": 0.2,
+      "battery_pct": 85,
+      "sequence": 3,
+      "source": "simulated"
+    },
+    {
+      "node_id": "SIM-ALGO-001",
+      "timestamp": "2026-09-23T12:00:30Z",
+      "soil_moisture_pct": 32.0,
+      "tilt_deg": 0.2,
+      "battery_pct": 85,
+      "sequence": 4,
+      "source": "simulated"
+    },
+    {
+      "node_id": "SIM-ALGO-001",
+      "timestamp": "2026-09-23T12:00:40Z",
+      "soil_moisture_pct": 32.0,
+      "tilt_deg": 0.2,
+      "battery_pct": 85,
+      "sequence": 5,
+      "source": "simulated"
+    },
+    {
+      "node_id": "SIM-ALGO-001",
+      "timestamp": "2026-09-23T12:00:50Z",
+      "soil_moisture_pct": null,
+      "tilt_deg": 0.2,
+      "battery_pct": 85,
+      "sequence": 6,
+      "source": "simulated"
+    }
+  ]
+}
