@@ -1,0 +1,93 @@
+{
+  "version": "NEW_SOIL_VWC_TRIAL_20261124",
+  "archive_sha256": "2234ba35e295695f6ee072c61f561b84d86e674e054c930025df8abb8abb349b",
+  "air_water_version": "NODE01_AIR_WATER_20261122_REVIEW",
+  "status": "TRIAL_OFFLINE_ONLY",
+  "risk_eligible": false,
+  "channels": {
+    "0": {
+      "points": [
+        {
+          "raw": 20699.0,
+          "vwc_est_pct": 0.0,
+          "run_id": "VWC01_20261124_191526_R04",
+          "source_sha256": "c26aca5ccbf99e6bdab28027ed6940b36b469aa8649d6bb29610885131a534c4",
+          "depth_cm_approx": 3.0
+        },
+        {
+          "raw": 19871.0,
+          "vwc_est_pct": 15.7,
+          "run_id": "VWC02_20261124_193224_R01",
+          "source_sha256": "e6eb404a831398766ed429eb3342929dea8a01cd4bdef4be3b7739365fb03561",
+          "depth_cm_approx": 2.0
+        },
+        {
+          "raw": 16573.0,
+          "vwc_est_pct": 20.9,
+          "run_id": "VWC03_20261124_205146_R05",
+          "source_sha256": "812db4241a17c77b9ee4ec4b43b72c190905fa90fac0f9582169a89cde3fccc0",
+          "depth_cm_approx": 2.0
+        }
+      ],
+      "raw_air": 20718.0,
+      "raw_water": 13032.0,
+      "notes": "0%为原样干土假设参考；15.7%与20.9%为基于称重与估算湿土体积58.6685cm3的条件估计；绝对误差待独立验证点补测"
+    },
+    "1": {
+      "points": [
+        {
+          "raw": 20876.0,
+          "vwc_est_pct": 0.0,
+          "run_id": "VWC01_20261124_191526_R04",
+          "source_sha256": "c26aca5ccbf99e6bdab28027ed6940b36b469aa8649d6bb29610885131a534c4",
+          "depth_cm_approx": 3.0
+        },
+        {
+          "raw": 20106.0,
+          "vwc_est_pct": 15.7,
+          "run_id": "VWC02_20261124_193224_R01",
+          "source_sha256": "e6eb404a831398766ed429eb3342929dea8a01cd4bdef4be3b7739365fb03561",
+          "depth_cm_approx": 2.0
+        },
+        {
+          "raw": 17459.0,
+          "vwc_est_pct": 20.9,
+          "run_id": "VWC03_20261124_205146_R05",
+          "source_sha256": "812db4241a17c77b9ee4ec4b43b72c190905fa90fac0f9582169a89cde3fccc0",
+          "depth_cm_approx": 2.0
+        }
+      ],
+      "raw_air": 20945.0,
+      "raw_water": 13118.0,
+      "notes": "0%为原样干土假设参考；15.7%与20.9%为基于称重与估算湿土体积58.6685cm3的条件估计；绝对误差待独立验证点补测"
+    },
+    "2": {
+      "points": [
+        {
+          "raw": 20602.0,
+          "vwc_est_pct": 0.0,
+          "run_id": "VWC01_20261124_191526_R04",
+          "source_sha256": "c26aca5ccbf99e6bdab28027ed6940b36b469aa8649d6bb29610885131a534c4",
+          "depth_cm_approx": 3.0
+        },
+        {
+          "raw": 19692.5,
+          "vwc_est_pct": 15.7,
+          "run_id": "VWC02_20261124_200418_R03",
+          "source_sha256": "c31bc3f630adac6a183bb87ec438bc749f2394039a177e2008c77c6d71697646",
+          "depth_cm_approx": 2.0
+        },
+        {
+          "raw": 16979.0,
+          "vwc_est_pct": 20.9,
+          "run_id": "VWC03_20261124_205146_R05",
+          "source_sha256": "812db4241a17c77b9ee4ec4b43b72c190905fa90fac0f9582169a89cde3fccc0",
+          "depth_cm_approx": 2.0
+        }
+      ],
+      "raw_air": 20606.0,
+      "raw_water": 13004.0,
+      "notes": "0%为原样干土假设参考；15.7%与20.9%为基于称重与估算湿土体积58.6685cm3的条件估计；绝对误差待独立验证点补测"
+    }
+  }
+}
