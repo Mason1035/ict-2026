@@ -71,7 +71,53 @@ public:
     void delay_ms(unsigned ms) override { delays.push_back(ms); clock += ms * 1000; }
     std::uint64_t now_us() const override { return clock; }
 };
+
+
+void toe_invalid_raw_recovers_only_with_fresh_status() {
+    using namespace node;
+    FakeBus bus;
+    bus.registers[{0x69, 0x75}][0] = 0x47;
+    drivers::DualIcm42688 imu(bus);
+    const auto site = sampling::ImuSite::Toe;
+    assert(imu.initialize(site, 100, true) == ESP_OK);
+    bus.clear_drdy_on_status = true;
+    bus.registers[{0x69, 0x2d}][0] = 0x10;
+    assert(imu.prepare_drdy(site) == ESP_OK);
+    assert(imu.diagnostic(site).startup_status == 0x10);
+    sampling::ImuSample sample;
+    auto bytes = bus.reads;
+    assert(imu.read(site, sample) == PortStatus::Unavailable);
+    assert(bus.reads == bytes + 1 && !sample.acquired_uptime_us);
+    bus.fail_read_reg = 0x2d;
+    bus.injected_read_error = ESP_ERR_INVALID_STATE;
+    bus.registers[{0x69, 0x2d}][0] = 0x08;
+    bytes = bus.reads;
+    assert(imu.read(site, sample) == PortStatus::Error);
+    assert(imu.diagnostic(site).error == ESP_ERR_INVALID_STATE && bus.reads == bytes + 1);
+    bus.fail_read_reg = 0x100;
+    bus.registers[{0x69, 0x1f}] = {0x80,0};
+    for (unsigned i = 0; i < 3; ++i) {
+        bus.registers[{0x69, 0x2d}][0] = 0x08;
+        assert(imu.read(site, sample) == PortStatus::Error);
+        assert(imu.diagnostic(site).error == ESP_ERR_INVALID_RESPONSE && !sample.acquired_uptime_us);
+    }
+    assert(imu.diagnostic(site).invalid_raw_codes == 3);
+    bus.registers[{0x69, 0x1f}] = {0x01,0x02};
+    assert(imu.read(site, sample) == PortStatus::Unavailable);
+    bus.registers[{0x69, 0x2d}][0] = 0x08;
+    assert(imu.read(site, sample) == PortStatus::Ready && sample.acquired_uptime_us);
+    // An injected independent INT_STATUS reader can consume a real latch.
+    // Verify the observable consequence without introducing one in firmware.
+    bus.registers[{0x69, 0x2d}][0] = 0x08;
+    std::uint8_t stolen_status = 0;
+    assert(bus.read(0x69, 0x2d, &stolen_status, 1) == ESP_OK && stolen_status == 0x08);
+    bytes = bus.reads;
+    assert(imu.read(site, sample) == PortStatus::Unavailable);
+    assert(bus.reads == bytes + 1 && !sample.acquired_uptime_us);
+}
+
 int main() {
+    toe_invalid_raw_recovers_only_with_fresh_status();
     using namespace node;
     FakeBus b;
     b.registers[{0x68, 0x75}][0] = b.registers[{0x69, 0x75}][0] = 0x47;

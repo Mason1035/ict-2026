@@ -133,8 +133,9 @@ void retry_preserves_prior_uncertainty() {
     backend.append_ok = false; backend.uncertain = true; writer.step(1);
     writer.step(251);
     backend.uncertain = false; writer.step(252); // this attempt clearly did not write
-    writer.step(502);
-    backend.append_ok = true; writer.step(503);
+    assert(writer.next_retry_ms() == 752);
+    writer.step(752);
+    backend.append_ok = true; writer.step(753);
     assert(writer.stats().retried_records == 2 && writer.stats().replayed_records == 2);
     assert(writer.stats().uncertain_records == 1); // retain earlier file ambiguity
     assert((backend.attempted_indices == std::vector<std::uint64_t>{55, 55, 55}));
@@ -375,6 +376,21 @@ void deferred_verification_interleaves_and_bounds_backlog() {
     assert(!writer.recovering());
 }
 void deferred_failures_preserve_pending_and_prior_evidence() {
+    FakeStorage final_backend;
+    final_backend.deferred = true;
+    node::storage::RecoveryWriter final_writer(final_backend, 64, 512);
+    final_writer.step(0);
+    assert(final_writer.take_record(record(1)));
+    final_writer.step(1);
+    final_writer.finish_drained_capture();
+    final_writer.step(2);
+    final_backend.verify_ok = false;
+    final_writer.step(3);
+    assert(final_writer.finished() && final_writer.last_operation() == Operation::VerifyFailed);
+    assert(final_writer.stats().errors == 1 && final_writer.stats().verify_failures == 1);
+    assert(final_writer.stats().verified_files == 0 && final_writer.stats().uncertain_records == 1);
+    final_writer.step(200000);
+    assert(final_backend.recover_calls == 1 && final_backend.open_calls == 0);
     FakeStorage backend;
     backend.deferred = true;
     node::storage::RecoveryWriter writer(backend, 64, 1);
@@ -470,6 +486,140 @@ void bounded_quantum_reduces_synthetic_rollover_stall() {
     assert(incremental.drop == 0 && incremental.max_step <= 4000);
     assert(incremental.consumed > blocking.consumed);
 }
+
+void unsynced_suffix_survives_w01_sized_outage() {
+    FakeStorage backend;
+    std::array<AcquisitionRecord, 256> journal{};
+    node::storage::RecoveryWriter writer(backend, 256, 50000, 16, journal.data());
+    writer.step(0);
+    for (unsigned i = 0; i < 239; ++i) {
+        assert(writer.take_record(record(i)));
+        writer.step(i + 1);
+    }
+    backend.append_ok = false;
+    assert(writer.take_record(record(239)));
+    writer.step(240);
+    assert(writer.last_operation() == Operation::AppendFailed);
+    backend.recover_ok = false;
+    while (writer.next_retry_ms() < 61000) {
+        writer.step(writer.next_retry_ms());
+        assert(writer.has_pending() && !writer.can_take_record());
+    }
+
+    // Use W01's observed prefix, backlog and final count. This simulates
+    // queue admission and writer ordering, not SD latency or RTOS behavior.
+    constexpr unsigned produced = 24652, offline_backlog = 12658, capacity = 16384;
+    static_assert(offline_backlog <= capacity);
+    std::deque<AcquisitionRecord> queued;
+    for (unsigned i = 240; i < 240 + offline_backlog; ++i) queued.push_back(record(i));
+    backend.append_ok = backend.recover_ok = true;
+    const auto now = writer.next_retry_ms();
+    writer.step(now);
+    // A second failure during replay must restart from the oldest record.
+    writer.step(now + 1);
+    backend.append_ok = false;
+    writer.step(now + 2);
+    const auto attempts_before_final_segment = backend.attempted_indices.size();
+    backend.append_ok = true;
+    const auto recovered_at = writer.next_retry_ms();
+    writer.step(recovered_at);
+    auto drain = [&](unsigned limit) {
+        for (unsigned pass = 0; pass < limit && (writer.has_pending() || !queued.empty()); ++pass) {
+            if (writer.can_take_record() && !queued.empty()) {
+                assert(writer.take_record(queued.front()));
+                queued.pop_front();
+            }
+            writer.step(recovered_at + pass + 1);
+        }
+        assert(queued.empty() && !writer.has_pending());
+    };
+    drain(2 * produced);
+    for (unsigned i = 240 + offline_backlog; i < produced; ++i) queued.push_back(record(i));
+    drain(2 * produced);
+    writer.request_finish();
+    writer.step(recovered_at + 2 * produced);
+    assert(writer.finished() && writer.stats().verified_rows == produced);
+    assert(backend.attempted_indices.size() - attempts_before_final_segment == produced);
+    for (unsigned i = 0; i < produced; ++i)
+        assert(backend.attempted_indices[attempts_before_final_segment + i] == i);
+}
+
+void failed_sync_replays_only_since_last_successful_sync() {
+    FakeStorage backend;
+    std::array<AcquisitionRecord, 3> journal{};
+    node::storage::RecoveryWriter writer(backend, journal.size(), 100, 16, journal.data());
+    writer.step(0);
+    for (unsigned i = 0; i < 6; ++i) {
+        assert(writer.take_record(record(i)));
+        writer.step(i * 2 + 1);
+        if (i == 5) backend.flush_ok = false;
+        writer.step(i * 2 + 2);
+    }
+    assert(writer.last_operation() == Operation::FlushFailed);
+    backend.flush_ok = true;
+    const auto now = writer.next_retry_ms();
+    writer.step(now);
+    for (unsigned i = 1; i <= 4; ++i) writer.step(now + i);
+    assert(writer.can_take_record());
+    assert((backend.attempted_indices == std::vector<std::uint64_t>{0, 1, 2, 3, 4, 5, 3, 4, 5}));
+    assert(writer.stats().replayed_records == 3);
+}
+
+void repeated_recover_then_append_failure_preserves_backoff() {
+    FakeStorage backend;
+    std::array<AcquisitionRecord, 1> journal{};
+    node::storage::RecoveryWriter writer(backend, journal.size(), 100, 16, journal.data());
+    writer.step(0);
+    assert(writer.can_take_record());
+    assert(writer.take_record(record(0)));
+    backend.append_ok = false;
+    writer.step(1);
+    assert(writer.last_operation() == Operation::AppendFailed);
+    assert(writer.next_retry_ms() == 251);
+
+    // Recover opens a new segment, but post-open append failure must escalate backoff.
+    writer.step(251);
+    assert(writer.last_operation() == Operation::Recovered);
+    writer.step(252);
+    assert(writer.last_operation() == Operation::AppendFailed);
+    assert(writer.next_retry_ms() == 752);
+
+    writer.step(752);
+    assert(writer.last_operation() == Operation::Recovered);
+    writer.step(753);
+    assert(writer.last_operation() == Operation::AppendFailed);
+    assert(writer.next_retry_ms() == 1753);
+
+    // Flush failure after successful append must also keep escalating backoff.
+    backend.append_ok = true;
+    backend.flush_ok = false;
+    writer.step(1753);
+    assert(writer.last_operation() == Operation::Recovered);
+    unsigned dt = 1;
+    for (; dt <= 8 && writer.last_operation() != Operation::FlushFailed; ++dt) {
+        writer.step(1753 + dt);
+    }
+    assert(writer.last_operation() == Operation::FlushFailed);
+    const auto flush_fail_at = 1753 + (dt - 1);
+    assert(writer.next_retry_ms() == flush_fail_at + 2000);
+
+    // Once flush succeeds, backoff resets so the next fresh failure starts at 250 ms.
+    backend.flush_ok = true;
+    const auto retry_at = writer.next_retry_ms();
+    writer.step(retry_at);
+    assert(writer.last_operation() == Operation::Recovered);
+    unsigned s = 1;
+    for (; s <= 8 && !writer.can_take_record(); ++s) {
+        writer.step(retry_at + s);
+    }
+    assert(writer.can_take_record());
+    const auto settled_at = retry_at + s;
+    assert(writer.take_record(record(1)));
+    backend.append_ok = false;
+    writer.step(settled_at);
+    assert(writer.last_operation() == Operation::AppendFailed);
+    assert(writer.next_retry_ms() == settled_at + 250);
+}
 }
 int main() {
     mount_failure_backoff();
@@ -489,4 +639,7 @@ int main() {
     deferred_verification_interleaves_and_bounds_backlog();
     deferred_failures_preserve_pending_and_prior_evidence();
     bounded_quantum_reduces_synthetic_rollover_stall();
+    unsynced_suffix_survives_w01_sized_outage();
+    failed_sync_replays_only_since_last_successful_sync();
+    repeated_recover_then_append_failure_preserves_backoff();
 }

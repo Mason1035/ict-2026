@@ -115,42 +115,53 @@ void incremental_boundaries(const std::string& dir) {
     const std::array<std::uint32_t, 11> crcs{0, 0xd3d99e8bU, 0x1b4e4ebdU,
         0x66121ff4U, 0x696fba91U, 0xb737fb1aU, 0x7d4546ffU, 0xfea63440U,
         0xa5fb792fU, 0x32253bccU, 0xa09b0680U};
-    for (unsigned k = 0; k < sizes.size(); ++k) {
-        const auto path = dir + "/B" + std::to_string(k);
-        std::ofstream(path, std::ios::binary) << std::string(sizes[k], 'A');
-        node::storage::ClosedSegment expected;
-        assert(std::snprintf(expected.path, sizeof(expected.path), "%s", path.c_str()) < static_cast<int>(sizeof(expected.path)));
-        expected.bytes = sizes[k]; expected.crc32 = crcs[k];
-        node::storage::IncrementalVerifier reader;
-        assert(reader.begin(expected));
-        assert(!reader.begin(expected)); // cannot overwrite the one active descriptor
-        auto result = node::storage::VerifyResult::Pending;
-        unsigned steps = 0;
-        while (result == node::storage::VerifyResult::Pending) {
-            const auto before = reader.bytes_read();
-            result = reader.step();
-            assert(reader.bytes_read() - before <= node::storage::IncrementalVerifier::read_quantum && ++steps < 100);
+    // Invalid subread lengths must fail explicitly with EINVAL.
+    {
+        node::storage::ClosedSegment dummy{};
+        std::snprintf(dummy.path, sizeof(dummy.path), "%s/unused", dir.c_str());
+        node::storage::IncrementalVerifier bad;
+        assert(!bad.begin(dummy, 0) && bad.last_error() == EINVAL);
+        assert(!bad.begin(dummy, node::storage::IncrementalVerifier::read_quantum + 1) && bad.last_error() == EINVAL);
+    }
+    for (const std::size_t subread : {node::storage::IncrementalVerifier::read_quantum,
+                                      node::storage::IncrementalVerifier::sector_bytes}) {
+        for (unsigned k = 0; k < sizes.size(); ++k) {
+            const auto path = dir + "/B" + std::to_string(subread) + "_" + std::to_string(k);
+            std::ofstream(path, std::ios::binary) << std::string(sizes[k], 'A');
+            node::storage::ClosedSegment expected;
+            assert(std::snprintf(expected.path, sizeof(expected.path), "%s", path.c_str()) < static_cast<int>(sizeof(expected.path)));
+            expected.bytes = sizes[k]; expected.crc32 = crcs[k];
+            node::storage::IncrementalVerifier reader;
+            assert(reader.begin(expected, subread) && reader.subread_bytes() == subread);
+            assert(!reader.begin(expected, subread)); // cannot overwrite the one active descriptor
+            auto result = node::storage::VerifyResult::Pending;
+            unsigned steps = 0;
+            while (result == node::storage::VerifyResult::Pending) {
+                const auto before = reader.bytes_read();
+                result = reader.step();
+                assert(reader.bytes_read() - before <= node::storage::IncrementalVerifier::read_quantum && ++steps < 100);
+            }
+            assert(result == node::storage::VerifyResult::Passed && !reader.active());
+            assert(reader.bytes_read() == sizes[k] && reader.crc32_so_far() == crcs[k]);
+            assert(steps == (sizes[k] + node::storage::IncrementalVerifier::read_quantum - 1) /
+                node::storage::IncrementalVerifier::read_quantum + 1);
+            // Extra suffix, including exact-512B/4-KiB boundaries, must fail rather than
+            // accepting the prefix as a complete file.
+            std::ofstream(path, std::ios::app | std::ios::binary) << 'X';
+            assert(reader.begin(expected, subread));
+            do { result = reader.step(); } while (result == node::storage::VerifyResult::Pending);
+            assert(result == node::storage::VerifyResult::Failed);
+            // Also distinguish a short file and a same-size CRC mismatch.
+            std::ofstream(path, std::ios::binary | std::ios::trunc) << std::string(sizes[k] ? sizes[k] - 1 : 1, 'A');
+            assert(reader.begin(expected, subread));
+            do { result = reader.step(); } while (result == node::storage::VerifyResult::Pending);
+            assert(result == node::storage::VerifyResult::Failed);
+            std::ofstream(path, std::ios::binary | std::ios::trunc) << std::string(sizes[k], 'A');
+            expected.crc32 ^= 1;
+            assert(reader.begin(expected, subread));
+            do { result = reader.step(); } while (result == node::storage::VerifyResult::Pending);
+            assert(result == node::storage::VerifyResult::Failed);
         }
-        assert(result == node::storage::VerifyResult::Passed && !reader.active());
-        assert(reader.bytes_read() == sizes[k]);
-        assert(steps == (sizes[k] + node::storage::IncrementalVerifier::read_quantum - 1) /
-            node::storage::IncrementalVerifier::read_quantum + 1);
-        // Extra suffix, including exact-4-KiB boundaries, must fail rather than
-        // accepting the prefix as a complete file.
-        std::ofstream(path, std::ios::app | std::ios::binary) << 'X';
-        assert(reader.begin(expected));
-        do { result = reader.step(); } while (result == node::storage::VerifyResult::Pending);
-        assert(result == node::storage::VerifyResult::Failed);
-        // Also distinguish a short file and a same-size CRC mismatch.
-        std::ofstream(path, std::ios::binary | std::ios::trunc) << std::string(sizes[k] ? sizes[k] - 1 : 1, 'A');
-        assert(reader.begin(expected));
-        do { result = reader.step(); } while (result == node::storage::VerifyResult::Pending);
-        assert(result == node::storage::VerifyResult::Failed);
-        std::ofstream(path, std::ios::binary | std::ios::trunc) << std::string(sizes[k], 'A');
-        expected.crc32 ^= 1;
-        assert(reader.begin(expected));
-        do { result = reader.step(); } while (result == node::storage::VerifyResult::Pending);
-        assert(result == node::storage::VerifyResult::Failed);
     }
 }
 void data_rows_cross_chunk_and_reject_wrong_count(const std::string& dir) {
@@ -159,31 +170,34 @@ void data_rows_cross_chunk_and_reject_wrong_count(const std::string& dir) {
     const std::string text = "#" + std::string(4091, 'X') + "\nimu," + std::string(4094, '1') +
         "\n# imu,metadata only\nkind,channel,columns\nsoil,1,41,,false,Error,263,,,,,,,,,,,,,\n";
     assert(text.size() == 8273);
-    const auto path = dir + "/row-boundary";
-    std::ofstream(path, std::ios::binary) << text;
-    node::storage::ClosedSegment segment;
-    assert(std::snprintf(segment.path, sizeof(segment.path), "%s", path.c_str()) < static_cast<int>(sizeof(segment.path)));
-    segment.bytes = text.size(); segment.rows = 2; segment.crc32 = 0x91b0c06cU;
-    node::storage::IncrementalVerifier reader;
-    auto finish = [&] {
-        assert(reader.begin(segment));
-        auto result = node::storage::VerifyResult::Pending;
-        while (result == node::storage::VerifyResult::Pending) result = reader.step();
-        return result;
-    };
-    assert(finish() == node::storage::VerifyResult::Passed && reader.rows_read() == 2);
-    assert(node::storage::DiagnosticLog::verify_file(path.c_str(), segment.bytes, segment.crc32, 2));
-    // Same bytes, CRC, and EOF; the independent row-count requirement rejects it.
-    segment.rows = 1;
-    assert(finish() == node::storage::VerifyResult::Failed && reader.rows_read() == 2);
-    assert(!node::storage::DiagnosticLog::verify_file(path.c_str(), segment.bytes, segment.crc32, 1));
-    segment.rows = 3;
-    assert(finish() == node::storage::VerifyResult::Failed);
-    // A recomputed matching CRC cannot turn an unterminated data line into a row.
-    std::ofstream(path, std::ios::binary | std::ios::trunc) << text.substr(0, text.size() - 1);
-    segment.bytes = text.size() - 1; segment.crc32 = 0xdbc68b62U; segment.rows = 2;
-    assert(finish() == node::storage::VerifyResult::Failed && reader.rows_read() == 1);
-    assert(!node::storage::DiagnosticLog::verify_file(path.c_str(), segment.bytes, segment.crc32, 2));
+    for (const std::size_t subread : {node::storage::IncrementalVerifier::read_quantum,
+                                      node::storage::IncrementalVerifier::sector_bytes}) {
+        const auto path = dir + "/row-boundary-" + std::to_string(subread);
+        std::ofstream(path, std::ios::binary) << text;
+        node::storage::ClosedSegment segment;
+        assert(std::snprintf(segment.path, sizeof(segment.path), "%s", path.c_str()) < static_cast<int>(sizeof(segment.path)));
+        segment.bytes = text.size(); segment.rows = 2; segment.crc32 = 0x91b0c06cU;
+        node::storage::IncrementalVerifier reader;
+        auto finish = [&] {
+            assert(reader.begin(segment, subread));
+            auto result = node::storage::VerifyResult::Pending;
+            while (result == node::storage::VerifyResult::Pending) result = reader.step();
+            return result;
+        };
+        assert(finish() == node::storage::VerifyResult::Passed && reader.rows_read() == 2);
+        assert(node::storage::DiagnosticLog::verify_file(path.c_str(), segment.bytes, segment.crc32, 2));
+        // Same bytes, CRC, and EOF; the independent row-count requirement rejects it.
+        segment.rows = 1;
+        assert(finish() == node::storage::VerifyResult::Failed && reader.rows_read() == 2);
+        assert(!node::storage::DiagnosticLog::verify_file(path.c_str(), segment.bytes, segment.crc32, 1));
+        segment.rows = 3;
+        assert(finish() == node::storage::VerifyResult::Failed);
+        // A recomputed matching CRC cannot turn an unterminated data line into a row.
+        std::ofstream(path, std::ios::binary | std::ios::trunc) << text.substr(0, text.size() - 1);
+        segment.bytes = text.size() - 1; segment.crc32 = 0xdbc68b62U; segment.rows = 2;
+        assert(finish() == node::storage::VerifyResult::Failed && reader.rows_read() == 1);
+        assert(!node::storage::DiagnosticLog::verify_file(path.c_str(), segment.bytes, segment.crc32, 2));
+    }
 }
 void historic_filename_scan_preserves_evidence(const std::string& dir) {
     const auto subdir = dir + "/scan";
@@ -244,6 +258,20 @@ void incremental_readback_interleaves_writes(const std::string& dir) {
     assert(reader.rows_read() == closed.rows);
     assert(log.rows() == wrote_during_readback && log.close_and_verify());
 }
+void reset_directory_cache_forces_rescan(const std::string& dir) {
+    const auto remount_dir = dir + "/remount_rescan";
+    assert(std::filesystem::create_directory(remount_dir));
+    node::storage::DiagnosticLog log;
+    assert(log.open_new(remount_dir.c_str(), "# TEST_ONLY initial mount\n"));
+    assert(std::string(log.path()) == remount_dir + "/N0000001.CSV");
+    assert(log.close_and_verify());
+
+    std::ofstream(remount_dir + "/N0000050.CSV") << "external evidence";
+    log.reset_directory_cache();
+    assert(log.open_new(remount_dir.c_str(), "# TEST_ONLY after remount cache reset\n"));
+    assert(std::string(log.path()) == remount_dir + "/N0000051.CSV");
+    assert(log.close_and_verify());
+}
 }
 
 int main(int argc, char** argv) {
@@ -286,5 +314,6 @@ int main(int argc, char** argv) {
     historic_filename_scan_preserves_evidence(dir);
     incremental_boundaries(dir);
     incremental_readback_interleaves_writes(dir);
+    reset_directory_cache_forces_rescan(dir);
     csv_compatibility_and_phase_timing(dir);
 }

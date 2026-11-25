@@ -143,7 +143,7 @@ class Journal:
 
 
 class Engine:
-    def __init__(self, journal, clock, expected_elf=None):
+    def __init__(self, journal, clock, expected_elf=None, *, identity_gate=None, start_guard=None):
         self.journal, self.clock, self.expected_elf = journal, clock, expected_elf
         self.lock = threading.RLock()
         self.lines, self.guard = Lines(), ClockGuard()
@@ -154,6 +154,8 @@ class Engine:
         self.verbose = False
         self.pending = None
         self.actual_elf = None
+        self.identity_gate = identity_gate
+        self.start_guard = start_guard
         self.experiments = []
         self.current = None
         self.begin_deadline_ns = None
@@ -184,6 +186,7 @@ class Engine:
                     'last_device_terminal': self.last_terminal,
                     'experiment_result': self.current.get('result', 'UNKNOWN') if self.current else 'UNKNOWN',
                     'actual_device_elf': self.actual_elf, 'expected_elf': self.expected_elf,
+                    'calibration_identity': self.identity_gate.evidence() if self.identity_gate else None,
                     'firmware_identity': ('NOT_OBSERVED' if not self.actual_elf else
                                           'UNKNOWN' if not self.expected_elf else
                                           'MATCH' if self.actual_elf == self.expected_elf else 'MISMATCH'),
@@ -225,7 +228,7 @@ class Engine:
 
     def receive(self, data, sample=None):
         with self.lock:
-            if self.closed or self.fatal:
+            if self.closed or self.fatal or (self.identity_gate and self.connection_status == 'DISCONNECTED'):
                 return
             try:
                 sample = sample or self.clock.sample()
@@ -234,6 +237,9 @@ class Engine:
                 self._observe_clock(sample)
                 for kind, line in self.lines.feed(data):
                     if kind != 'LINE':
+                        if self.identity_gate:
+                            self.identity_gate.invalidate()
+                            self.actual_elf = None
                         if kind not in self.parse_issues:
                             self.parse_issues.append(kind)
                         self.state = 'UNKNOWN'
@@ -278,11 +284,14 @@ class Engine:
             self.boot_await_startup = False
             self.startup_seen = True
         elf = re.search(r'\bapp_elf_sha256=([0-9a-fA-F]{64})\b', line)
-        if elf:
+        if elf and not self.identity_gate:
             self.actual_elf = elf[1].lower()
             if self.expected_elf and self.actual_elf != self.expected_elf:
                 self.errors.append('设备ELF与所选Manifest不一致')
                 self.message('设备ELF身份不匹配，禁止START，请先确认固件版本', True, '设备身份')
+        if self.identity_gate:
+            self.identity_gate.receive(line, sample)
+            self.actual_elf = self.identity_gate.actual_elf
         ready = re.search(r'\bEXPERIMENT_READY id=(\S+)', line) if msg.event == 'EXPERIMENT_READY' else None
         if ready:
             if self.current and self.current['experiment_id'] == ready[1]:
@@ -462,6 +471,16 @@ class Engine:
                 raise ValueError('已观察到固件身份不匹配，拒绝START')
             sample = self.clock.sample()
             self._observe_clock(sample)
+            if command == 'START' and self.identity_gate:
+                if data != b'EXP START 30\r\n':
+                    raise ValueError('CALIBRATION_START_BLOCKED：本批次仅接受人工 EXP START 30')
+                if not self.start_guard:
+                    raise ValueError('CALIBRATION_START_BLOCKED：缺少批准检查')
+                self.start_guard()
+                if not self.clock.confirmed or self.guard.issues or self.parse_issues:
+                    raise ValueError('CALIBRATION_START_BLOCKED：串口或时钟证据不完整')
+                evidence = self.identity_gate.start(sample)
+                self.journal.event('CALIBRATION_MANUAL_START_GATE', sample, **evidence)
             tx = uuid.uuid4().hex
             # Keep all RX/TX journal mutation serialized. A request is persisted before write.
             try:
@@ -478,6 +497,9 @@ class Engine:
 
     def disconnected(self, error):
         with self.lock:
+            if self.identity_gate:
+                self.identity_gate.invalidate()
+                self.actual_elf = None
             self.capture_complete = False
             if self.state != 'DISCONNECTED':
                 self.device_state_before_disconnect = self.state

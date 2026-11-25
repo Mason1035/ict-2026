@@ -254,9 +254,12 @@ void IncrementalVerifier::cancel() {
         fd_ = -1;
     }
 }
-bool IncrementalVerifier::begin(const ClosedSegment& segment) {
+bool IncrementalVerifier::begin(const ClosedSegment& segment, std::size_t subread_bytes) {
     if (fd_ >= 0) { errno = EBUSY; return false; } // do not replace/poison the existing readback
-    if (!segment.path[0]) { errno = error_ = EINVAL; return false; }
+    if (!segment.path[0] || subread_bytes == 0 || subread_bytes > read_quantum) {
+        errno = error_ = EINVAL;
+        return false;
+    }
     error_ = 0;
     int flags = O_RDONLY;
 #ifdef _WIN32
@@ -265,7 +268,7 @@ bool IncrementalVerifier::begin(const ClosedSegment& segment) {
     fd_ = ::open(segment.path, flags);
     if (fd_ < 0) { error_ = errno ? errno : EIO; return false; }
     // A POSIX read avoids stdio prefetch and unbuffered one-byte refill loops.
-    segment_ = segment; bytes_ = 0; crc_ = 0xffffffffU; row_counter_.reset();
+    segment_ = segment; subread_bytes_ = subread_bytes; bytes_ = 0; crc_ = 0xffffffffU; row_counter_.reset();
     return true;
 }
 VerifyResult IncrementalVerifier::finish(bool valid) {
@@ -276,20 +279,40 @@ VerifyResult IncrementalVerifier::finish(bool valid) {
 }
 VerifyResult IncrementalVerifier::step() {
     if (fd_ < 0) { errno = error_ = EBADF; return VerifyResult::Failed; }
-    // Request one extra byte only when it fits this same <=4-KiB quantum;
-    // exact multiples get a separate EOF step, rejecting trailing corruption.
-    // Multi-sector reads amortize the measured per-read SD command overhead.
-    const auto remaining = segment_.bytes - bytes_;
-    const auto request = remaining >= sizeof(buffer_) ? sizeof(buffer_) : remaining + 1;
-    errno = 0;
-    const auto received = ::read(fd_, buffer_, request);
-    if (received < 0) { error_ = errno ? errno : EIO; return finish(false); }
-    const auto count = static_cast<std::size_t>(received);
-    crc_ = update_crc(crc_, buffer_, count); bytes_ += count; row_counter_.consume(buffer_, count);
-    if (bytes_ > segment_.bytes) return finish(false);
-    if (!count)
+    // Exact byte matches still require a separate explicit EOF probe so
+    // trailing corruption after expected bytes is always rejected.
+    if (bytes_ == segment_.bytes) {
+        errno = 0;
+        const auto received = ::read(fd_, buffer_, 1);
+        if (received < 0) { error_ = errno ? errno : EIO; return finish(false); }
+        const auto count = static_cast<std::size_t>(received);
+        if (count > 0) {
+            crc_ = update_crc(crc_, buffer_, count); bytes_ += count; row_counter_.consume(buffer_, count);
+            return finish(false);
+        }
         return finish(bytes_ == segment_.bytes && (crc_ ^ 0xffffffffU) == segment_.crc32 &&
             row_counter_.rows() == segment_.rows);
+    }
+    // Bounded <=4-KiB step; may perform smaller subreads (e.g., 512 B single-sector)
+    // while keeping total bytes per step <= read_quantum.
+    std::size_t step_bytes = 0;
+    while (step_bytes < read_quantum && bytes_ < segment_.bytes) {
+        const auto remaining = segment_.bytes - bytes_;
+        const auto quota = read_quantum - step_bytes;
+        const auto limit = quota < subread_bytes_ ? quota : subread_bytes_;
+        const auto request = remaining >= limit ? limit : remaining + 1;
+        errno = 0;
+        const auto received = ::read(fd_, buffer_, request);
+        if (received < 0) { error_ = errno ? errno : EIO; return finish(false); }
+        const auto count = static_cast<std::size_t>(received);
+        if (!count) {
+            return finish(bytes_ == segment_.bytes && (crc_ ^ 0xffffffffU) == segment_.crc32 &&
+                row_counter_.rows() == segment_.rows);
+        }
+        crc_ = update_crc(crc_, buffer_, count); bytes_ += count; step_bytes += count;
+        row_counter_.consume(buffer_, count);
+        if (bytes_ > segment_.bytes) return finish(false);
+    }
     return VerifyResult::Pending;
 }
 }

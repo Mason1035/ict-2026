@@ -1,0 +1,39 @@
+{
+  "schema": "NODE01_NO_AUTO_START_SOURCE_PROOF_V1",
+  "source": "REAL_FROZEN_SOURCE_AUDIT",
+  "manifest_sha256": "bf529da2f31d02977bcf69e1a0e83cf773c9e4dff657d09701662f70a454d54f",
+  "expected_elf": "288e76253c36efcc1939959443c2ae58c245eb2ea0f7ba667e950d9d2372119d",
+  "expected_bin": "2be566f0195877656610ae2ebf17437ae41fdae280457f7b914e4dd64fadd422",
+  "source_root": "C:\\Users\\LQY\\Documents\\GitHub\\ict-2026\\docs\\test_records\\NODE-01\\round-15-diag-output-wdt-fix\\source-final",
+  "files": {
+    "main/app_main.cpp": {
+      "bytes": 1631,
+      "sha256": "13de898ca320e742affe7dc74eec8bb76db8d7115cd4c82f8e3a6cf54e26f412"
+    },
+    "components/node_runtime/runtime.cpp": {
+      "bytes": 116359,
+      "sha256": "4de44367627eda78ce0da33c01d5c97868187750e35fc1a56212661884ca6c12"
+    },
+    "components/node_runtime/include/node/runtime_config.hpp": {
+      "bytes": 5464,
+      "sha256": "a688a9813a566feeb799f83f1a8ec63b2462b647eb5029a1d08d67234ea919d0"
+    },
+    "components/node_runtime/include/node/experiment_control.hpp": {
+      "bytes": 5321,
+      "sha256": "cdd2637b417fa6176dfa606a853883ca62beba9c0cec16115d86fa80f2c9ad66"
+    },
+    "components/node_runtime/experiment_runtime.inc": {
+      "bytes": 5459,
+      "sha256": "7a54898d69843a02db9af55527ff3eb78369cfed51d4c796d87c53b5b4600bfb"
+    }
+  },
+  "audited_semantics": {
+    "runtime.cpp:232-246": "READY waits for START_PENDING plus storage intent verification",
+    "experiment_control.hpp:84-90": "begin requires explicit request_start state transition",
+    "experiment_runtime.inc:31-39": "request_start called only from explicit START handler",
+    "runtime_config.hpp:12-13": "SANDBOX build selects SandboxExperiment",
+    "runtime.cpp:1594": "runtime declares auto_start=0; corroboration, not sole proof"
+  },
+  "firmware_control": "EXPLICIT_START_REQUIRED",
+  "note": "No auto_start value is added to or inferred as a default in the original manifest."
+}

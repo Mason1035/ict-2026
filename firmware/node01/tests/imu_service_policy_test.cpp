@@ -1,5 +1,6 @@
 #include "node/acquisition_policy.hpp"
 #include "node/imu_irq_policy.hpp"
+#include "node/toe_status_trace.hpp"
 #include <array>
 #include <cassert>
 #include <cstdint>
@@ -198,6 +199,88 @@ void stop_keeps_late_raw_but_never_services_again() {
     assert(m.sites[0].unarmed == 100 && m.sites[0].cursor.pending(m.sites[0].raw) == 101);
     m.assert_accounting();
 }
+
+
+void toe_edge_bursts_preserve_status_gate(unsigned edges_per_frame) {
+    Model m;
+    m.initialize(0, true);
+    m.initialize(1, true);
+    node::drivers::toe_trace::Trace trace;
+    constexpr unsigned frames = 100;
+    for (unsigned frame = 0; frame < frames; ++frame) {
+        m.begin_frame();
+        m.produce(0);
+        m.edge(0);
+        for (unsigned edge = 0; edge < edges_per_frame; ++edge) {
+            m.edge(1);
+            trace.note_edge({frame*10000ULL + edge, m.sites[1].raw, true});
+        }
+        m.drain_notification_hints();
+        assert(!m.fallback(0) && !m.fallback(1));
+    }
+    assert(m.sites[0].valid == frames);
+    assert(m.sites[1].raw == frames*edges_per_frame);
+    assert(m.sites[1].attempts == frames && m.sites[1].unavailable == frames && m.sites[1].valid == 0);
+    assert(m.sites[1].consumed == m.sites[1].raw);
+    assert(m.sites[1].edge_coalesced == m.sites[1].raw - frames);
+    assert(trace.edge_count == 128 && trace.edges.back().irq_number == 128);
+    assert(node::drivers::toe_trace::Trace::rate_abnormal(m.sites[1].raw, 1000000));
+    m.assert_accounting();
+}
+
+void toe_trace_is_bounded_and_keeps_first_sdk_failure() {
+    using node::drivers::toe_trace::Request;
+    using node::drivers::toe_trace::Trace;
+    assert(!Trace::rate_abnormal(100, 1000000));
+    assert(!Trace::rate_abnormal(900, 100000));
+    Trace trace;
+    for (unsigned i = 1; i <= 70; ++i) {
+        Request r;
+        r.sdk_entered = i != 35;
+        r.status_present = i != 35 && i != 40 && i != 41;
+        r.status = r.status_present ? 8 : 0;
+        r.result = r.status_present ? 0 : 259;
+        trace.note_request(r);
+    }
+    assert(trace.total_requests == 70 && trace.first_count == 32);
+    assert(trace.first[0].seq == 1 && trace.first.back().seq == 32);
+    assert(trace.first_error_seq == 40 && trace.first_error.sdk_entered && !trace.first_error.status_present);
+    assert(trace.before_count == 8 && trace.before[0].seq == 32 && trace.before.back().seq == 39);
+    assert(trace.after_count == 8 && trace.after[0].seq == 41 && trace.after.back().seq == 48);
+}
+
+void duplicate_gpio_callback_does_not_duplicate_sample() {
+    Model m;
+    m.initialize(0, true);
+    m.initialize(1, true);
+    m.begin_frame();
+    m.produce(1);
+    m.edge(1);
+    m.edge(1); // simulate duplicate callbacks, not the ESP-IDF registration API
+    m.drain_notification_hints();
+    assert(m.sites[1].raw == 2 && m.sites[1].attempts == 1 && m.sites[1].valid == 1);
+    assert(m.sites[1].edge_coalesced == 1);
+    m.assert_accounting();
+}
+
+void one_read_clear_consumer_per_frame() {
+    Model m;
+    m.initialize(0, true);
+    m.initialize(1, true);
+    m.begin_frame();
+    m.produce(1);
+    m.edge(1);
+    m.drain_notification_hints();
+    assert(m.sites[1].valid == 1 && m.sites[1].attempts == 1);
+    // An IRQ and fallback scheduled for the same site and frame cannot
+    // independently consume the same latch.
+    assert(!m.fallback(1));
+    m.begin_frame();
+    assert(m.fallback(1));
+    assert(m.sites[1].valid == 1 && m.sites[1].unavailable == 1);
+    m.assert_accounting();
+}
+
 } // namespace
 
 int main() {
@@ -206,5 +289,10 @@ int main() {
     dual_sites_at_different_phases();
     noisy_top_keeps_raw_evidence_without_flooding_reads();
     stop_keeps_late_raw_but_never_services_again();
+    toe_edge_bursts_preserve_status_gate(70);
+    toe_edge_bursts_preserve_status_gate(90);
+    toe_trace_is_bounded_and_keeps_first_sdk_failure();
+    one_read_clear_consumer_per_frame();
+    duplicate_gpio_callback_does_not_duplicate_sample();
     std::puts("HOST_IMU_SERVICE_POLICY_TEST_PASS (TEST_ONLY injected edges/notifications/status; HARDWARE_NOT_RUN)");
 }

@@ -2,17 +2,19 @@
 #include <cstdint>
 
 namespace node::runtime::diagnostic {
-enum class Mode { Acquisition, SensorsOnly, StorageOnly, SandboxExperiment };
+enum class Mode { Acquisition, SensorsOnly, StorageOnly, SandboxExperiment, ToeBench };
 constexpr bool sensors_enabled(Mode mode) { return mode != Mode::StorageOnly; }
-constexpr bool storage_enabled(Mode mode) { return mode != Mode::SensorsOnly; }
+constexpr bool storage_enabled(Mode mode) { return mode != Mode::SensorsOnly && mode != Mode::ToeBench; }
 constexpr bool isolated(Mode mode) { return mode != Mode::Acquisition; }
 constexpr const char* name(Mode mode) {
     if (mode == Mode::SandboxExperiment) return "SANDBOX_EXPERIMENT_CAPTURE";
+    if (mode == Mode::ToeBench) return "TOE_BENCH_TEST_ONLY";
     return mode == Mode::SensorsOnly ? "SENSORS_ONLY_TEST_ONLY" :
         mode == Mode::StorageOnly ? "STORAGE_ONLY_SYNTHETIC_TEST_ONLY" : "ACQUISITION_DIAGNOSTIC";
 }
 constexpr const char* source(Mode mode) {
     if (mode == Mode::SandboxExperiment) return "REAL_SENSOR_EXPERIMENT_UNCALIBRATED";
+    if (mode == Mode::ToeBench) return "REAL_SENSOR_TEST_ONLY";
     return mode == Mode::StorageOnly ? "SYNTHETIC" : "REAL_SENSOR_DIAGNOSTIC";
 }
 constexpr const char* time_source(Mode mode) {

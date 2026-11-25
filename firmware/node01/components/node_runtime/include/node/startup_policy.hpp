@@ -47,6 +47,11 @@ constexpr Gate capture_gate(Plan plan, bool sensors, bool storage,
     return storage && !storage_ready ? Gate::Wait : Gate::Proceed;
 }
 
+inline constexpr unsigned sd_startup_mount_attempts = 3;
+constexpr bool retry_sd_startup_mount(bool timeout_cleaned_up, bool aborted, unsigned attempts) {
+    return timeout_cleaned_up && !aborted && attempts > 0 && attempts < sd_startup_mount_attempts;
+}
+
 enum class AbortAction { None, FinishEmptyFile, ParkVerified, StopUnverified };
 constexpr bool may_begin_capture(Gate gate, bool aborted) {
     return !aborted && gate == Gate::Proceed;

@@ -1,4 +1,12 @@
+#include "sdkconfig.h"
 #include "node/i2c_bus.hpp"
+#include "node/i2c_read_retry.hpp"
+#ifdef CONFIG_NODE01_TOE_BENCH_ADS
+#include "node/bench_bus_observation.hpp"
+#endif
+#if defined(CONFIG_NODE01_TOE_STATUS_TRACE) || defined(CONFIG_NODE01_DIAG_TOE_BENCH)
+#include "node/toe_status_trace.hpp"
+#endif
 #include "node/board.hpp"
 #include "node/timeout_budget.hpp"
 #include "esp_timer.h"
@@ -6,7 +14,6 @@
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "sdkconfig.h"
 #include <algorithm>
 #include <cstring>
 #include <limits>
@@ -24,15 +31,31 @@ struct Transfer {
     std::uint8_t* rx; std::size_t rx_size;
     bool executed = false;
     I2cLineLevels lines{};
+#if defined(CONFIG_NODE01_TOE_STATUS_TRACE) || defined(CONFIG_NODE01_DIAG_TOE_BENCH)
+    bool trace_toe_status = false;
+    std::uint64_t trace_sdk_begin_us = 0, trace_sdk_end_us = 0;
+#endif
 };
 esp_err_t transfer(void* p) {
     auto& t = *static_cast<Transfer*>(p);
     t.lines.before_sda = gpio_get_level(static_cast<gpio_num_t>(board::pin::i2c_sda));
     t.lines.before_scl = gpio_get_level(static_cast<gpio_num_t>(board::pin::i2c_scl));
     t.executed = true;
+#if defined(CONFIG_NODE01_TOE_STATUS_TRACE) || defined(CONFIG_NODE01_DIAG_TOE_BENCH)
+#ifndef CONFIG_NODE01_TOE_BENCH_ADS
+    if (t.trace_toe_status)
+#endif
+        t.trace_sdk_begin_us = esp_timer_get_time();
+#endif
     const auto error = t.rx_size ? i2c_master_transmit_receive(t.dev, t.tx, t.tx_size,
         t.rx, t.rx_size, transfer_timeout_ms) :
         i2c_master_transmit(t.dev, t.tx, t.tx_size, transfer_timeout_ms);
+#if defined(CONFIG_NODE01_TOE_STATUS_TRACE) || defined(CONFIG_NODE01_DIAG_TOE_BENCH)
+#ifndef CONFIG_NODE01_TOE_BENCH_ADS
+    if (t.trace_toe_status)
+#endif
+        t.trace_sdk_end_us = esp_timer_get_time();
+#endif
     t.lines.after_sda = gpio_get_level(static_cast<gpio_num_t>(board::pin::i2c_sda));
     t.lines.after_scl = gpio_get_level(static_cast<gpio_num_t>(board::pin::i2c_scl));
     return error;
@@ -112,15 +135,69 @@ i2c_master_dev_handle_t I2cBus::device(std::uint8_t address) const {
 esp_err_t I2cBus::read(std::uint8_t a, std::uint8_t reg, std::uint8_t* out, std::size_t n) {
     const auto begin = now_us();
     const auto d = device(a);
+    if (!d || !execute_ || !out || !n) {
+        const auto error = !d || !execute_ ? ESP_ERR_INVALID_STATE : ESP_ERR_INVALID_ARG;
+        diagnostics_.record(a, reg, n, true, false, error, now_us() - begin);
+        return error; // local/lock failures are not evidence of a failed SDK transaction
+    }
     Transfer t{d, &reg, 1, out, n};
-    const auto error = !d || !execute_ ? ESP_ERR_INVALID_STATE :
-        (!out || !n ? ESP_ERR_INVALID_ARG :
-#ifdef CONFIG_NODE01_I2C_LOCK_DIAG_TRACE
-        diagnostic_execute_ ? diagnostic_execute_(transfer,&t,{static_cast<std::uint16_t>(std::min(n,std::size_t{65535})),a,reg,'R'},&t.executed) :
+#if defined(CONFIG_NODE01_TOE_STATUS_TRACE) || defined(CONFIG_NODE01_DIAG_TOE_BENCH)
+#ifdef CONFIG_NODE01_DIAG_TOE_BENCH
+    t.trace_toe_status = (a == board::bus::imu_top_address || a == board::bus::imu_toe_address) &&
+        ((reg == 0x2d && n == 1) || (reg == 0x1f && n == 12));
+#else
+    t.trace_toe_status = a == board::bus::imu_toe_address && reg == 0x2d && n == 1;
 #endif
-        execute_(transfer, &t));
-    diagnostics_.record(a, reg, n, true, t.executed, error, now_us() - begin, t.lines);
-    return error;
+#endif
+    I2cLineLevels first_lines{}, retry_lines{};
+    std::uint64_t first_wall_us = 0, retry_wall_us = 0;
+    unsigned attempts = 0;
+    const auto result = retry::read_once_then_maybe_retry(a, reg, n, [&] {
+        t.executed = false; t.lines = {};
+#ifdef CONFIG_NODE01_TOE_BENCH_ADS
+        t.trace_sdk_begin_us = t.trace_sdk_end_us = 0;
+#endif
+        const auto entered_us = now_us();
+        const auto error =
+#ifdef CONFIG_NODE01_I2C_LOCK_DIAG_TRACE
+            diagnostic_execute_ ? diagnostic_execute_(transfer,&t,{static_cast<std::uint16_t>(std::min(n,std::size_t{65535})),a,reg,'R'},&t.executed) :
+#endif
+            execute_(transfer, &t);
+        if (++attempts == 1) { first_lines = t.lines; first_wall_us = now_us() - begin; }
+        else { retry_lines = t.lines; retry_wall_us = now_us() - entered_us; }
+#ifdef CONFIG_NODE01_TOE_BENCH_ADS
+        const int word = a == board::bus::ads1115_address && reg == 1 && n == 2 &&
+            t.executed && error == ESP_OK ? (out[0] << 8) | out[1] : -1;
+        bench_bus::observe({entered_us,t.trace_sdk_begin_us,t.trace_sdk_end_us,now_us(),
+            bench_bus::lock_wait_us(),error,a,reg,'R',t.executed,attempts > 1,word});
+#endif
+        return retry::Attempt{error, t.executed};
+    }, [] { vTaskDelay(1); }, [&] { std::memset(out, 0, n); });
+    // Preserve the original failure even when the final read succeeds. req is
+    // a logical request; sdk/err include both actual attempts. Yield time is
+    // not reported as bus-held time. Existing driver OS/config/deadline checks
+    // still decide whether the new bytes can become a Valid sample.
+    diagnostics_.record(a, reg, n, true, result.first.sdk_entered,
+        result.first.error, first_wall_us, first_lines);
+    if (result.attempted) diagnostics_.record_retry(a, reg, n, result.first.error,
+        result.final.sdk_entered, result.final.error, retry_wall_us, retry_lines);
+#if defined(CONFIG_NODE01_TOE_STATUS_TRACE) || defined(CONFIG_NODE01_DIAG_TOE_BENCH)
+    if (t.trace_toe_status) {
+        toe_trace::Request observed;
+        observed.address = a;
+        observed.reg = reg;
+        observed.request_us = begin;
+        observed.sdk_begin_us = t.trace_sdk_begin_us;
+        observed.sdk_end_us = t.trace_sdk_end_us;
+        observed.end_us = now_us();
+        observed.sdk_entered = result.final.sdk_entered;
+        observed.result = result.final.error;
+        observed.status_present = reg == 0x2d && observed.sdk_entered && observed.result == ESP_OK;
+        if (observed.status_present) observed.status = *out;
+        toe_trace::observe_status_read(observed);
+    }
+#endif
+    return result.final.error;
 }
 esp_err_t I2cBus::write(std::uint8_t a, std::uint8_t reg, const std::uint8_t* data, std::size_t n) {
     const auto begin = now_us();
@@ -136,6 +213,14 @@ esp_err_t I2cBus::write(std::uint8_t a, std::uint8_t reg, const std::uint8_t* da
 #endif
         execute_(transfer, &t));
     diagnostics_.record(a, reg, n, false, t.executed, error, now_us() - begin, t.lines);
+#ifdef CONFIG_NODE01_TOE_BENCH_ADS
+    if (d && execute_ && valid_data) {
+        const int word = a == board::bus::ads1115_address && reg == 1 && n == 2 ?
+            (data[0] << 8) | data[1] : -1;
+        bench_bus::observe({begin,t.trace_sdk_begin_us,t.trace_sdk_end_us,now_us(),
+            bench_bus::lock_wait_us(),error,a,reg,'W',t.executed,false,word});
+    }
+#endif
     return error;
 }
 void I2cBus::delay_ms(unsigned ms) {

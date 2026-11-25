@@ -157,6 +157,30 @@ void schedules() {
     assert(capture_gate(Plan::Concurrent,true,false,InitState::Ready,InitState::Ready,InitState::Ready,false) == Gate::Proceed);
 }
 
+void startup_mount_timeout_backoff() {
+    FakeBackend backend;
+    RecoveryWriter writer(backend,256,UINT32_MAX);
+    backend.recover_ok = false;
+    writer.step(0);
+    assert(writer.stats().errors == 1 && !writer.active());
+    assert(retry_sd_startup_mount(true, false, writer.stats().recovery_attempts));
+    writer.step(249);
+    assert(backend.recoveries == 1 && !writer.active());
+    writer.step(250);
+    assert(writer.stats().errors == 2 && !writer.active());
+    assert(retry_sd_startup_mount(true, false, writer.stats().recovery_attempts));
+    writer.step(749);
+    assert(backend.recoveries == 2);
+    backend.recover_ok = true;
+    writer.step(750);
+    assert(writer.active() && writer.stats().errors == 2 && backend.recoveries == 3);
+    assert(!retry_sd_startup_mount(true, false, writer.stats().recovery_attempts));
+    assert(!retry_sd_startup_mount(false, false, 1)); // open/sync or cleanup failure
+    assert(!retry_sd_startup_mount(true, true, 1)); // startup deadline/abort
+    assert(!retry_sd_startup_mount(true, false, 0));
+    assert(writer.stats().append_accepted == 0);
+}
+
 void aborted_empty_file() {
     FakeBackend backend;
     RecoveryWriter writer(backend, 256, UINT32_MAX);
@@ -198,6 +222,6 @@ void aborted_empty_file() {
 }
 
 int main() {
-    probe_cases(); schedules(); aborted_empty_file();
+    probe_cases(); schedules(); startup_mount_timeout_backoff(); aborted_empty_file();
     std::puts("HOST_STARTUP_POLICY_TEST_PASS (TEST_ONLY task permutations/probe callbacks/timeout/empty-file cleanup; HARDWARE_NOT_RUN)");
 }

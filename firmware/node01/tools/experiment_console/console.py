@@ -21,6 +21,7 @@ from serial.tools import list_ports
 from .clock import HostClock
 from .core import Engine, Journal
 from .transport import Receiver, open_port
+from .manifest import validate_build_config, build_manifest
 
 PROJECT = Path(__file__).resolve().parents[2]
 REPOSITORY = PROJECT.parents[1]
@@ -45,6 +46,11 @@ def expected_identity(path):
             digest = hashlib.file_digest(stream, 'sha256').hexdigest()
         if digest != entry['sha256']:
             raise ValueError('候选产物SHA不匹配：' + str(file))
+    validate_build_config(root)
+    if manifest.get('format') == 'NODE01_EXPERIMENT_CONSOLE_MANIFEST_V1':
+        checked = build_manifest(root)
+        if manifest['files'] != checked['files'] or manifest.get('source') != checked['source']:
+            raise ValueError('正式Manifest未完整绑定实际构建产物')
     return manifest['files']['zhishao_node01.elf']['sha256']
 
 
@@ -179,6 +185,25 @@ class ConsoleUI:
             await asyncio.gather(refresh, return_exceptions=True)
 
 
+def qualification_line_ui(engine, writer):
+    print('资格串口正在记录。输入 :status 查看本机证据，:quit 释放串口。', flush=True)
+    print('日志目录：', engine.journal.directory, flush=True)
+    for line in sys.stdin:
+        command = line.strip()
+        if command == ':quit':
+            break
+        if command == ':status':
+            print(json.dumps(engine.snapshot(), ensure_ascii=False), flush=True)
+        elif command:
+            try:
+                engine.send(command, writer)
+                print('命令已写入，等待设备证据。', flush=True)
+            except (ValueError, OSError, RuntimeError) as error:
+                print('命令失败：', repr(error), flush=True)
+        engine.tick()
+    return 2 if engine.fatal else 0
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description='NODE-01 Windows实验控制台；打开后不自动START/STOP/RESET')
     parser.add_argument('--port', default='COM7')
@@ -189,31 +214,83 @@ def main(argv=None):
     zone.add_argument('--utc-offset')
     parser.add_argument('--output-dir', type=Path, default=DEFAULT_ROOT)
     parser.add_argument('--manifest', type=Path)
+    parser.add_argument('--calibration-purpose', choices=('qualification', 'calibration'))
+    parser.add_argument('--qualification-authorization', type=Path)
+    parser.add_argument('--qualification-line-input', action='store_true')
     args = parser.parse_args(argv)
+    if args.qualification_authorization and args.calibration_purpose != 'qualification':
+        parser.error('一次性资格授权仅可用于 qualification')
+    if args.qualification_line_input and not args.qualification_authorization:
+        parser.error('资格命令行模式需要一次性授权')
+    profile = gate = guard = authorization = None
+    if args.calibration_purpose:
+        if args.list_ports or args.manifest is None:
+            parser.error('正式标定路径必须显式指定 --manifest，不能与端口列表并用')
+        from .calibration_v1.manifest_schema_adapter import require_start_approval, verify_manifest
+        from .calibration_v1.identity import IdentityGate
+        from .calibration_v1.common import unchanged
+        try:
+            profile = verify_manifest(args.manifest)
+            if args.qualification_authorization:
+                from .calibration_v1.qualification import QualificationAuthorization
+                authorization = QualificationAuthorization(profile, args.qualification_authorization)
+            else:
+                require_start_approval(profile, args.calibration_purpose)
+        except (ValueError, OSError, KeyError) as error:
+            parser.error(str(error) if str(error).startswith('CALIBRATION_START_BLOCKED') else
+                         f'CALIBRATION_START_BLOCKED：{error}')
+        gate = IdentityGate(profile['expected_elf'])
+
+        def guard():
+            unchanged(profile['inputs'])
+            require_start_approval(profile, args.calibration_purpose)
     if args.list_ports:
         for port in list_ports.comports():
             print(port.device, port.description)
         return 0
     if not re.fullmatch(r'COM[1-9]\d*', args.port, re.I) or not 1200 <= args.baud <= 2000000:
         parser.error('Windows端口须为COM数字；波特率1200–2000000')
-    if not sys.stdin.isatty() or not sys.stdout.isatty():
+    if not args.qualification_line_input and (not sys.stdin.isatty() or not sys.stdout.isatty()):
         parser.error('当前不是可编辑交互终端；请在Windows Terminal/PowerShell 7运行。--list-ports、归档dry-run可在非交互环境使用；未连接串口。')
     clock = HostClock(args.timezone, args.utc_offset)
-    expected = expected_identity(args.manifest or default_manifest())
+    expected = profile['expected_elf'] if profile else expected_identity(args.manifest or default_manifest())
+    if profile is None:
+        from .calibration_v1.manifest_schema_adapter import CANDIDATE, profiles
+        if expected == profiles()[CANDIDATE]['elf_sha256']:
+            parser.error('CALIBRATION_START_BLOCKED：B 需要显式用途与批准，当前可运行离线清单/文件检查')
     print('电脑实际时间/时区：', json.dumps(clock.sample(), ensure_ascii=False))
     print('核对电脑时钟后输入 YES；若不可信输入 UNKNOWN（将禁止精确日期归档）；其它输入退出。')
     choice = input('时间确认 > ').strip().upper()
     if choice not in ['YES', 'UNKNOWN']:
         return 0
     clock.confirmed = choice == 'YES'
+    if authorization:
+        if not clock.confirmed:
+            parser.error('资格会话需要显式确认主机时间')
+        from .calibration_v1.qualification import QualificationEngine
+        matches = [p for p in list_ports.comports()
+                   if (p.vid, p.pid, p.serial_number, p.location) ==
+                   (0x10C4, 0xEA60, '54578303DAA1F011AAA123A0D9065118', '1-13')]
+        if len(matches) != 1 or matches[0].device.upper() != args.port.upper() or args.baud != 115200:
+            parser.error('资格串口必须匹配已核验 NODE-01 的 USB 身份、端口及 115200 波特率')
     journal = Journal(args.output_dir, clock, args.port, args.baud)
-    engine = Engine(journal, clock, expected)
+    if profile:
+        qualification_binding = {}
+        if authorization:
+            from .calibration_v1.qualification import AUTHORIZATION_SHA
+            qualification_binding['qualification_authorization_sha256'] = AUTHORIZATION_SHA
+        journal.event('CALIBRATION_PROFILE_V1', clock.sample(), firmware_id=profile['firmware_id'],
+                      manifest_sha256=profile['manifest_sha256'], purpose=args.calibration_purpose,
+                      **qualification_binding)
+    engine = (QualificationEngine(journal, clock, profile, authorization) if authorization else
+              Engine(journal, clock, expected, identity_gate=gate, start_guard=guard))
     receiver = None
     try:
         device = open_port(args.port, args.baud)
         receiver = Receiver(device, engine)
         receiver.start()
-        result = asyncio.run(ConsoleUI(engine, device.write).run())
+        result = (qualification_line_ui(engine, device.write) if args.qualification_line_input else
+                  asyncio.run(ConsoleUI(engine, device.write).run()))
     except Exception as error:
         engine.disconnected(error)
         print('原始异常：', repr(error), file=sys.stderr)

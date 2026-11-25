@@ -28,7 +28,7 @@ class Receiver:
             try:
                 data = self.device.read(min(max(self.device.in_waiting, 1), 4096))
                 if data:
-                    self.engine.receive(data, self.engine.clock.sample())
+                    self.engine.receive(data)  # Engine timestamps RX under the shared journal lock.
                 if self.engine.fatal:
                     return
             except Exception as error:

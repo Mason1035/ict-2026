@@ -29,20 +29,26 @@ private:
 class IncrementalVerifier {
 public:
     static constexpr std::size_t read_quantum = 4096; // eight 512-byte SD sectors per bounded read
+    static constexpr std::size_t sector_bytes = 512;
     ~IncrementalVerifier() { cancel(); }
-    bool begin(const ClosedSegment&);
+    bool begin(const ClosedSegment&, std::size_t subread_bytes = read_quantum);
     VerifyResult step();
     void cancel();
     bool active() const { return fd_ >= 0; }
     int last_error() const { return error_; }
     std::size_t bytes_read() const { return bytes_; }
+    std::size_t expected_bytes() const { return segment_.bytes; }
+    std::size_t subread_bytes() const { return subread_bytes_; }
     unsigned rows_read() const { return row_counter_.rows(); }
+    unsigned expected_rows() const { return segment_.rows; }
+    std::uint32_t crc32_so_far() const { return crc_ ^ 0xffffffffU; }
 private:
     VerifyResult finish(bool valid);
     int fd_ = -1;
     ClosedSegment segment_{};
     DataRowCounter row_counter_;
-    char buffer_[read_quantum]{};
+    alignas(4) char buffer_[read_quantum]{};
+    std::size_t subread_bytes_ = read_quantum;
     std::size_t bytes_ = 0;
     std::uint32_t crc_ = 0xffffffffU;
     int error_ = 0;
@@ -66,6 +72,7 @@ public:
     bool close_and_verify();
     bool close_for_verification(ClosedSegment&); // flush+close only; not VERIFIED
     void abandon(); // closes best-effort; partial file retained, never deleted
+    void reset_directory_cache() { directory_[0] = '\0'; }
     const char* path() const { return path_; }
     unsigned rows() const { return rows_; }
     std::uint32_t crc32() const { return crc_ ^ 0xffffffffU; }

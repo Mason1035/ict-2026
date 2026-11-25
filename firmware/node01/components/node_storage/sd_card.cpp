@@ -1,5 +1,6 @@
 #include "node/sd_card.hpp"
 #include "node/board.hpp"
+#include "driver/gpio.h"
 #include "driver/spi_common.h"
 #include "driver/sdspi_host.h"
 #include "esp_vfs_fat.h"
@@ -11,13 +12,19 @@ PortStatus SdCard::mount() {
     if (cleanup_error_ != ESP_OK) { error_ = cleanup_error_; return status_ = PortStatus::Error; }
     if (card_) return status_;
     if (spi_owned_) { error_ = ESP_ERR_INVALID_STATE; return status_ = PortStatus::Error; }
+    // Keep internal pull-ups enabled so MISO/MOSI/CS do not float when CS is high
+    // or during slow open-drain transitions on module buffers.
+    gpio_set_pull_mode(static_cast<gpio_num_t>(board::pin::sd_miso), GPIO_PULLUP_ONLY);
+    gpio_set_pull_mode(static_cast<gpio_num_t>(board::pin::sd_mosi), GPIO_PULLUP_ONLY);
+    gpio_set_pull_mode(static_cast<gpio_num_t>(board::pin::sd_cs), GPIO_PULLUP_ONLY);
     spi_bus_config_t bus{};
     bus.mosi_io_num = board::pin::sd_mosi; bus.miso_io_num = board::pin::sd_miso;
     bus.sclk_io_num = board::pin::sd_sclk; bus.quadwp_io_num = bus.quadhd_io_num = -1;
     bus.max_transfer_sz = 4096;
     sdmmc_host_t host = SDSPI_HOST_DEFAULT();
     host.max_freq_khz = CONFIG_NODE01_SD_KHZ;
-    host.command_timeout_ms = 1000; // per-command bound, not whole-filesystem latency guarantee
+    // Leave command_timeout_ms = 0 so ordinary commands stay bounded at
+    // SDMMC_DEFAULT_CMD_TIMEOUT_MS (1000ms) while writes receive SDMMC_WRITE_CMD_TIMEOUT_MS (5000ms).
     error_ = spi_bus_initialize(static_cast<spi_host_device_t>(host.slot), &bus, SDSPI_DEFAULT_DMA);
     if (error_ != ESP_OK) return status_ = PortStatus::Error;
     spi_owned_ = true;

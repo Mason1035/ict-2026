@@ -13,13 +13,22 @@ struct I2cLineLevels {
 struct I2cDeviceDiagnostics {
     std::uint8_t address = 0;
     // transfers counts logical API requests, including an outer lock timeout.
-    // sdk_calls counts only requests that actually entered the SDK callback.
+    // sdk_calls includes first + retry attempts that actually entered the SDK.
+    // transfers/reads/writes remain logical requests; sdk_calls may exceed transfers.
     std::uint64_t transfers = 0, sdk_calls = 0, reads = 0, writes = 0;
     std::uint64_t errors = 0, timeouts = 0, invalid_states = 0;
     // IDF 5.5.3 folds non-DONE synchronous outcomes (including NACK and
     // hardware timeout) into INVALID_STATE. Never label this as handle loss.
     std::uint64_t sdk_errors = 0, local_errors = 0;
     std::uint64_t sdk_invalid_states = 0, local_invalid_states = 0;
+    // First errors never disappear when a retry succeeds. Existing errors /
+    // invalid_states include failures of BOTH attempts, not final sample errors.
+    std::uint64_t first_errors = 0, first_invalid_states = 0;
+    std::uint64_t retry_attempts = 0, retry_recovered = 0, retry_failed = 0;
+    std::uint64_t retry_sdk_calls = 0;
+    std::uint8_t last_retry_reg = 0;
+    std::size_t last_retry_size = 0;
+    esp_err_t last_retry_original_error = ESP_OK, last_retry_error = ESP_OK;
     std::uint64_t probes = 0, probe_sdk_calls = 0;
     esp_err_t last_probe_error = ESP_OK;
     std::uint64_t total_wall_us = 0, max_wall_us = 0, last_wall_us = 0;
@@ -51,7 +60,8 @@ public:
             if (executed) ++d.sdk_calls;
             if (read) ++d.reads; else ++d.writes;
             if (error != ESP_OK) {
-                ++d.errors;
+                ++d.errors; ++d.first_errors;
+                if (error == ESP_ERR_INVALID_STATE) ++d.first_invalid_states;
                 if (executed) ++d.sdk_errors; else ++d.local_errors;
                 if (error == ESP_ERR_INVALID_STATE) {
                     if (executed) ++d.sdk_invalid_states; else ++d.local_invalid_states;
@@ -67,6 +77,38 @@ public:
             if (wall_us > d.max_wall_us) d.max_wall_us = wall_us;
             d.last_wall_us = wall_us; d.last_reg = reg; d.last_size = size;
             d.last_read = read; d.last_executed = executed; d.last_error = error;
+            break;
+        }
+    }
+    // Called exactly once only after an eligible failed first SDK read.
+    // This is not another logical request and never rewrites a successful
+    // first attempt. The last original/retry pair remains sticky for Health.
+    void record_retry(std::uint8_t address, std::uint8_t reg, std::size_t size,
+                esp_err_t original, bool executed, esp_err_t error,
+                std::uint64_t wall_us, I2cLineLevels lines = {}) {
+        Guard guard(lock_);
+        for (auto& d : data_) if (d.address == address) {
+            ++d.retry_attempts;
+            if (executed) { ++d.sdk_calls; ++d.retry_sdk_calls; }
+            if (error == ESP_OK) ++d.retry_recovered;
+            else {
+                ++d.retry_failed; ++d.errors;
+                if (executed) ++d.sdk_errors; else ++d.local_errors;
+                if (error == ESP_ERR_TIMEOUT) ++d.timeouts;
+                if (error == ESP_ERR_INVALID_STATE) {
+                    ++d.invalid_states;
+                    if (executed) ++d.sdk_invalid_states; else ++d.local_invalid_states;
+                }
+                d.last_failed_lines = lines;
+                d.last_failed_reg = reg; d.last_failed_size = size;
+                d.last_failed_read = true; d.last_failed_executed = executed;
+                d.last_failed_error = error; d.last_failed_wall_us = wall_us;
+            }
+            d.last_retry_reg = reg; d.last_retry_size = size;
+            d.last_retry_original_error = original; d.last_retry_error = error;
+            d.last_wall_us = wall_us; d.last_error = error; d.last_executed = executed;
+            d.total_wall_us += wall_us;
+            if (wall_us > d.max_wall_us) d.max_wall_us = wall_us;
             break;
         }
     }

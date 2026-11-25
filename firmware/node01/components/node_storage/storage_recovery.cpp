@@ -4,16 +4,26 @@
 namespace node::storage {
 bool RecoveryWriter::take_record(const sampling::AcquisitionRecord& record) {
     if (!can_take_record()) return false;
+    if (sync_journal_) {
+        sync_journal_[journal_rows_++] = record;
+        replay_next_ = journal_rows_;
+    }
     pending_ = record;
     phase_ = Phase::Append;
     return true;
 }
 void RecoveryWriter::release_pending() {
     pending_.reset(); pending_retry_ = pending_uncertain_ = false; phase_ = Phase::Ready;
+    if (replay_next_ < journal_rows_) load_replay_record();
+}
+void RecoveryWriter::load_replay_record() {
+    pending_ = sync_journal_[replay_next_++];
+    pending_retry_ = pending_uncertain_ = true;
+    phase_ = Phase::Append;
 }
 void RecoveryWriter::failed(std::uint64_t now_ms) {
     constexpr unsigned delays[] = {250, 500, 1000, 2000, 5000};
-    active_ = false; final_verification_ = false;
+    active_ = false; final_verification_ = false; verification_appends_ = 0;
     ++stats_.errors;
     if (verification_active_) {
         // A concurrent writer failure can prevent completing the old readback.
@@ -27,7 +37,10 @@ void RecoveryWriter::failed(std::uint64_t now_ms) {
     // fclose is best-effort and may itself complete a prior uncertain write.
     // Replayed records keep their original acquisition_index for duplicate detection.
     backend_.abandon();
-    if (pending_) pending_retry_ = true;
+    if (journal_rows_) {
+        replay_next_ = 0;
+        load_replay_record();
+    } else if (pending_) pending_retry_ = true;
     next_retry_ms_ = backend_.completed_at_ms(now_ms) + delays[std::min(backoff_, 4U)];
     if (backoff_ < 4) ++backoff_;
 }
@@ -35,7 +48,7 @@ void RecoveryWriter::verify_one(std::uint64_t now_ms) {
     ++stats_.verification_steps;
     if (phase_ == Phase::Verify) ++stats_.verification_backpressure_steps;
     const auto outcome = backend_.verify_step();
-    verification_due_ = false;
+    verification_due_ = false; verification_appends_ = 0;
     if (outcome == VerifyResult::Pending) { operation_ = Operation::VerifyProgress; return; }
     const auto checked_rows = verification_rows_;
     verification_active_ = false; verification_rows_ = 0;
@@ -53,7 +66,17 @@ void RecoveryWriter::verify_one(std::uint64_t now_ms) {
     // accepted while waiting for flush/rollover. Retry only that actual pending.
     if (pending_ && phase_ != Phase::Append) pending_uncertain_ = true;
     backend_.abort_verification();
-    operation_ = Operation::VerifyFailed; failed(now_ms);
+    operation_ = Operation::VerifyFailed;
+    if (stop_on_final_read_error_ && final_verification_ && !pending_ && !journal_rows_ && !rows_) {
+        // Final writer already closed. Reopening creates an empty file and
+        // cannot verify the closed segment. Keep its failure for the caller.
+        ++stats_.errors;
+        final_verification_ = false;
+        active_ = false;
+        finished_ = true;
+        return;
+    }
+    failed(now_ms);
 }
 void RecoveryWriter::step(std::uint64_t now_ms) {
     operation_ = Operation::None;
@@ -68,7 +91,8 @@ void RecoveryWriter::step(std::uint64_t now_ms) {
             return;
         }
         ++stats_.recoveries;
-        active_ = true; backoff_ = rows_ = unflushed_rows_ = 0;
+        // Preserve backoff_ until a flush/verify succeeds so post-open write failures back off.
+        active_ = true; rows_ = unflushed_rows_ = 0;
         phase_ = pending_ ? Phase::Append : Phase::Ready;
         operation_ = Operation::Recovered;
         return;
@@ -106,7 +130,11 @@ void RecoveryWriter::step(std::uint64_t now_ms) {
             operation_ = Operation::AppendFailed; failed(now_ms); return;
         }
         ++stats_.append_accepted; ++rows_; ++unflushed_rows_;
-        if (verification_active_) verification_due_ = true;
+        // A 4KiB read after EVERY row can throttle the writer below its
+        // producer at slow SPI clocks. Bound readback by an append quota;
+        // idle/rollover/finalization still drain the previous reader fully.
+        if (verification_active_ && ++verification_appends_ >= verification_stride_rows_)
+            verification_due_ = true;
         operation_ = Operation::AppendAccepted;
         if (rows_ % flush_rows_ == 0) phase_ = Phase::Flush;
         else if (rows_ >= rollover_rows_) phase_ = Phase::Verify;
@@ -119,7 +147,9 @@ void RecoveryWriter::step(std::uint64_t now_ms) {
             pending_uncertain_ = true;
             operation_ = Operation::FlushFailed; failed(now_ms); return;
         }
+        backoff_ = 0;
         stats_.flush_accepted += unflushed_rows_; unflushed_rows_ = 0;
+        journal_rows_ = replay_next_ = 0;
         operation_ = Operation::FlushAccepted;
         if (rows_ >= rollover_rows_) phase_ = Phase::Verify; else release_pending();
         return;
@@ -134,9 +164,11 @@ void RecoveryWriter::step(std::uint64_t now_ms) {
                 operation_ = Operation::VerifyFailed; failed(now_ms); return;
             }
             verification_rows_ = rows_;
-            verification_active_ = verification_due_ = true;
+            verification_active_ = verification_due_ = true; verification_appends_ = 0;
             ++stats_.deferred_files;
+            backoff_ = 0;
             stats_.flush_accepted += unflushed_rows_; unflushed_rows_ = 0;
+            journal_rows_ = replay_next_ = 0;
             // The closed file remains evidence, not VERIFIED. Subsequent old
             // readback failure cannot replay its whole contents from one slot.
             release_pending(); rows_ = 0;
@@ -152,7 +184,9 @@ void RecoveryWriter::step(std::uint64_t now_ms) {
             operation_ = Operation::VerifyFailed; failed(now_ms); return;
         }
         ++stats_.verified_files; stats_.verified_rows += rows_;
+        backoff_ = 0;
         stats_.flush_accepted += unflushed_rows_; unflushed_rows_ = 0;
+        journal_rows_ = replay_next_ = 0;
         // A later open failure MUST NOT replay a record in a verified file.
         release_pending(); rows_ = 0;
         if (finish_requested_) { finished_ = true; active_ = false; }

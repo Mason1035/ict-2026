@@ -1,4 +1,35 @@
-# NODE-01 正式 ESP-IDF 固件框架
+# NODE-01 V0.1 集成固件
+
+## 当前版本（2026-10-28 第四轮真实整合定向修复）
+
+最新真实整合运行完成约120秒采集，24725条产生、24435条通过文件验证、290条队列丢失（1.1729%），结论为 **QUALITY_LIMITED / INTEGRATION_NOT_READY**。重启前TOE初始化失败/异常边沿与重启后的稳定采集已分别分析。本轮修正IRQ过早启用和未初始化设备被通知放大读取的问题，分开启动/采集边沿；存储保持相同CSV字节语义及每256行同步，减少格式化调用，采用4KiB写缓冲、细分墙时和排除队列等待的服务预算。Queue256仅辅助吸收长尾，不构成持续吞吐证明。SD时钟保持10MHz，不提高频率。
+
+三种新候选位于 `build-v01-fourth-board-{fix,sensors,storage}`，各自实际sdkconfig与第三轮对应模式一致，均120秒受控窗口。实际软件结果和完整BIN/ELF哈希见仓库 `docs/test_records/NODE-01/2026-10-28-fourth-board-faults/verification-summary.json`；分析及手动复测顺序见 [第四轮真实整合报告](docs/FOURTH_BOARD_INTEGRATION_REVIEW_2026-10-28.md)。新固件均 **NEED_HARDWARE_RETEST**，未自动操作硬件或提交；不能将Host/编译通过当成零丢样或异常物理根因已经解决。必须等待文件验证终态后再停止供电。
+
+## 历史版本（2026-10-27 第三轮隔离测试联合修复）
+
+第三轮片段日志确认：Sensors-only无已记录I2C错误但有效约95～96Hz；Storage-only在1MHz有持续积压和1.63秒长尾。当前最小修复保ODR100，采用冻结GPIO4/5的可选DRDY+显式轮询回退，并增加受控120秒采集后排空/完整验证（含独立行数）。三种候选位于 `build-v01-third-board-{sensors,storage,fix}`，SD候选10MHz仅为待测配置，Queue仍128。最新分析、配置边界和复测步骤见 [第三轮联合修复报告](docs/THIRD_BOARD_FAULT_REVIEW_2026-10-27.md)；证据位于 `docs/test_records/NODE-01/2026-10-27-third-board-faults/`。所有新镜像仍 **NEED_HARDWARE_RETEST / INTEGRATION_NOT_READY**，120秒到期不等于可以断电，须等文件验证终态。以下保留前轮历史说明，旧目录/调度/回读参数不能代替本轮实际sdkconfig。
+
+第二次实板确认任务平均周期约100Hz，但有效IMU采样及持续SD吞吐仍未通过。当前修复、隔离诊断和下一次最小验证顺序见 [第二次实板故障报告](docs/SECOND_BOARD_FAULT_REVIEW_2026-10-26.md)，证据位于 `docs/test_records/NODE-01/2026-10-26-second-board-faults/`。本轮补厂商I2C接口配置、分阶段错误诊断、16KiB批量写/4KiB回读、256行同步/4000行轮换及服务预算；Queue仍128。默认离线候选目录为 `build-v01-second-board-fix`，另有明确标注TEST_ONLY的传感器隔离和SYNTHETIC存储隔离构建。所有新镜像硬件结论仍 **NEED_HARDWARE_RETEST / INTEGRATION_NOT_READY**，不能把编译/Host通过当有效100Hz或持续206条/秒已通过。下文及FIRST_BOARD_TEST为较早阶段说明，旧64/1000/512B参数和构建目录不适用于本轮候选；以本报告及其config为准。
+
+首板故障修复已接入：用户真实日志记录为 **FIRST_BOARD_PARTIAL_PASS / INTEGRATION_NOT_READY**，不能沿用为本轮修复固件的通过结论。最新依据见 [首板故障报告](docs/FIRST_BOARD_FAULT_REVIEW_2026-10-25.md)：I2C等待量化guard、ADS原始初始化错误保留、周期miss锁定修复、512字节交错回读及分项耗时诊断。Queue仍128、目标采样率不变。当前网络关闭构建目录 `build-v01-first-board-fix`，新证据为 `docs/test_records/NODE-01/2026-10-25-first-board-faults/`；修复版硬件结论仍 **NEED_HARDWARE_RETEST**。下方10月23/25早前说明是阶段历史，首次/再次操作以更新后的上板指南为准。
+
+2026-10-25 Runtime 审查修复：整组快照提交、独立 ADS 等待上限、SD 恢复状态机与 pending 重试、分类失败计数、周期 miss 重建基准及启动进度观察已接入。最新结论见 [代码审查报告](docs/V01_CODE_REVIEW_2026-10-25.md)，证据写入 `docs/test_records/NODE-01/2026-10-25-v01-code-review/`，不覆盖以下 10 月 23 日记录。实板仍 NOT_RUN。首次操作请使用更新后的上板指南。
+
+现有工程已接入双 ICM-42688-P、ADS1115 三路原始采集、FreeRTOS Sampling、SensorSnapshot 和 SDSPI 工程诊断日志；另实现可选 Wi-Fi/MQTT、v2 序列化及持久化身份分配。代码版本 `0.1.0-integration`，在既有李青原分支开发，未提交、未烧录、未打开串口。
+
+默认配置用于首次本地采集验证：I2C 100kHz、SD 1MHz、IMU ODR/轮询目标 100Hz、Soil 每路目标 2Hz、通信关闭。400kHz/20MHz 是后续实测目标。Risk 三字段保持 null，报警输出禁用，LoRa 未实现。工程诊断 CSV 不是正式实验 CSV，也不是训练数据。
+
+- [本轮开发报告与验收表](docs/V01_INTEGRATION_REPORT.md)
+- [首次上板指南](docs/FIRST_BOARD_TEST.md)：须用户审查并自行决定烧录；不沿用历史串口号。
+- 构建证据：仓库 `docs/test_records/NODE-01/2026-10-23-v01-final-local/`、`2026-10-23-v01-final-network/`；主机及静态检查：`2026-10-23-v01-verification/`。
+- 新增组件 `node_drivers`、`node_storage`、`node_comm`，复用 `node_board`、`node_contracts`、`node_logic`、`node_runtime`。冻结 GPIO、协议头、Risk 算法和队友工程未改。
+
+以下内容保留为 **2026-09-28 框架阶段历史说明**，其中“未实现”、旧二进制大小、旧分支来源和 COM7 均不代表本轮状态；本轮操作以以上报告和指南为准。
+
+---
+
+## 历史：NODE-01 正式 ESP-IDF 固件框架
 
 负责人：李青原。项目位置 `ict-2026/firmware/node01`，属于现有“李青原”分支；目录名是实现约定，不是新增 FROZEN 事实。版本 `0.1.0-framework`。
 

@@ -7,3 +7,11 @@
 /firmware/node01/tools/**/__pycache__/
 /firmware/node01/tests/__pycache__/
 # firmware/node01/.gitignore already excludes its build*/ directories.
+
+# Global safety guards against build outputs, caches, and raw NVS/flash backups
+**/build*/
+**/__pycache__/
+*.pyc
+*.elf
+*.map
+**/*nvs*.bin

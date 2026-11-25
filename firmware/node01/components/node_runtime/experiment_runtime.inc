@@ -35,6 +35,9 @@ void experiment_command(experiment::Request request, unsigned endpoint) {
     if (request.command == experiment::Command::Start) {
         portENTER_CRITICAL(&snapshot_lock);
         const bool accepted = experiment_session.request_start(request.seconds);
+#ifdef CONFIG_NODE01_TOE_STATUS_TRACE
+        if (accepted) toe_start_request_us = now;
+#endif
         const auto state = experiment_session.observation().state;
         portEXIT_CRITICAL(&snapshot_lock);
         ESP_LOGI(tag,"EXP_ACK endpoint=%u command=START accepted=%d seconds=%u state=%s; accepted request is not BEGIN",endpoint,accepted,request.seconds,experiment::name(state));

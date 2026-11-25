@@ -17,12 +17,19 @@ namespace injection {
 enum class Fault { None, PartialWrite, Write, Flush, Sync, Close, Read };
 Fault next = Fault::None;
 unsigned fired = 0;
+int read_skip = -1;
+bool short_read_once = false;
 bool take(Fault fault) {
     if (next != fault) return false;
     next = Fault::None; ++fired; return true;
 }
 void arm(Fault fault) { assert(next == Fault::None); next = fault; fired = 0; }
-void consumed() { assert(next == Fault::None && fired == 1); }
+void arm_read_after(unsigned skip_successes) {
+    assert(next == Fault::None && read_skip < 0);
+    next = Fault::Read; fired = 0; read_skip = static_cast<int>(skip_successes);
+}
+void arm_short_read() { assert(!short_read_once); short_read_once = true; }
+void consumed() { assert(next == Fault::None && fired == 1 && read_skip < 0); }
 }
 
 extern "C" {
@@ -66,7 +73,21 @@ int wrapped_commit(int fd) {
 Commit __wrap___imp__commit = wrapped_commit;
 int __real_read(int, void*, unsigned int);
 int __wrap_read(int fd, void* data, unsigned int count) {
-    if (injection::take(injection::Fault::Read)) { errno = EIO; return -1; }
+    if (fd >= 3 && injection::next == injection::Fault::Read) {
+        if (injection::read_skip > 0) {
+            --injection::read_skip;
+        } else {
+            injection::read_skip = -1;
+            injection::next = injection::Fault::None;
+            ++injection::fired;
+            errno = EIO;
+            return -1;
+        }
+    }
+    if (fd >= 3 && injection::short_read_once && count > 100) {
+        injection::short_read_once = false;
+        return __real_read(fd, data, 100);
+    }
     return __real_read(fd, data, count);
 }
 #else
@@ -77,7 +98,21 @@ int __wrap_fsync(int fd) {
 }
 ssize_t __real_read(int, void*, std::size_t);
 ssize_t __wrap_read(int fd, void* data, std::size_t count) {
-    if (injection::take(injection::Fault::Read)) { errno = EIO; return -1; }
+    if (fd >= 3 && injection::next == injection::Fault::Read) {
+        if (injection::read_skip > 0) {
+            --injection::read_skip;
+        } else {
+            injection::read_skip = -1;
+            injection::next = injection::Fault::None;
+            ++injection::fired;
+            errno = EIO;
+            return -1;
+        }
+    }
+    if (fd >= 3 && injection::short_read_once && count > 100) {
+        injection::short_read_once = false;
+        return __real_read(fd, data, 100);
+    }
     return __real_read(fd, data, count);
 }
 #endif
@@ -234,6 +269,120 @@ void writer_never_counts_failed_file_as_verified(const std::string& root) {
         }
     }
 }
+
+void mid_read_short_read_and_truncation_failures(const std::string& root) {
+    const auto dir = directory(root, "midread");
+    DiagnosticLog log;
+    assert(log.open_new(dir.c_str(), metadata));
+    for (std::uint64_t i = 0; i < 400; ++i) assert(log.append(record(i)));
+    ClosedSegment closed;
+    assert(log.close_for_verification(closed));
+    assert(closed.bytes > 3 * IncrementalVerifier::read_quantum && closed.rows == 400);
+
+    // 1) Mid-file EIO with 4096-byte subreads preserves exact byte count already read.
+    IncrementalVerifier reader;
+    assert(!reader.begin(closed, 0) && reader.last_error() == EINVAL);
+    assert(!reader.begin(closed, IncrementalVerifier::read_quantum + 1) && reader.last_error() == EINVAL);
+    assert(reader.begin(closed, IncrementalVerifier::read_quantum));
+    assert(reader.step() == VerifyResult::Pending && reader.bytes_read() == IncrementalVerifier::read_quantum);
+    injection::arm_read_after(1);
+    assert(reader.step() == VerifyResult::Pending &&
+           reader.bytes_read() == 2 * IncrementalVerifier::read_quantum);
+    assert(reader.step() == VerifyResult::Failed);
+    injection::consumed();
+    assert(reader.last_error() == EIO && !reader.active() &&
+           reader.bytes_read() == 2 * IncrementalVerifier::read_quantum);
+
+    // 2) Mid-file EIO with 512-byte single-sector subreads (fails on 6th subread inside 1st step,
+    //    and on 14th subread during 2nd step, keeping exact byte count).
+    assert(reader.begin(closed, IncrementalVerifier::sector_bytes));
+    assert(reader.subread_bytes() == IncrementalVerifier::sector_bytes &&
+           reader.expected_bytes() == closed.bytes &&
+           reader.expected_rows() == closed.rows);
+    injection::arm_read_after(5);
+    assert(reader.step() == VerifyResult::Failed);
+    injection::consumed();
+    assert(reader.last_error() == EIO && !reader.active() &&
+           reader.bytes_read() == 5 * IncrementalVerifier::sector_bytes);
+
+    assert(reader.begin(closed, IncrementalVerifier::sector_bytes));
+    injection::arm_read_after(13);
+    assert(reader.step() == VerifyResult::Pending &&
+           reader.bytes_read() == IncrementalVerifier::read_quantum);
+    assert(reader.step() == VerifyResult::Failed);
+    injection::consumed();
+    assert(reader.last_error() == EIO && !reader.active() &&
+           reader.bytes_read() == 13 * IncrementalVerifier::sector_bytes);
+
+    // 3) Valid non-EOF short read completes cleanly with exact CRC32 and row count.
+    injection::arm_short_read();
+    assert(reader.begin(closed, IncrementalVerifier::sector_bytes));
+    auto state = VerifyResult::Pending;
+    while (state == VerifyResult::Pending) state = reader.step();
+    assert(state == VerifyResult::Passed && !injection::short_read_once &&
+           reader.bytes_read() == closed.bytes && reader.rows_read() == closed.rows &&
+           reader.crc32_so_far() == closed.crc32);
+
+    // 4) Truncated file (1 byte short) and appended file (1 byte extra) both fail verification.
+    const std::string trunc_path = dir + "/trunc.csv";
+    std::filesystem::copy_file(closed.path, trunc_path);
+    std::filesystem::resize_file(trunc_path, closed.bytes - 1);
+    ClosedSegment trunc_seg = closed;
+    std::snprintf(trunc_seg.path, sizeof(trunc_seg.path), "%s", trunc_path.c_str());
+    assert(reader.begin(trunc_seg, IncrementalVerifier::sector_bytes));
+    state = VerifyResult::Pending;
+    while (state == VerifyResult::Pending) state = reader.step();
+    assert(state == VerifyResult::Failed && !reader.active());
+
+    const std::string extra_path = dir + "/extra.csv";
+    std::filesystem::copy_file(closed.path, extra_path);
+    {
+        std::ofstream extra(extra_path, std::ios::binary | std::ios::app);
+        extra.put('\n');
+        assert(extra.good());
+    }
+    ClosedSegment extra_seg = closed;
+    std::snprintf(extra_seg.path, sizeof(extra_seg.path), "%s", extra_path.c_str());
+    assert(reader.begin(extra_seg, IncrementalVerifier::sector_bytes));
+    state = VerifyResult::Pending;
+    while (state == VerifyResult::Pending) state = reader.step();
+    assert(state == VerifyResult::Failed && !reader.active());
+}
+
+void final_readback_failure_creates_no_empty_successor(const std::string& root) {
+    const auto dir = directory(root, "drained_fail");
+    RealLogBackend backend(dir);
+    RecoveryWriter writer(backend, 1, UINT32_MAX);
+    std::uint32_t t = 0;
+    writer.step(t);
+    assert(writer.active());
+    for (std::uint64_t i = 0; i < 40; ++i) {
+        while (!writer.can_take_record() && t < 500) writer.step(++t);
+        assert(writer.take_record(record(i)));
+        writer.step(++t);
+    }
+    while (writer.has_pending() && t < 500) writer.step(++t);
+    writer.finish_drained_capture();
+    while (!backend.verifier.active() && !writer.finished() && t < 1500) {
+        writer.step(++t);
+    }
+    assert(backend.verifier.active() && !writer.finished());
+    injection::arm(injection::Fault::Read);
+    writer.step(++t);
+    injection::consumed();
+    while (!writer.finished() && t < 2000) {
+        writer.step(++t);
+    }
+    assert(writer.finished() &&
+           writer.stats().verify_failures == 1 &&
+           writer.stats().errors == 1 &&
+           writer.stats().verified_files == 0 &&
+           writer.stats().verified_rows == 0 &&
+           writer.stats().uncertain_records == 40);
+    const auto files = std::distance(std::filesystem::directory_iterator(dir),
+                                     std::filesystem::directory_iterator{});
+    assert(files == 1);
+}
 }
 
 int main(int argc, char** argv) {
@@ -242,5 +391,7 @@ int main(int argc, char** argv) {
     assert(std::filesystem::create_directory(root));
     write_failures(root); flush_sync_close_failures(root); read_failure(root);
     writer_never_counts_failed_file_as_verified(root);
+    mid_read_short_read_and_truncation_failures(root);
+    final_readback_failure_creates_no_empty_successor(root);
     std::puts("HOST_STORAGE_IO_FAULT_TEST_PASS (TEST_ONLY real writer/CRT failures; FATFS/MicroSD HARDWARE_NOT_RUN)");
 }

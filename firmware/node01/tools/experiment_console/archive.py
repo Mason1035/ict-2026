@@ -140,7 +140,23 @@ def inspect(sd_dir, session_path=None, manifest_path=None, experiment_id=None):
         for name in ['serial.bin','device.txt','events.jsonl']:
             if before_check[str(run_dir/name)] != session['evidence_files'][name]:
                 raise ValueError('原始证据在验证期间变化：'+name)
-        checks = original_check(manifest_path, csv_path, begin_path, end_path, run_dir / 'device.txt')
+        # Explicit reviewed A/B manifests get the versioned semantics. Other
+        # historical manifests retain the original, stricter legacy validator.
+        from .calibration_v1.manifest_schema_adapter import profile_for_sha, verify_manifest
+        from .calibration_v1.common import unchanged
+        from .calibration_v1.verify_espidf_run import verify_run
+        profile = profile_for_sha(before_check[str(manifest_path)]['sha256']) if manifest_path and not plan['test_only'] else None
+        if profile and manifest_path is not None:
+            reviewed = verify_manifest(manifest_path)
+            report = verify_run({'experiment_id': experiment['experiment_id'], 'csv':str(csv_path),
+                 'begin':str(begin_path),'end':str(end_path),'session':str(session_path)},reviewed)
+            unchanged(reviewed['inputs'])
+            checks = {k:v for k,v in report.items() if k not in ('rows','boundary_records')}
+            if report['status'] != 'FILES_AND_UART_VERIFIED':
+                plan.update(host_status='HOST_FILES_INCOMPLETE', versioned_verifier=checks)
+                raise ValueError('版本化三件套核验未完成：' + ', '.join(report['reasons']))
+        else:
+            checks = original_check(manifest_path, csv_path, begin_path, end_path, run_dir / 'device.txt')
         if any(file_info(path) != before_check[str(path)] for path in validated_paths):
             raise ValueError('原校验器执行期间源文件发生变化，拒绝归档')
         if int(end['start_us']) != int(experiment['device_monotonic_us']):
@@ -200,6 +216,7 @@ def copy_verified(plan, output_dir):
                 raise ValueError('源/副本SHA或长度不同')
             mapped[extension] = {'source': str(source), 'destination': str(target), **expected}
         result = {**plan, 'action': 'COPIED_NOT_MOVED', 'archive_files': mapped,
+                  'host_file_copy':'HOST_FILE_COPY_VERIFIED',
                   'archive_directory': str(group), 'sd_originals_modified': False,
                   'renamed_copies_note': 'BEG/END内容仍引用原N名；已先校验原件，副本逐项SHA相同，映射保留。'}
         with (group / (plan['suggested_stem'] + '.session.json')).open('x', encoding='utf-8') as stream:

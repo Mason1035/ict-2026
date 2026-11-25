@@ -45,16 +45,22 @@ struct RecoveryStats {
 };
 class RecoveryWriter {
 public:
-    explicit RecoveryWriter(Backend& backend, unsigned flush_rows = 64, unsigned rollover_rows = 1000)
+    explicit RecoveryWriter(Backend& backend, unsigned flush_rows = 64, unsigned rollover_rows = 1000,
+            unsigned verification_stride_rows = 1, sampling::AcquisitionRecord* sync_journal = nullptr)
         : backend_(backend), flush_rows_(flush_rows ? flush_rows : 1),
-          rollover_rows_(rollover_rows ? rollover_rows : 1) {}
+          rollover_rows_(rollover_rows ? rollover_rows : 1),
+          verification_stride_rows_(verification_stride_rows ? verification_stride_rows : 1),
+          sync_journal_(sync_journal) {}
     bool active() const { return active_ && phase_ != Phase::Open && !final_verification_ && !finished_; }
     bool recovering() const { return !active_ && !finished_; } // normal rollover Open is not recovery
     bool verification_active() const { return verification_active_; }
-    bool can_take_record() const { return active() && !pending_ && !finish_requested_; }
+    bool can_take_record() const {
+        return active() && !pending_ && !finish_requested_ && journal_rows_ < flush_rows_;
+    }
     // Runtime requests this only after producers stop and its queue is drained.
     // An already-owned pending record still completes/retries before final close.
     void request_finish() { finish_requested_ = true; }
+    void finish_drained_capture() { stop_on_final_read_error_ = true; request_finish(); }
     bool finish_requested() const { return finish_requested_; }
     // Control-flow completion, NOT a loss-free data-quality or durability claim.
     // Historical error/uncertain/replay counters remain authoritative.
@@ -71,18 +77,24 @@ private:
     enum class Phase { Ready, Append, Flush, Verify, Open };
     void failed(std::uint64_t now_ms);
     void release_pending();
+    void load_replay_record();
     void verify_one(std::uint64_t now_ms);
     Backend& backend_;
-    const unsigned flush_rows_, rollover_rows_;
+    const unsigned flush_rows_, rollover_rows_, verification_stride_rows_;
+    // Optional caller-owned array of at least flush_rows_ records. Keep the
+    // complete unsynced suffix across remounts, including the failed append.
+    sampling::AcquisitionRecord* const sync_journal_;
+    unsigned journal_rows_ = 0, replay_next_ = 0;
     RecoveryStats stats_{};
     std::optional<sampling::AcquisitionRecord> pending_;
     bool active_ = false, pending_retry_ = false, pending_uncertain_ = false;
     bool verification_active_ = false, verification_due_ = false;
     bool finish_requested_ = false, finished_ = false, final_verification_ = false;
+    bool stop_on_final_read_error_ = false;
     Phase phase_ = Phase::Ready;
     Operation operation_ = Operation::None;
     unsigned backoff_ = 0, rows_ = 0, unflushed_rows_ = 0;
-    unsigned verification_rows_ = 0;
+    unsigned verification_rows_ = 0, verification_appends_ = 0;
     std::uint64_t next_retry_ms_ = 0;
 };
 }

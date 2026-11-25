@@ -10,9 +10,25 @@ config NODE01_DIAG_SENSORS_ONLY
     help
         Include SDK I2C NACK diagnostics that INFO builds cannot expose.
         Extra error logging changes timing; this is an isolation test.
+config NODE01_DIAG_TOE_BENCH
+    bool "TEST_ONLY: finite dual-IMU TOE bench, no SD or formal protocol"
+    depends on !NODE01_NETWORK_ENABLE
+    select NODE01_IMU_DRDY
 config NODE01_DIAG_STORAGE_ONLY
     bool "SYNTHETIC/TEST_ONLY: SD load, no I2C or network"
 endchoice
+
+config NODE01_TOE_BENCH_ADS
+    bool "TEST_ONLY: add ADS1115 load to dual-IMU bench"
+    depends on NODE01_DIAG_TOE_BENCH
+
+config NODE01_TOE_BENCH_SD
+    bool "TEST_ONLY: add finite MicroSD I/O without production Queue"
+    depends on NODE01_TOE_BENCH_ADS
+
+config NODE01_TOE_BENCH_QUEUE_SD
+    bool "TEST_ONLY: use production Queue and CSV Writer instead of synthetic SD I/O"
+    depends on NODE01_TOE_BENCH_SD
 choice NODE01_STARTUP_PLAN
     prompt "TEST_ONLY controlled integration startup experiment"
     depends on NODE01_DIAG_ACQUISITION
@@ -47,7 +63,7 @@ config NODE01_CAPTURE_SECONDS
         Periodic fsync remains. This does not guarantee zero loss/durability.
 config NODE01_SANDBOX_EXPERIMENT
     bool "Operator-controlled sandbox capture (30-300 seconds, one run per boot)"
-    depends on NODE01_DIAG_ACQUISITION && NODE01_STARTUP_IMU_FIRST && NODE01_IMU_DRDY && !NODE01_NETWORK_ENABLE
+    depends on NODE01_DIAG_ACQUISITION && NODE01_STARTUP_IMU_FIRST && NODE01_IMU_DRDY && !NODE01_NETWORK_ENABLE && !NODE01_WIFI_ONLY && !NODE01_MQTT_ONLY
     default n
     help
         Separate candidate mode. Initializes real sensors and SD, waits for
@@ -62,4 +78,12 @@ config NODE01_I2C_LOCK_DIAG_TRACE
         eight ADS channel attempts, bounded rolling history and anomalies.
         No timeout/priority/ODR change. Intrusion needs real-board assessment.
         Saturation or missing links explicitly prevents completeness claims.
+config NODE01_TOE_STATUS_TRACE
+    bool "TEST_ONLY: bounded TOE INT1 and existing INT_STATUS trace"
+    depends on NODE01_SANDBOX_EXPERIMENT && !NODE01_I2C_LOCK_DIAG_TRACE
+    default n
+    help
+        Observe existing rising IRQs and TOE INT_STATUS transactions.
+        No extra I2C reads, retries, GPIO transitions, or IRQ reconfiguration.
+        Export records in HealthTask after the capture has finished.
 endmenu

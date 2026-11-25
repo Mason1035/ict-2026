@@ -1,3 +1,4 @@
+#include "sdkconfig.h"
 #include "node/runtime.hpp"
 #include "node/runtime_config.hpp"
 #include "node/runtime_policy.hpp"
@@ -10,6 +11,21 @@
 #include "node/timeout_budget.hpp"
 #include "node/acquisition.hpp"
 #include "node/imu_irq_policy.hpp"
+#if defined(CONFIG_NODE01_TOE_STATUS_TRACE) || defined(CONFIG_NODE01_DIAG_TOE_BENCH)
+#include "node/toe_status_trace.hpp"
+#endif
+#ifdef CONFIG_NODE01_DIAG_TOE_BENCH
+#include "node/toe_bench_protocol.hpp"
+#ifdef CONFIG_NODE01_TOE_BENCH_ADS
+#include "node/bench_bus_observation.hpp"
+#include <new>
+#endif
+#include "driver/pulse_cnt.h"
+#include "esp_random.h"
+#include <cstdio>
+#include <fcntl.h>
+#include <unistd.h>
+#endif
 #include "node/diagnostic_log.hpp"
 #include "node/storage_recovery.hpp"
 #include "node/storage_pressure.hpp"
@@ -19,7 +35,6 @@
 #include "node/sd_card.hpp"
 #include "node/network.hpp"
 #include "esp_app_desc.h"
-#include "sdkconfig.h"
 #ifdef CONFIG_NODE01_I2C_LOCK_DIAG_TRACE
 #include "node/i2c_finite_trace.hpp"
 #include "node/i2c_trace_output.hpp"
@@ -30,6 +45,7 @@
 #include <cinttypes>
 #include <type_traits>
 #include <limits>
+#include <new>
 #ifdef CONFIG_NODE01_SANDBOX_EXPERIMENT
 #include "node/experiment_control.hpp"
 #include "node/experiment_metadata.hpp"
@@ -46,6 +62,12 @@
 #include "freertos/queue.h"
 #include "freertos/semphr.h"
 #include "freertos/task.h"
+#ifdef CONFIG_NODE01_TOE_BENCH_SD
+#include "node/sd_bench_pattern.hpp"
+#endif
+#ifdef CONFIG_NODE01_TOE_BENCH_QUEUE_SD
+#include "driver/sdspi_host.h"
+#endif
 
 namespace node::runtime {
 namespace {
@@ -62,6 +84,10 @@ EventGroupHandle_t events = nullptr;
 SemaphoreHandle_t i2c_mutex = nullptr;
 QueueHandle_t alarm_queue = nullptr;
 QueueHandle_t storage_queue = nullptr;
+StaticQueue_t storage_queue_control;
+std::uint8_t* storage_queue_payload = nullptr;
+using StorageSyncJournal = std::array<sampling::AcquisitionRecord, config::storage_flush_rows>;
+StorageSyncJournal* storage_sync_journal = nullptr;
 drivers::I2cBus sensor_bus;
 drivers::DualIcm42688 imus(sensor_bus);
 drivers::SoilAds1115 adc(sensor_bus);
@@ -84,6 +110,13 @@ struct IrqObservation {
 portMUX_TYPE irq_lock = portMUX_INITIALIZER_UNLOCKED;
 std::array<IrqObservation, 2> imu_irqs{};
 std::array<drivers::ImuIrqGate, 2> imu_irq_gates{}; // protected by irq_lock, including in ISR
+#ifdef CONFIG_NODE01_TOE_STATUS_TRACE
+drivers::toe_trace::Trace toe_status_trace;
+bool toe_trace_armed = false; // irq_lock. The experiment is single-use per boot.
+std::uint64_t toe_start_request_us = 0; // snapshot_lock
+std::uint64_t toe_previous_edge_us = 0, toe_previous_valid_us = 0;
+char toe_read_origin = 'A'; // ImuTask only
+#endif
 bool imu_irqs_ready = false, gpio_service_owned = false;
 std::array<std::atomic<std::uint32_t>, 2> imu_irq_services{}, imu_irq_empty{}, imu_irq_fallbacks{}, imu_irq_coalesced{};
 // ImuTask is the sole writer; Health prints the first observations using the existing snapshot lock.
@@ -213,7 +246,46 @@ bool capture_should_stop() {
 #endif
     return stop;
 }
+#ifdef CONFIG_NODE01_DIAG_TOE_BENCH
+static_assert(config::capture_seconds==toe_bench::window_seconds && config::imu_drdy_enabled);
+IrqObservation irq_observation(unsigned site);
+#ifdef CONFIG_NODE01_TOE_BENCH_QUEUE_SD
+constexpr EventBits_t bench_queue_done=1U<<17;
+std::atomic<unsigned> bench_readab_request{0};
+std::atomic<bool> bench_readab_done{false};
+std::atomic<std::size_t> bench_verify_subread{storage::IncrementalVerifier::read_quantum};
+std::atomic<bool> bench_open_request{false};
+std::atomic<bool> bench_file_ready_atomic{false};
+std::atomic<unsigned> bench_wrstress_request{0};
+std::atomic<bool> bench_wrstress_done{false};
+void enqueue_record(sampling::AcquisitionRecord&);
+void acknowledge_producer_stop(std::uint32_t);
+#endif
+#ifdef CONFIG_NODE01_TOE_BENCH_ADS
+#include "toe_ads_bench.inc"
+#endif
+#if defined(CONFIG_NODE01_TOE_BENCH_SD) && !defined(CONFIG_NODE01_TOE_BENCH_QUEUE_SD)
+#include "toe_sd_bench.inc"
+#endif
+#include "toe_bench_runtime.inc"
+#endif
 template<class Prepare> bool begin_capture(Prepare prepare) {
+#ifdef CONFIG_NODE01_DIAG_TOE_BENCH
+    if constexpr (config::toe_bench_ads_enabled) {
+        if (!wait_startup_stage(slow_initialized, "ADS_PREFLIGHT_NOT_COMPLETED") ||
+            slow_startup.load()!=startup::InitState::Ready) return bench_fail("ADS_PREFLIGHT",ESP_ERR_INVALID_STATE);
+    }
+#if defined(CONFIG_NODE01_TOE_BENCH_QUEUE_SD)
+    const auto ready=xEventGroupWaitBits(events,event::SD_OK | startup_aborted,pdFALSE,pdFALSE,
+                                        pdMS_TO_TICKS(config::startup_timeout_ms));
+    if (!(ready & event::SD_OK) || (ready & startup_aborted)) return bench_fail("QUEUE_SD_STARTUP",ESP_ERR_INVALID_STATE);
+#elif defined(CONFIG_NODE01_TOE_BENCH_SD)
+    if (!(xEventGroupWaitBits(events,bench_sd_ready,pdFALSE,pdTRUE,pdMS_TO_TICKS(5000)) & bench_sd_ready) ||
+        bench_sd_mount_result!=ESP_OK) return bench_fail("SD_MOUNT_GATE",ESP_ERR_INVALID_STATE);
+#endif
+    if (!wait_bench_start(imu_startup[0].load()==startup::InitState::Ready &&
+                          imu_startup[1].load()==startup::InitState::Ready)) return false;
+#else
     // Fix the previous fail-open timeout: no capture epoch or producer release
     // without SD mount+open. Failure cleanup stays with the StorageTask owner.
     bool storage_ready = !config::storage_enabled;
@@ -245,12 +317,29 @@ template<class Prepare> bool begin_capture(Prepare prepare) {
     const auto selected = experiment_observation();
     if (selected.state != experiment::State::StartPending || !experiment_start_storage_ok.load()) { abort_startup("EXPERIMENT_STORAGE_START_NOT_VERIFIED"); return false; }
 #endif
+#endif // dedicated TOE bench skips formal startup/SD gate
+#ifdef CONFIG_NODE01_TOE_STATUS_TRACE
+    portENTER_CRITICAL(&irq_lock);
+    toe_trace_armed = true;
+    portEXIT_CRITICAL(&irq_lock);
+#endif
     prepare(); // e.g. clear stale DRDY/arm only ready sites BEFORE the capture epoch
 #ifdef CONFIG_NODE01_SANDBOX_EXPERIMENT
     for (unsigned i = 0; i < 2; ++i) if (imus.diagnostic(static_cast<sampling::ImuSite>(i)).drdy_arm_error != ESP_OK) {
         portENTER_CRITICAL(&irq_lock); for (auto& irq : imu_irq_gates) irq.stop(); portEXIT_CRITICAL(&irq_lock);
         for (int pin : {board::pin::imu_top_int1,board::pin::imu_toe_int1}) gpio_intr_disable(static_cast<gpio_num_t>(pin));
         abort_startup("IMU_STARTUP_STATUS_CLEAR_FAILED"); return false;
+    }
+#endif
+#ifdef CONFIG_NODE01_DIAG_TOE_BENCH
+    if (bench_arm_result[0]!=ESP_OK || bench_arm_result[1]!=ESP_OK ||
+        !snapshot_bench_counters(bench_begin)) {
+        portENTER_CRITICAL(&irq_lock);
+        bench_armed=false;
+        for (auto& gate : imu_irq_gates) gate.stop();
+        portEXIT_CRITICAL(&irq_lock);
+        for (auto pin : bench_pins) gpio_intr_disable(pin);
+        return bench_fail("ARM_OR_PCNT_BEGIN",ESP_FAIL);
     }
 #endif
     const auto now = static_cast<std::uint64_t>(esp_timer_get_time());
@@ -271,14 +360,20 @@ template<class Prepare> bool begin_capture(Prepare prepare) {
 #ifdef CONFIG_NODE01_I2C_LOCK_DIAG_TRACE
     finite_locked([&]{finite_i2c_trace.begin(now);});
 #endif
+#ifdef CONFIG_NODE01_TOE_BENCH_ADS
+    bench_bus_active = true;
+#endif
     xEventGroupSetBits(events, capture_ready);
+#ifdef CONFIG_NODE01_DIAG_TOE_BENCH
+    ESP_LOGW(tag,"TOE_BENCH_BEGIN boot=%s start_us=%" PRIu64 " window_s=%u",bench_id,now,toe_bench::window_seconds);
+#endif
 #ifdef CONFIG_NODE01_SANDBOX_EXPERIMENT
     ESP_LOGW(tag,"EXPERIMENT_BEGIN id=%s monotonic_us=%" PRIu64 " requested_seconds=%u calibration=NOT_READY; UART operator latency not hardware sync",experiment_id,now,selected.seconds);
 #endif
     return true;
 }
 bool begin_capture() { return begin_capture([] {}); }
-void producer_stopped(std::uint32_t bit) {
+void acknowledge_producer_stop(std::uint32_t bit) {
     portENTER_CRITICAL(&snapshot_lock);
     capture_window.producer_done(bit);
 #ifdef CONFIG_NODE01_SANDBOX_EXPERIMENT
@@ -287,6 +382,9 @@ void producer_stopped(std::uint32_t bit) {
     portEXIT_CRITICAL(&snapshot_lock);
     ESP_LOGW(tag, "CAPTURE_PRODUCER_STOP bit=%lu actual_us=%" PRIu64 "; no further records from this producer",
         static_cast<unsigned long>(bit), static_cast<std::uint64_t>(esp_timer_get_time()));
+}
+void producer_stopped(std::uint32_t bit) {
+    acknowledge_producer_stop(bit);
     for (;;) vTaskDelay(pdMS_TO_TICKS(1000)); // keep handle valid for Health stack diagnostics
 }
 IrqObservation irq_observation(unsigned site) {
@@ -464,16 +562,24 @@ void imu_task(void*) {
             print_init_access("IMU_INIT_ACCESS", trace.critical[entry]);
         if (trace.first_failure_present) print_init_access("IMU_INIT_FIRST_FAILURE", trace.first_failure);
     }
+#ifndef CONFIG_NODE01_DIAG_TOE_BENCH
     if (!wait_startup_stage(slow_initialized, "ADS_INIT_NOT_COMPLETED")) {
         print_startup_timing(); park_startup(TaskId::Imu, "PREREQUISITE_BLOCKED");
     }
+#endif
     const bool capture_started = begin_capture([&] {
         for (unsigned i = 0; i < 2; ++i) {
             const auto site = static_cast<sampling::ImuSite>(i);
             const auto pin = static_cast<gpio_num_t>(i ? board::pin::imu_toe_int1 : board::pin::imu_top_int1);
             auto armed = ESP_ERR_INVALID_STATE;
             if (imu_irqs_ready && initialized[i]) {
+#ifdef CONFIG_NODE01_DIAG_TOE_BENCH
+                bench_arm_us[i]=esp_timer_get_time();
+#endif
                 armed = imus.prepare_drdy(site);
+#ifdef CONFIG_NODE01_DIAG_TOE_BENCH
+                append_bench_status(i);
+#endif
                 if (armed == ESP_OK) {
                     portENTER_CRITICAL(&irq_lock);
                     imu_irq_gates[i].arm_result(true);
@@ -488,6 +594,10 @@ void imu_task(void*) {
                     portEXIT_CRITICAL(&irq_lock);
                 }
             }
+#ifdef CONFIG_NODE01_DIAG_TOE_BENCH
+            bench_arm_result[i]=armed;
+            bench_arm_end_us[i]=esp_timer_get_time();
+#endif
             portENTER_CRITICAL(&snapshot_lock);
             imu_diagnostic_observation[i] = imus.diagnostic(site);
             portEXIT_CRITICAL(&snapshot_lock);
@@ -516,7 +626,29 @@ void imu_task(void*) {
         const auto site = static_cast<sampling::ImuSite>(i);
         sampling::AcquisitionRecord record;
         record.channel = i; record.attempted_uptime_us = esp_timer_get_time();
+#ifdef CONFIG_NODE01_TOE_STATUS_TRACE
+        if (i == 1) {
+            portENTER_CRITICAL(&irq_lock);
+            toe_previous_edge_us = imu_irqs[i].last_edge_us;
+            portEXIT_CRITICAL(&irq_lock);
+            toe_previous_valid_us = last_valid[i];
+            toe_read_origin = from_irq ? 'I' : 'P';
+        }
+#endif
+#ifdef CONFIG_NODE01_DIAG_TOE_BENCH
+        portENTER_CRITICAL(&irq_lock);
+        bench_last_edge_us=imu_irqs[i].last_edge_us;
+        portEXIT_CRITICAL(&irq_lock);
+        bench_last_valid_us=last_valid[i];
+        bench_origin=from_irq ? 'I' : 'P';
+#endif
         const auto result = imus.read(site, record.imu);
+#ifdef CONFIG_NODE01_DIAG_TOE_BENCH
+        append_bench_status(i);
+#endif
+#ifdef CONFIG_NODE01_TOE_BENCH_ADS
+        bench_note_imu(i, result, record.imu.acquired_uptime_us, last_valid[i]);
+#endif
         portENTER_CRITICAL(&snapshot_lock);
         imu_diagnostic_observation[i] = imus.diagnostic(site);
         portEXIT_CRITICAL(&snapshot_lock);
@@ -543,11 +675,21 @@ void imu_task(void*) {
     for (;;) {
         if (capture_should_stop()) {
             portENTER_CRITICAL(&irq_lock);
+#ifdef CONFIG_NODE01_TOE_STATUS_TRACE
+            toe_trace_armed = false; // freeze before any pending GPIO callback or exporter
+#endif
+#ifdef CONFIG_NODE01_DIAG_TOE_BENCH
+            bench_armed=false;
+#endif
             for (auto& gate : imu_irq_gates) gate.stop();
             portEXIT_CRITICAL(&irq_lock);
             for (int pin : {board::pin::imu_top_int1, board::pin::imu_toe_int1})
                 if (imu_irqs_ready) gpio_intr_disable(static_cast<gpio_num_t>(pin));
+#ifdef CONFIG_NODE01_DIAG_TOE_BENCH
+            finish_bench();
+#else
             producer_stopped(producer_imu);
+#endif
         }
         const auto cycle_start = static_cast<std::uint64_t>(esp_timer_get_time());
         if (previous_start) update_max(imu_start_period_max_us, bounded_us(cycle_start - previous_start));
@@ -670,6 +812,9 @@ void storage_test_producer(void*) {
     }
 }
 void slow_task(void*) {
+#ifdef CONFIG_NODE01_TOE_BENCH_ADS
+    bench_ads_task();
+#else
     await_start();
     if constexpr (config::startup_plan == startup::Plan::ImuFirst) {
         if (!wait_startup_stage(imu_initialized, "IMU_INIT_NOT_COMPLETED") ||
@@ -745,6 +890,7 @@ void slow_task(void*) {
             vTaskDelay(1); policy::rebase_after_yield(last_wake, xTaskGetTickCount());
         }
     }
+#endif
 }
 void risk_task(void*) {
     await_start();
@@ -787,18 +933,50 @@ void alarm_task(void*) {
         }
     }
 }
-#ifdef CONFIG_NODE01_NETWORK_ENABLE
+#if defined(CONFIG_NODE01_NETWORK_ENABLE) || defined(CONFIG_NODE01_WIFI_ONLY) || defined(CONFIG_NODE01_MQTT_ONLY)
 void comm_task(void*) {
     await_start();
+#if defined(CONFIG_NODE01_NETWORK_ENABLE) && !defined(CONFIG_NODE01_DIAG_TOE_BENCH)
+    // Let IMU, ADS1115, and initial SD mount finish before Wi-Fi RF init draws peak current.
+    if (events) {
+        xEventGroupWaitBits(
+            events, capture_ready | startup_aborted, pdFALSE, pdFALSE,
+            drivers::timing::guarded_wait_ticks(config::startup_timeout_ms + 2000U, configTICK_RATE_HZ));
+    }
+#endif
     static comm::Network network;
     const auto init = network.start();
-    if (init != ESP_OK) ESP_LOGE(tag, "COMM_BLOCKED %s; provisioning/identity required; sampling continues", esp_err_to_name(init));
+    if (init != ESP_OK) ESP_LOGE(tag, "COMM_BLOCKED %s; network remains disabled; sampling continues", esp_err_to_name(init));
     unsigned cycles = 0;
     for (;;) {
+#if defined(CONFIG_NODE01_REAL_TEST_ONLY)
+        const auto capture_status = []() -> comm::MqttOnly::CapturePermit {
+            const auto bits = xEventGroupGetBits(events);
+            if (!(bits & capture_ready) || !(bits & event::SD_OK) || (bits & startup_aborted)) return {};
+            const auto capture = capture_observation();
+            if (!capture.started || capture.stop_requested) return {};
+            return {capture.started_us, capture.started_us + config::capture_seconds * 1'000'000ULL};
+        };
+        const auto sd_ready = (system_events() & event::SD_OK) != 0;
+        if (const auto limit = publish_request.load()) {
+            const auto rc = sd_ready ? network.authorize_publish(limit) : ESP_ERR_INVALID_STATE;
+            ESP_LOGI(tag, "REAL_PUBLISH_GRANT rc=%d limit=%u", static_cast<int>(rc), limit);
+            publish_request.store(0);
+        }
+        network.poll(sensor_snapshot(), sd_ready, capture_status);
+#elif defined(CONFIG_NODE01_WIFI_ONLY) || defined(CONFIG_NODE01_MQTT_ONLY)
+        network.poll({}, false);
+#else
         network.poll(sensor_snapshot(), (system_events() & event::SD_OK) != 0);
+#endif
         set_observed(event::WIFI_UP, network.wifi_up());
         set_observed(event::MQTT_UP, network.mqtt_up());
-        if (++cycles % 40 == 0) ESP_LOGI(tag, "COMM wifi=%d mqtt=%d enqueued=%lu rejected=%lu edge_online=false; no durable receipt",
+        if (++cycles % 40 == 0) ESP_LOGI(tag,
+#ifdef CONFIG_NODE01_REAL_TEST_ONLY
+            "COMM_REAL_TEST_ONLY wifi=%d mqtt=%d local_qos0_returns=%lu rejected=%lu edge_online=false; no durable receipt",
+#else
+            "COMM wifi=%d mqtt=%d enqueued=%lu rejected=%lu edge_online=false; no durable receipt",
+#endif
             network.wifi_up(), network.mqtt_up(), static_cast<unsigned long>(network.enqueued()),
             static_cast<unsigned long>(network.rejected()));
         mark_progress(TaskId::CommSupervisor);
@@ -808,6 +986,13 @@ void comm_task(void*) {
 #endif
 void storage_task(void*) {
     await_start();
+#ifdef CONFIG_NODE01_TOE_BENCH_QUEUE_SD
+    if (!wait_startup_stage(slow_initialized,"QUEUE_SD_WAIT_ADS") ||
+        slow_startup.load()!=startup::InitState::Ready) {
+        abort_startup("QUEUE_SD_SENSOR_PREREQUISITE");
+        park_startup(TaskId::Storage,"QUEUE_SD_SENSOR_PREREQUISITE");
+    }
+#endif
     if constexpr (config::startup_plan == startup::Plan::ImuFirst) {
         if (!wait_startup_stage(slow_initialized, "SENSORS_INIT_NOT_COMPLETED") ||
             startup::storage_gate(config::startup_plan, imu_startup[0].load(), imu_startup[1].load(), slow_startup.load()) != startup::Gate::Proceed) {
@@ -838,7 +1023,12 @@ void storage_task(void*) {
         "# ads_pga_mv=%u; ads_sps=%u; soil_period_ms=%u; per_channel_time=%s; utc=unavailable\n",
         config::capture_seconds, config::capture_seconds ? "POST_CAPTURE_SINGLE_FILE" : "INTERLEAVED_SEGMENTS",
         config::imu_drdy_enabled ? "DRDY_WITH_EXPLICIT_FALLBACK" : "POLLING_OR_SYNTHETIC",
-        diagnostic::name(config::diagnostic_mode), diagnostic::source(config::diagnostic_mode), elf_hash,
+#ifdef CONFIG_NODE01_TOE_BENCH_QUEUE_SD
+        config::bench_queue_mode,
+#else
+        diagnostic::name(config::diagnostic_mode),
+#endif
+        diagnostic::source(config::diagnostic_mode), elf_hash,
         config::storage_flush_rows, config::effective_storage_segment_rows,
         static_cast<unsigned>(storage::DiagnosticLog::write_buffer_bytes), static_cast<unsigned>(storage::IncrementalVerifier::read_quantum),
         static_cast<unsigned>(config::storage_queue_length),
@@ -858,10 +1048,22 @@ void storage_task(void*) {
     public:
         SdBackend(storage::SdCard& card, storage::DiagnosticLog& log, const char* metadata)
             : card_(card), log_(log), metadata_(metadata) {}
+#ifdef CONFIG_NODE01_TOE_BENCH_QUEUE_SD
+        void set_premounted() { premounted_ = true; }
+#endif
         bool recover() override {
+            mount_timeout_retriable_ = false;
             const auto started = begin_io(StorageIo::Recover);
             abort_verification();
             log_.abandon();
+#ifdef CONFIG_NODE01_TOE_BENCH_QUEUE_SD
+            if (premounted_) {
+                premounted_ = false;
+                const bool opened = open_next();
+                end_io(StorageIo::Recover, opened, started);
+                return opened;
+            }
+#endif
             const auto reset = card_.reset();
             if (reset != ESP_OK) {
                 error_ = reset; error_domain_ = "esp_err_t"; error_path_ = storage::SdCard::mount_point;
@@ -871,11 +1073,22 @@ void storage_task(void*) {
             const auto mount = card_.mount();
             startup_phase_end(StartupStage::SdMount, card_.last_error());
             if (mount != PortStatus::Ready) {
+                mount_timeout_retriable_ = card_.mount_timeout_retriable();
                 error_ = card_.last_error(); error_domain_ = "esp_err_t"; error_path_ = storage::SdCard::mount_point;
                 end_io(StorageIo::Recover, false, started); return false;
             }
-            const bool opened = open_next();
-            end_io(StorageIo::Recover, opened, started); return opened;
+            log_.reset_directory_cache();
+            if (!open_next()) {
+                end_io(StorageIo::Recover, false, started); return false;
+            }
+            if (!log_.flush()) {
+                error_ = log_.last_error();
+                error_domain_ = "errno";
+                error_path_ = log_.path();
+                log_.abandon();
+                end_io(StorageIo::Recover, false, started); return false;
+            }
+            end_io(StorageIo::Recover, true, started); return true;
         }
         bool open_next() override {
             const auto started = begin_io(StorageIo::Open);
@@ -921,15 +1134,22 @@ void storage_task(void*) {
         bool begin_verify() override {
             const auto started = begin_io(StorageIo::Close);
             bool ok = observe(log_.close_for_verification(checking_));
+            std::size_t subread = storage::IncrementalVerifier::read_quantum;
+#ifdef CONFIG_NODE01_TOE_BENCH_QUEUE_SD
+            subread = bench_verify_subread.load();
+#endif
             if (ok) {
-                ok = verifier_.begin(checking_);
+                ok = verifier_.begin(checking_, subread);
                 error_ = ok ? 0 : (verifier_.last_error() ? verifier_.last_error() : errno);
                 error_path_ = checking_.path;
+#ifdef CONFIG_NODE01_TOE_BENCH_QUEUE_SD
+                if (ok) sdspi_host_get_diag_stats(&verify_start_diag_);
+#endif
             }
             end_io(StorageIo::Close, ok, started);
-            if (ok) ESP_LOGI(tag, "SD_VERIFY_BEGIN path=%s rows=%u bytes=%u crc32=%08lx quantum=%u; not VERIFIED yet",
+            if (ok) ESP_LOGI(tag, "SD_VERIFY_BEGIN path=%s rows=%u bytes=%u crc32=%08lx quantum=%u subread=%u; not VERIFIED yet",
                 checking_.path, checking_.rows, static_cast<unsigned>(checking_.bytes), static_cast<unsigned long>(checking_.crc32),
-                static_cast<unsigned>(storage::IncrementalVerifier::read_quantum));
+                static_cast<unsigned>(storage::IncrementalVerifier::read_quantum), static_cast<unsigned>(verifier_.subread_bytes()));
             return ok;
         }
         storage::VerifyResult verify_step() override {
@@ -938,15 +1158,87 @@ void storage_task(void*) {
             error_ = verifier_.last_error(); error_domain_ = "errno";
             error_path_ = checking_.path;
             end_io(StorageIo::VerifyChunk, result != storage::VerifyResult::Failed, started);
+#ifdef CONFIG_NODE01_TOE_BENCH_QUEUE_SD
+            if (result == storage::VerifyResult::Failed) {
+                sdspi_diag_stats_t now{};
+                sdspi_host_get_diag_stats(&now);
+                ESP_LOGE(tag, "SD_VERIFY_FAIL path=%s offset=%u expected_bytes=%u rows_read=%u expected_rows=%u crc_so_far=%08lx subread=%u errno=%d"
+                         " cmd17=%lu/%lu cmd18=%lu/%lu cmd12=%lu/%lu cmd13=%lu/%lu last_cmd=%d last_stage=%s last_arg=0x%08" PRIx32 " last_blk=%lu last_r1=0x%02x last_rc=0x%x",
+                         checking_.path, static_cast<unsigned>(verifier_.bytes_read()), static_cast<unsigned>(verifier_.expected_bytes()),
+                         verifier_.rows_read(), verifier_.expected_rows(), static_cast<unsigned long>(verifier_.crc32_so_far()),
+                         static_cast<unsigned>(verifier_.subread_bytes()), error_,
+                         static_cast<unsigned long>(now.cmd17_ok - verify_start_diag_.cmd17_ok),
+                         static_cast<unsigned long>(now.cmd17_err - verify_start_diag_.cmd17_err),
+                         static_cast<unsigned long>(now.cmd18_ok - verify_start_diag_.cmd18_ok),
+                         static_cast<unsigned long>(now.cmd18_err - verify_start_diag_.cmd18_err),
+                         static_cast<unsigned long>(now.cmd12_ok - verify_start_diag_.cmd12_ok),
+                         static_cast<unsigned long>(now.cmd12_err - verify_start_diag_.cmd12_err),
+                         static_cast<unsigned long>(now.cmd13_ok - verify_start_diag_.cmd13_ok),
+                         static_cast<unsigned long>(now.cmd13_err - verify_start_diag_.cmd13_err),
+                         now.last_fail_cmd, now.last_fail_stage[0] ? now.last_fail_stage : "none",
+                         now.last_fail_arg, static_cast<unsigned long>(now.last_fail_blk_idx),
+                         now.last_fail_r1, now.last_fail_rc);
+            } else if (result == storage::VerifyResult::Passed) {
+                sdspi_diag_stats_t now{};
+                sdspi_host_get_diag_stats(&now);
+                ESP_LOGI(tag, "SD_VERIFY_STATS path=%s subread=%u cmd17=%lu/%lu cmd18=%lu/%lu cmd12=%lu/%lu cmd13=%lu/%lu sec1=%lu secN=%lu",
+                         checking_.path, static_cast<unsigned>(verifier_.subread_bytes()),
+                         static_cast<unsigned long>(now.cmd17_ok - verify_start_diag_.cmd17_ok),
+                         static_cast<unsigned long>(now.cmd17_err - verify_start_diag_.cmd17_err),
+                         static_cast<unsigned long>(now.cmd18_ok - verify_start_diag_.cmd18_ok),
+                         static_cast<unsigned long>(now.cmd18_err - verify_start_diag_.cmd18_err),
+                         static_cast<unsigned long>(now.cmd12_ok - verify_start_diag_.cmd12_ok),
+                         static_cast<unsigned long>(now.cmd12_err - verify_start_diag_.cmd12_err),
+                         static_cast<unsigned long>(now.cmd13_ok - verify_start_diag_.cmd13_ok),
+                         static_cast<unsigned long>(now.cmd13_err - verify_start_diag_.cmd13_err),
+                         static_cast<unsigned long>(now.sectors_read_single - verify_start_diag_.sectors_read_single),
+                         static_cast<unsigned long>(now.sectors_read_multi - verify_start_diag_.sectors_read_multi));
+            }
+#endif
             if (result == storage::VerifyResult::Passed) verified_ = checking_;
             return result;
         }
+#ifdef CONFIG_NODE01_TOE_BENCH_QUEUE_SD
+        storage::VerifyResult run_readonly_pass(const storage::ClosedSegment& seg, std::size_t subread,
+                                                unsigned& out_steps, int& out_errno,
+                                                sdspi_diag_stats_t& out_diag, std::uint64_t& out_elapsed_us) {
+            verifier_.cancel();
+            sdspi_host_reset_diag_stats();
+            const auto t0 = static_cast<std::uint64_t>(esp_timer_get_time());
+            out_steps = 0;
+            out_errno = 0;
+            if (!verifier_.begin(seg, subread)) {
+                out_errno = verifier_.last_error();
+                out_elapsed_us = static_cast<std::uint64_t>(esp_timer_get_time()) - t0;
+                sdspi_host_get_diag_stats(&out_diag);
+                return storage::VerifyResult::Failed;
+            }
+            auto result = storage::VerifyResult::Pending;
+            auto last_yield_us = static_cast<std::uint64_t>(esp_timer_get_time());
+            while (result == storage::VerifyResult::Pending) {
+                result = verifier_.step();
+                ++out_steps;
+                const auto now = static_cast<std::uint64_t>(esp_timer_get_time());
+                if (now - last_yield_us >= 50000ULL) {
+                    mark_progress(TaskId::Storage);
+                    vTaskDelay(1);
+                    last_yield_us = static_cast<std::uint64_t>(esp_timer_get_time());
+                }
+            }
+            out_errno = verifier_.last_error();
+            out_elapsed_us = static_cast<std::uint64_t>(esp_timer_get_time()) - t0;
+            sdspi_host_get_diag_stats(&out_diag);
+            return result;
+        }
+        const storage::IncrementalVerifier& verifier() const { return verifier_; }
+#endif
         const storage::ClosedSegment& last_verified_segment() const { return verified_; }
         void abort_verification() override { verifier_.cancel(); }
         void abandon() override { verifier_.cancel(); log_.abandon(); }
         bool last_write_uncertain() const override { return log_.last_write_uncertain(); }
         int last_error() const override { return error_; }
         const char* error_domain() const { return error_domain_; }
+        bool mount_timeout_retriable() const { return mount_timeout_retriable_; }
         const char* error_path() const { return error_path_; }
         std::uint64_t completed_at_ms(std::uint64_t) const override { return uptime_ms(); }
     private:
@@ -956,15 +1248,27 @@ void storage_task(void*) {
         storage::SdCard& card_; storage::DiagnosticLog& log_; const char* metadata_;
         storage::IncrementalVerifier verifier_;
         storage::ClosedSegment checking_{}, verified_{};
+#ifdef CONFIG_NODE01_TOE_BENCH_QUEUE_SD
+        sdspi_diag_stats_t verify_start_diag_{};
+        bool premounted_ = false;
+#endif
         int error_ = 0; // SDK esp_err_t for mount/reset; errno for file operations, operation is logged
         const char* error_domain_ = "none";
+        bool mount_timeout_retriable_ = false;
         const char* error_path_ = storage::SdCard::mount_point;
     };
     static SdBackend backend(card, log, metadata); // fixed reader buffer does not consume the task stack
-    storage::RecoveryWriter writer(backend, config::storage_flush_rows, config::effective_storage_segment_rows);
+    storage::RecoveryWriter writer(backend, config::storage_flush_rows, config::effective_storage_segment_rows,
+        config::storage_readback_stride_rows, storage_sync_journal ? storage_sync_journal->data() : nullptr);
     sampling::AcquisitionRecord record;
     policy::StorageServiceBudget service_budget(config::storage_append_yield_rows, config::storage_work_budget_us);
     bool completion_reported = false;
+#ifdef CONFIG_NODE01_TOE_BENCH_QUEUE_SD
+    bool bench_file_ready=false;
+    bool bench_sd_mounted = false;
+    unsigned bench_mount_attempts = 0;
+    std::uint64_t bench_next_mount_ms = 0;
+#endif
 #ifdef CONFIG_NODE01_SANDBOX_EXPERIMENT
     static storage::ExperimentMetadata experiment_metadata;
     static storage::ExperimentRecord experiment_record;
@@ -975,9 +1279,303 @@ void storage_task(void*) {
 #endif
     std::uint64_t startup_abort_seen_us = 0;
     for (;;) {
-        // Never drain the queue during Recovery. At most one dequeued record
-        // belongs to the writer; on failure it precedes all later queued records.
+        // Stop dequeuing during Recovery. The writer retries its unsynced
+        // suffix before accepting any newer records.
         const auto capture = capture_observation();
+#ifdef CONFIG_NODE01_TOE_BENCH_QUEUE_SD
+        if (!bench_sd_mounted && !capture.started && !(xEventGroupGetBits(events) & startup_aborted)) {
+            if (uptime_ms() >= bench_next_mount_ms) {
+                ++bench_mount_attempts;
+                startup_phase_begin(StartupStage::SdMount);
+                const auto mount = card.mount();
+                startup_phase_end(StartupStage::SdMount, card.last_error());
+                if (mount == PortStatus::Ready) {
+                    bench_sd_mounted = true;
+                    backend.set_premounted();
+                    ESP_LOGW(tag, "TOE_QUEUE_SD_MOUNTED sd=1 sd_khz=%d mode=READONLY_UNTIL_START", CONFIG_NODE01_SD_KHZ);
+                    set_observed(event::SD_OK, !(xEventGroupGetBits(events) & startup_aborted));
+                } else if (startup::retry_sd_startup_mount(card.mount_timeout_retriable(),
+                                                            (xEventGroupGetBits(events) & startup_aborted) != 0,
+                                                            bench_mount_attempts)) {
+                    bench_next_mount_ms = uptime_ms() + 1000ULL;
+                    ESP_LOGW(tag, "TOE_QUEUE_SD_MOUNT_RETRY attempt=%u limit=%u rc=%d retry_ms=1000",
+                             bench_mount_attempts, startup::sd_startup_mount_attempts, card.last_error());
+                } else {
+                    ESP_LOGE(tag, "TOE_QUEUE_STARTUP_ERROR domain=esp_err_t rc=%d path=%s",
+                             card.last_error(), storage::SdCard::mount_point);
+                    abort_startup("QUEUE_SD_MOUNT_FAILED");
+                }
+            }
+            mark_progress(TaskId::Storage);
+            vTaskDelay(pdMS_TO_TICKS(20));
+            continue;
+        }
+        if (const auto readab_order = bench_readab_request.load()) {
+            if (!capture.started) {
+                set_observed(event::SD_OK, false);
+                backend.abandon();
+                static storage::ClosedSegment target{};
+                std::snprintf(target.path, sizeof(target.path), "%s/N0000195.CSV", storage::SdCard::mount_point);
+                target.bytes = 3434953U;
+                target.rows = 24653U;
+                target.crc32 = 0xbbb7508eU;
+                const esp_err_t init_status_rc = card.check_status();
+                ESP_LOGW(tag, "TOE_READAB_BEGIN order=%u target=%s expected_bytes=%u expected_rows=%u expected_crc32=%08lx initial_status_rc=%d",
+                         readab_order, target.path, static_cast<unsigned>(target.bytes), target.rows,
+                         static_cast<unsigned long>(target.crc32), static_cast<int>(init_status_rc));
+                const struct {
+                    unsigned pass_idx;
+                    const char* label;
+                    std::size_t subread;
+                } passes[2] = {
+                    {1U, readab_order == 2U ? "single_512" : "multi_4096",
+                     readab_order == 2U ? storage::IncrementalVerifier::sector_bytes : storage::IncrementalVerifier::read_quantum},
+                    {2U, readab_order == 2U ? "multi_4096" : "single_512",
+                     readab_order == 2U ? storage::IncrementalVerifier::read_quantum : storage::IncrementalVerifier::sector_bytes}
+                };
+                for (unsigned p = 0; p < 2; ++p) {
+                    bool remounted = false;
+                    esp_err_t remount_rc = ESP_OK;
+                    if (p == 1U) {
+                        const esp_err_t between_rc = card.check_status();
+                        if (between_rc != ESP_OK) {
+                            remounted = true;
+                            remount_rc = card.reset();
+                            if (remount_rc == ESP_OK) {
+                                remount_rc = (card.mount() == PortStatus::Ready) ? ESP_OK : card.last_error();
+                            }
+                        }
+                        ESP_LOGW(tag, "TOE_READAB_BETWEEN status_rc=%d remounted=%d remount_rc=%d",
+                                 static_cast<int>(between_rc), remounted, static_cast<int>(remount_rc));
+                    }
+                    unsigned steps = 0;
+                    int pass_errno = 0;
+                    std::uint64_t elapsed_us = 0;
+                    sdspi_diag_stats_t diag{};
+                    auto res = storage::VerifyResult::Failed;
+                    if (!remounted || remount_rc == ESP_OK) {
+                        res = backend.run_readonly_pass(target, passes[p].subread, steps, pass_errno, diag, elapsed_us);
+                    } else {
+                        pass_errno = EIO;
+                    }
+                    const esp_err_t post_status_rc = (remounted && remount_rc != ESP_OK) ? remount_rc : card.check_status();
+                    ESP_LOGW(tag, "TOE_READAB_PASS pass=%u label=%s subread=%u remounted=%d result=%s elapsed_us=%" PRIu64
+                             " steps=%u bytes=%u rows=%u crc32=%08lx errno=%d"
+                             " cmd17=%lu/%lu cmd18=%lu/%lu cmd12=%lu/%lu cmd13=%lu/%lu sec1=%lu secN=%lu"
+                             " post_status_rc=%d fail_cmd=%d fail_stage=%s fail_lba=0x%08" PRIx32 " fail_blk=%lu"
+                             " fail_r1=0x%02x fail_rc=0x%x",
+                             passes[p].pass_idx, passes[p].label, static_cast<unsigned>(passes[p].subread),
+                             remounted, res == storage::VerifyResult::Passed ? "PASS" : "FAIL",
+                             elapsed_us, steps,
+                             static_cast<unsigned>(backend.verifier().bytes_read()),
+                             backend.verifier().rows_read(),
+                             static_cast<unsigned long>(backend.verifier().crc32_so_far()),
+                             pass_errno,
+                             static_cast<unsigned long>(diag.cmd17_ok), static_cast<unsigned long>(diag.cmd17_err),
+                             static_cast<unsigned long>(diag.cmd18_ok), static_cast<unsigned long>(diag.cmd18_err),
+                             static_cast<unsigned long>(diag.cmd12_ok), static_cast<unsigned long>(diag.cmd12_err),
+                             static_cast<unsigned long>(diag.cmd13_ok), static_cast<unsigned long>(diag.cmd13_err),
+                             static_cast<unsigned long>(diag.sectors_read_single),
+                             static_cast<unsigned long>(diag.sectors_read_multi),
+                             static_cast<int>(post_status_rc),
+                             diag.last_fail_cmd,
+                             diag.last_fail_stage[0] ? diag.last_fail_stage : "none",
+                             diag.last_fail_arg,
+                             static_cast<unsigned long>(diag.last_fail_blk_idx),
+                             diag.last_fail_r1,
+                             diag.last_fail_rc);
+                }
+                const auto unmount_rc = card.reset();
+                ESP_LOGW(tag, "TOE_READAB_END order=%u unmount_rc=%d", readab_order, static_cast<int>(unmount_rc));
+                bench_readab_done.store(true);
+                park_startup(TaskId::Storage, "TOE_READAB_COMPLETE");
+            }
+        }
+        if (const auto wr_cycles = bench_wrstress_request.load()) {
+            if (!capture.started) {
+                set_observed(event::SD_OK, false);
+                backend.abandon();
+                alignas(4) static std::uint8_t wr_buf[4096];
+                alignas(4) static std::uint8_t rd_buf[4096];
+                static constexpr std::uint32_t crc_nibble[16] = {
+                    0x00000000U, 0x1db71064U, 0x3b6e20c8U, 0x26d930acU,
+                    0x76dc4190U, 0x6b6b51f4U, 0x4db26158U, 0x5005713cU,
+                    0xedb88320U, 0xf00f9344U, 0xd6d6a3e8U, 0xcb61b38cU,
+                    0x9b64c2b0U, 0x86d3d2d4U, 0xa00ae278U, 0xbdbdf21cU
+                };
+                auto crc_update = [&](std::uint32_t crc, const std::uint8_t* p, std::size_t n) {
+                    for (std::size_t i = 0; i < n; ++i) {
+                        crc ^= p[i];
+                        crc = (crc >> 4) ^ crc_nibble[crc & 15U];
+                        crc = (crc >> 4) ^ crc_nibble[crc & 15U];
+                    }
+                    return crc;
+                };
+                char tmp_path[64]{};
+                std::snprintf(tmp_path, sizeof(tmp_path), "%s/WRSTRESS.TMP", storage::SdCard::mount_point);
+                const esp_err_t init_status_rc = card.check_status();
+                ESP_LOGW(tag, "TOE_WRSTRESS_BEGIN cycles=%u target=%s size_bytes=1048576 sync_every_bytes=32768 initial_status_rc=%d",
+                         wr_cycles, tmp_path, static_cast<int>(init_status_rc));
+                unsigned passed_cycles = 0;
+                unsigned failed_cycles = 0;
+                for (unsigned c = 1; c <= wr_cycles; ++c) {
+                    sdspi_host_reset_diag_stats();
+                    int step_errno = 0;
+                    const char* fail_phase = "none";
+                    std::size_t wr_bytes = 0;
+                    std::size_t rd_bytes = 0;
+                    std::uint32_t expected_crc = 0xffffffffU;
+                    std::uint32_t actual_crc = 0xffffffffU;
+                    const auto t_wr0 = static_cast<std::uint64_t>(esp_timer_get_time());
+                    auto last_yield = t_wr0;
+                    bool ok = true;
+                    const int wfd = ::open(tmp_path, O_WRONLY | O_CREAT | O_TRUNC, 0600);
+                    if (wfd < 0) {
+                        ok = false;
+                        step_errno = errno ? errno : EIO;
+                        fail_phase = "open_write";
+                    } else {
+                        for (unsigned chunk = 0; chunk < 256U && ok; ++chunk) {
+                            for (std::size_t i = 0; i < sizeof(wr_buf); ++i) {
+                                wr_buf[i] = static_cast<std::uint8_t>((c * 73U + chunk * 17U + i * 31U) ^ (i >> 4));
+                            }
+                            expected_crc = crc_update(expected_crc, wr_buf, sizeof(wr_buf));
+                            std::size_t off = 0;
+                            while (off < sizeof(wr_buf)) {
+                                errno = 0;
+                                const ssize_t w = ::write(wfd, wr_buf + off, sizeof(wr_buf) - off);
+                                if (w <= 0) {
+                                    ok = false;
+                                    step_errno = errno ? errno : EIO;
+                                    fail_phase = "write";
+                                    break;
+                                }
+                                off += static_cast<std::size_t>(w);
+                                wr_bytes += static_cast<std::size_t>(w);
+                            }
+                            if (ok && ((chunk + 1U) % 8U == 0U)) {
+                                errno = 0;
+                                if (::fsync(wfd) != 0) {
+                                    ok = false;
+                                    step_errno = errno ? errno : EIO;
+                                    fail_phase = "fsync";
+                                }
+                            }
+                            const auto now = static_cast<std::uint64_t>(esp_timer_get_time());
+                            if (now - last_yield >= 50000ULL) {
+                                mark_progress(TaskId::Storage);
+                                vTaskDelay(1);
+                                last_yield = static_cast<std::uint64_t>(esp_timer_get_time());
+                            }
+                        }
+                        errno = 0;
+                        if (::close(wfd) != 0 && ok) {
+                            ok = false;
+                            step_errno = errno ? errno : EIO;
+                            fail_phase = "close_write";
+                        }
+                    }
+                    const auto wr_us = static_cast<std::uint64_t>(esp_timer_get_time()) - t_wr0;
+                    const auto t_rd0 = static_cast<std::uint64_t>(esp_timer_get_time());
+                    if (ok) {
+                        errno = 0;
+                        const int rfd = ::open(tmp_path, O_RDONLY);
+                        if (rfd < 0) {
+                            ok = false;
+                            step_errno = errno ? errno : EIO;
+                            fail_phase = "open_read";
+                        } else {
+                            while (ok && rd_bytes < 1048576U) {
+                                errno = 0;
+                                const ssize_t r = ::read(rfd, rd_buf, sizeof(rd_buf));
+                                if (r < 0) {
+                                    ok = false;
+                                    step_errno = errno ? errno : EIO;
+                                    fail_phase = "read";
+                                    break;
+                                }
+                                if (r == 0) {
+                                    ok = false;
+                                    step_errno = EIO;
+                                    fail_phase = "short_eof";
+                                    break;
+                                }
+                                actual_crc = crc_update(actual_crc, rd_buf, static_cast<std::size_t>(r));
+                                rd_bytes += static_cast<std::size_t>(r);
+                                const auto now = static_cast<std::uint64_t>(esp_timer_get_time());
+                                if (now - last_yield >= 50000ULL) {
+                                    mark_progress(TaskId::Storage);
+                                    vTaskDelay(1);
+                                    last_yield = static_cast<std::uint64_t>(esp_timer_get_time());
+                                }
+                            }
+                            if (ok) {
+                                errno = 0;
+                                const ssize_t eof_probe = ::read(rfd, rd_buf, 1);
+                                if (eof_probe != 0) {
+                                    ok = false;
+                                    step_errno = eof_probe < 0 ? (errno ? errno : EIO) : EFBIG;
+                                    fail_phase = "eof_probe";
+                                } else if (actual_crc != expected_crc) {
+                                    ok = false;
+                                    step_errno = EIO;
+                                    fail_phase = "crc_mismatch";
+                                }
+                            }
+                            errno = 0;
+                            if (::close(rfd) != 0 && ok) {
+                                ok = false;
+                                step_errno = errno ? errno : EIO;
+                                fail_phase = "close_read";
+                            }
+                        }
+                    }
+                    const auto rd_us = static_cast<std::uint64_t>(esp_timer_get_time()) - t_rd0;
+                    sdspi_diag_stats_t diag{};
+                    sdspi_host_get_diag_stats(&diag);
+                    const esp_err_t post_status_rc = card.check_status();
+                    ESP_LOGW(tag, "TOE_WRSTRESS_CYCLE cycle=%u result=%s phase=%s errno=%d wr_bytes=%u rd_bytes=%u"
+                             " crc_ok=%d wr_us=%" PRIu64 " rd_us=%" PRIu64
+                             " cmd17=%lu/%lu cmd18=%lu/%lu cmd12=%lu/%lu cmd13=%lu/%lu cmd24=%lu/%lu cmd25=%lu/%lu"
+                             " post_cs=%lu/%lu/%lu wr_busy_max_us=%lu last_wr_b0=%lu last_fail=%d:%s:0x%08" PRIx32 ":r1=0x%02x:rc=0x%x status_rc=%d",
+                             c, ok ? "PASS" : "FAIL", fail_phase, step_errno,
+                             static_cast<unsigned>(wr_bytes), static_cast<unsigned>(rd_bytes),
+                             (ok && actual_crc == expected_crc) ? 1 : 0, wr_us, rd_us,
+                             static_cast<unsigned long>(diag.cmd17_ok), static_cast<unsigned long>(diag.cmd17_err),
+                             static_cast<unsigned long>(diag.cmd18_ok), static_cast<unsigned long>(diag.cmd18_err),
+                             static_cast<unsigned long>(diag.cmd12_ok), static_cast<unsigned long>(diag.cmd12_err),
+                             static_cast<unsigned long>(diag.cmd13_ok), static_cast<unsigned long>(diag.cmd13_err),
+                             static_cast<unsigned long>(diag.cmd24_ok), static_cast<unsigned long>(diag.cmd24_err),
+                             static_cast<unsigned long>(diag.cmd25_ok), static_cast<unsigned long>(diag.cmd25_err),
+                             static_cast<unsigned long>(diag.post_cs_busy_waits),
+                             static_cast<unsigned long>(diag.post_cs_busy_bytes),
+                             static_cast<unsigned long>(diag.post_cs_busy_err),
+                             static_cast<unsigned long>(diag.write_busy_max_us),
+                             static_cast<unsigned long>(diag.write_busy_zeros_last),
+                             diag.last_fail_cmd, diag.last_fail_stage[0] ? diag.last_fail_stage : "none",
+                             diag.last_fail_arg, diag.last_fail_r1, diag.last_fail_rc, static_cast<int>(post_status_rc));
+                    if (!ok) {
+                        ++failed_cycles;
+                        const esp_err_t fail_status_rc = card.check_status();
+                        const esp_err_t reset_rc = card.reset();
+                        const esp_err_t mount_rc = (reset_rc == ESP_OK) ? ((card.mount() == PortStatus::Ready) ? ESP_OK : card.last_error()) : reset_rc;
+                        const esp_err_t remount_status_rc = (mount_rc == ESP_OK) ? card.check_status() : mount_rc;
+                        ESP_LOGW(tag, "TOE_WRSTRESS_SOFT_REMOUNT cycle=%u fail_status_rc=%d reset_rc=%d mount_rc=%d post_status_rc=%d",
+                                 c, static_cast<int>(fail_status_rc), static_cast<int>(reset_rc),
+                                 static_cast<int>(mount_rc), static_cast<int>(remount_status_rc));
+                        break;
+                    }
+                    ++passed_cycles;
+                }
+                const int unlink_rc = (card.status() == PortStatus::Ready) ? ::unlink(tmp_path) : -1;
+                const auto unmount_rc = card.reset();
+                ESP_LOGW(tag, "TOE_WRSTRESS_END cycles=%u passed=%u failed=%u unlink_rc=%d unmount_rc=%d",
+                         wr_cycles, passed_cycles, failed_cycles, unlink_rc, static_cast<int>(unmount_rc));
+                bench_wrstress_done.store(true);
+                park_startup(TaskId::Storage, "TOE_WRSTRESS_COMPLETE");
+            }
+        }
+#endif
 #ifdef CONFIG_NODE01_SANDBOX_EXPERIMENT
         if (!capture.started && !experiment_begin_written && experiment_observation().state == experiment::State::StartPending) {
             const auto session = experiment_observation();
@@ -1021,6 +1619,14 @@ void storage_task(void*) {
                     esp_err_to_name(cleanup), verified);
             park_startup(TaskId::Storage, "STARTUP_ABORT_CLEANUP_COMPLETE_OR_BLOCKED");
         }
+#ifdef CONFIG_NODE01_TOE_BENCH_QUEUE_SD
+        if (!capture.started && !bench_open_request.load()) {
+            set_observed(event::SD_OK, bench_sd_mounted && !(xEventGroupGetBits(events) & startup_aborted));
+            mark_progress(TaskId::Storage);
+            vTaskDelay(pdMS_TO_TICKS(20));
+            continue;
+        }
+#endif
         if (capture.stop_requested && uptime_ms() - capture.requested_stop_us / 1000 > 120000 && !writer.finished()) {
 #ifdef CONFIG_NODE01_SANDBOX_EXPERIMENT
             experiment_fail("FINALIZE_TIMEOUT_CSV_NOT_VERIFIED");
@@ -1052,7 +1658,7 @@ void storage_task(void*) {
         }
         if (capture.stop_requested && (capture.producers_done & producer_mask) == producer_mask &&
                 uxQueueMessagesWaiting(storage_queue) == 0 && !writer.has_pending()) {
-            writer.request_finish();
+            writer.finish_drained_capture();
 #ifdef CONFIG_NODE01_SANDBOX_EXPERIMENT
             portENTER_CRITICAL(&snapshot_lock); experiment_session.finalizing(true,true,false); portEXIT_CRITICAL(&snapshot_lock);
 #endif
@@ -1074,11 +1680,38 @@ void storage_task(void*) {
             }
         }
         set_observed(event::SD_OK,writer.active() && experiment_sd_prepared && !(xEventGroupGetBits(events)&startup_aborted));
+#elif defined(CONFIG_NODE01_TOE_BENCH_QUEUE_SD)
+        if (!capture.started && !bench_file_ready && !(xEventGroupGetBits(events) & startup_aborted)) {
+            // Errors are cumulative. Only a new recovery error can drive
+            // the startup gate while the writer waits out its backoff.
+            const bool mount_or_open_error = writer.stats().errors != prior_errors;
+            const bool sync_error = writer.active() && !log.flush();
+            if (mount_or_open_error && startup::retry_sd_startup_mount(
+                    backend.mount_timeout_retriable(),
+                    (xEventGroupGetBits(events) & startup_aborted) != 0,
+                    static_cast<unsigned>(writer.stats().recovery_attempts))) {
+                ESP_LOGW(tag, "TOE_QUEUE_SD_MOUNT_RETRY attempt=%u limit=%u rc=%d retry_ms=%" PRIu64,
+                         static_cast<unsigned>(writer.stats().recovery_attempts),
+                         startup::sd_startup_mount_attempts, backend.last_error(), writer.next_retry_ms());
+            } else if (mount_or_open_error || sync_error) {
+                ESP_LOGE(tag,"TOE_QUEUE_STARTUP_ERROR domain=%s rc=%d path=%s",
+                         mount_or_open_error ? backend.error_domain() : "errno",
+                         mount_or_open_error ? backend.last_error() : log.last_error(),
+                         mount_or_open_error ? backend.error_path() : log.path());
+                abort_startup("QUEUE_SD_MOUNT_OPEN_OR_SYNC_FAILED");
+            } else if (writer.active() && !(xEventGroupGetBits(events) & startup_aborted)) {
+                ESP_LOGW(tag,"TOE_QUEUE_FILE_READY path=%s queue=1 queue_capacity=%u storage_task=1 sd=1 sd_khz=%d network=0 sync=1",
+                         log.path(),static_cast<unsigned>(config::storage_queue_length),CONFIG_NODE01_SD_KHZ);
+                bench_file_ready=true;
+                bench_file_ready_atomic.store(true);
+            }
+        }
+        set_observed(event::SD_OK,bench_file_ready && writer.active() && !(xEventGroupGetBits(events)&startup_aborted));
 #else
         set_observed(event::SD_OK, writer.active());
 #endif
         if (writer.stats().errors != prior_errors) {
-            ESP_LOGE(tag, "SD_RECOVERY operation=%d error=%d domain=%s error_path=%s current_writer=%s pending=%d acquisition_index=%" PRIu64 " retry_ms=%" PRIu64 "; partial file retained; potential replay != proven loss",
+            ESP_LOGE(tag, "SD_RECOVERY operation=%d error=%d domain=%s error_path=%s current_writer=%s pending=%d last_dequeued_index=%" PRIu64 " retry_ms=%" PRIu64 "; partial file retained; potential replay != proven loss",
                 static_cast<int>(writer.last_operation()), backend.last_error(), backend.error_domain(), backend.error_path(), log.path(),
                 writer.has_pending(), record.acquisition_index, writer.next_retry_ms());
         }
@@ -1110,6 +1743,25 @@ void storage_task(void*) {
                     static_cast<unsigned long>(records_produced.load()), static_cast<unsigned long>(storage_queue_drops.load()),
                     s.append_accepted, s.verified_rows, s.errors, s.uncertain_records, s.replayed_records);
                 completion_reported = true;
+#ifdef CONFIG_NODE01_TOE_BENCH_QUEUE_SD
+                const auto& verified=backend.last_verified_segment();
+                const auto remaining=uxQueueMessagesWaiting(storage_queue);
+                const auto unmount=card.reset();
+                ESP_LOGW(tag,"TOE_QUEUE_RESULT path=%s produced=%lu enqueued=%lu dequeued=%lu appended=%" PRIu64
+                    " verified_rows=%" PRIu64 " verified_files=%" PRIu64 " bytes=%u crc32=%08lx clean=%d"
+                    " queue_drop=%lu internal_drop=%lu index_exhausted=%lu peak=%lu remaining=%u pending=%d"
+                    " errors=%" PRIu64 " uncertain=%" PRIu64 " replay=%" PRIu64 " retried=%" PRIu64
+                    " verify_failures=%" PRIu64 " unmount_rc=%d",
+                    verified.path[0] ? verified.path : log.path(),static_cast<unsigned long>(records_produced.load()),
+                    static_cast<unsigned long>(records_enqueued.load()),static_cast<unsigned long>(records_dequeued.load()),
+                    s.append_accepted,s.verified_rows,s.verified_files,static_cast<unsigned>(verified.bytes),
+                    static_cast<unsigned long>(verified.crc32),clean,static_cast<unsigned long>(storage_queue_drops.load()),
+                    static_cast<unsigned long>(storage_internal_drops.load()),static_cast<unsigned long>(acquisition_exhausted.load()),
+                    static_cast<unsigned long>(storage_queue_peak.load()),static_cast<unsigned>(remaining),writer.has_pending(),
+                    s.errors,s.uncertain_records,s.replayed_records,s.retried_records,s.verify_failures,unmount);
+                xEventGroupSetBits(events,bench_queue_done);
+                for (;;) vTaskDelay(pdMS_TO_TICKS(1000));
+#endif
 #ifdef CONFIG_NODE01_SANDBOX_EXPERIMENT
                 const auto session = experiment_observation();
                 const auto& verified = backend.last_verified_segment();
@@ -1170,6 +1822,53 @@ void storage_task(void*) {
         }
     }
 }
+#ifdef CONFIG_NODE01_TOE_STATUS_TRACE
+void print_toe_request(const char* window, const drivers::toe_trace::Request& r) {
+    ESP_LOGI(tag, "TOE_TRACE_READ window=%s seq=%lu task=ImuTask origin=%c address=0x69 reg=0x2d len=1"
+        " request_us=%" PRIu64 " sdk_begin_us=%" PRIu64 " sdk_end_us=%" PRIu64 " end_us=%" PRIu64
+        " sdk_entered=%d result=%ld status_present=%d status=0x%02x data_ready=%d"
+        " last_edge_us=%" PRIu64 " last_valid_us=%" PRIu64,
+        window, static_cast<unsigned long>(r.seq), r.origin, r.request_us, r.sdk_begin_us, r.sdk_end_us, r.end_us,
+        r.sdk_entered, static_cast<long>(r.result), r.status_present, r.status,
+        r.status_present ? ((r.status & 0x08) ? 1 : 0) : -1, r.last_edge_us, r.last_valid_us);
+    vTaskDelay(1); // let idle run between lines; exporter runs after storage terminal
+}
+void export_toe_trace(const policy::CaptureObservation& capture, const IrqObservation& irq) {
+    std::uint64_t start_request_us;
+    portENTER_CRITICAL(&snapshot_lock);
+    start_request_us = toe_start_request_us;
+    portEXIT_CRITICAL(&snapshot_lock);
+    const auto elapsed = capture.requested_stop_us - capture.started_us;
+    const auto abnormal = drivers::toe_trace::Trace::rate_abnormal(irq.capture_edges, elapsed);
+    ESP_LOGI(tag, "TOE_TRACE_BEGIN schema=1 experiment_id=%s start_request_us=%" PRIu64
+        " begin_us=%" PRIu64 " stop_us=%" PRIu64 " rising=%lu falling=NOT_CAPTURED"
+        " gpio_irq_total=%lu capture_rising=%lu saved_edges=%u requests=%lu first=%u before=%u after=%u"
+        " first_sdk_error_seq=%lu threshold_hz=500 rate_abnormal=%d",
+        experiment_id, start_request_us, capture.started_us, capture.requested_stop_us,
+        static_cast<unsigned long>(irq.edges), static_cast<unsigned long>(irq.edges),
+        static_cast<unsigned long>(irq.capture_edges), static_cast<unsigned>(toe_status_trace.edge_count),
+        static_cast<unsigned long>(toe_status_trace.total_requests), static_cast<unsigned>(toe_status_trace.first_count),
+        static_cast<unsigned>(toe_status_trace.before_count), static_cast<unsigned>(toe_status_trace.after_count),
+        static_cast<unsigned long>(toe_status_trace.first_error_seq), abnormal);
+    vTaskDelay(1);
+    if (abnormal) {
+        ESP_LOGW(tag, "TOE_IRQ_RATE_ABNORMAL capture_rising=%lu window_us=%" PRIu64 " threshold_hz=500",
+            static_cast<unsigned long>(irq.capture_edges), elapsed);
+        vTaskDelay(1);
+    }
+    for (std::size_t i = 0; i < toe_status_trace.edge_count; ++i) {
+        const auto& row = toe_status_trace.edges[i];
+        ESP_LOGI(tag, "TOE_TRACE_IRQ irq=%lu us=%" PRIu64 " gpio=5 trigger=RISING sampled_level=%d",
+            static_cast<unsigned long>(row.irq_number), row.us, row.level_high);
+        vTaskDelay(1);
+    }
+    for (std::size_t i = 0; i < toe_status_trace.first_count; ++i) print_toe_request("first", toe_status_trace.first[i]);
+    for (std::size_t i = 0; i < toe_status_trace.before_count; ++i) print_toe_request("before", toe_status_trace.before[i]);
+    if (toe_status_trace.first_error_seq) print_toe_request("error", toe_status_trace.first_error);
+    for (std::size_t i = 0; i < toe_status_trace.after_count; ++i) print_toe_request("after", toe_status_trace.after[i]);
+    ESP_LOGI(tag, "TOE_TRACE_END schema=1 experiment_id=%s", experiment_id);
+}
+#endif
 void health_task(void*) {
     await_start();
     const auto observation_start = uptime_ms();
@@ -1183,6 +1882,9 @@ void health_task(void*) {
     std::uint32_t previous_loops = 0, previous_produced = 0, previous_enqueued = 0, previous_dequeued = 0, previous_queue_drop = 0, previous_event_wakes = 0;
     std::array<std::uint32_t, 2> previous_edges{};
     std::uint64_t previous_us = 0, previous_appended = 0;
+#ifdef CONFIG_NODE01_TOE_STATUS_TRACE
+    bool toe_trace_exported = false;
+#endif
     // Single HealthTask owns these fixed snapshots. Keep the larger diagnostic
     // copies off its stack; no I/O is performed while snapshot_lock is held.
     static StorageObservation observed_storage;
@@ -1364,6 +2066,15 @@ void health_task(void*) {
                 d.address, d.sdk_errors, d.local_errors, d.sdk_invalid_states, d.local_invalid_states,
                 d.last_failed_lines.before_sda, d.last_failed_lines.before_scl,
                 d.last_failed_lines.after_sda, d.last_failed_lines.after_scl, d.probes, d.last_probe_error);
+        // Low-rate Health only. SDK recovery != conversion/sample recovery;
+        // read-to-clear IMU status/sample reads and all writes are NOT retried.
+        for (const auto& d : device)
+            ESP_LOGI(tag, "I2C_RETRY addr=0x%02x first_errors=%" PRIu64 " first_259=%" PRIu64
+                " attempts=%" PRIu64 " recovered=%" PRIu64 " failed=%" PRIu64 " retry_sdk=%" PRIu64
+                " last=R/0x%02x/%u original=%d result=%d policy=SAFE_READ_ONCE; recovered is SDK read, not sample PASS",
+                d.address, d.first_errors, d.first_invalid_states, d.retry_attempts, d.retry_recovered, d.retry_failed,
+                d.retry_sdk_calls, d.last_retry_reg, static_cast<unsigned>(d.last_retry_size),
+                d.last_retry_original_error, d.last_retry_error);
         const auto& st = observed_storage.stats;
 #ifdef CONFIG_NODE01_I2C_LOCK_DIAG_TRACE
         if(capture.started && capture.stop_requested && (capture.producers_done & producer_mask)==producer_mask && observed_storage.finished)
@@ -1386,10 +2097,10 @@ void health_task(void*) {
             st.verification_backpressure_steps);
         ESP_LOGI(tag, "SD_FAILURE write=%" PRIu64 " flush=%" PRIu64 " verify=%" PRIu64 " open=%" PRIu64 " recovery=%" PRIu64 " unavailable_drop=0",
             st.write_failures, st.flush_failures, st.verify_failures, st.open_failures, st.recovery_failures);
-        ESP_LOGI(tag, "STORAGE_SCHED explicit_yields=%lu sleep_us=%lu append_budget=%u wall_budget_us=%u flush_rows=%u segment_rows=%u queue_capacity=%u; budget excludes queue wait, checked AFTER each I/O",
+        ESP_LOGI(tag, "STORAGE_SCHED explicit_yields=%lu sleep_us=%lu append_budget=%u wall_budget_us=%u flush_rows=%u segment_rows=%u queue_capacity=%u readback_stride_rows=%u; budget excludes queue wait, checked AFTER each I/O",
             static_cast<unsigned long>(service_yields), static_cast<unsigned long>(service_sleep),
             config::storage_append_yield_rows, config::storage_work_budget_us, config::storage_flush_rows, config::effective_storage_segment_rows,
-            static_cast<unsigned>(config::storage_queue_length));
+            static_cast<unsigned>(config::storage_queue_length), config::storage_readback_stride_rows);
         constexpr const char* io_names[]{"recover_inclusive", "open", "append", "flush", "close_begin", "verify_4KiB", "queue_wait"};
         // Fixed histograms provide intervals, not invented exact percentiles.
         auto print_histogram = [&](const char* operation, const policy::LatencyHistogram& histogram) {
@@ -1491,6 +2202,15 @@ void health_task(void*) {
             !(i == index(TaskId::SlowSensor) && (capture.producers_done & producer_slow)) &&
             watches[i].observe(cycles[i], now_us/1000, config::progress_stall_ms, i == index(TaskId::Alarm)))
                 ESP_LOGE(tag, "TASK_NO_PROGRESS task=%s; liveness only, no unconditional watchdog feed", config::tasks[i].name);
+#ifdef CONFIG_NODE01_TOE_STATUS_TRACE
+        const auto toe_state = experiment_observation().state;
+        if (!toe_trace_exported && capture.started && capture.requested_stop_us >= capture.started_us &&
+            (capture.producers_done & producer_imu) && !irq_debug[1].enabled &&
+            (toe_state == experiment::State::Finalized || toe_state == experiment::State::Failed)) {
+            toe_trace_exported = true;
+            export_toe_trace(capture, irq_debug[1]);
+        }
+#endif
         previous_valid = valid; previous_loops = cycles[index(TaskId::Imu)];
         previous_produced = produced; previous_enqueued = enqueued; previous_dequeued = dequeued; previous_appended = st.append_accepted;
         previous_queue_drop = drops; previous_us = now_us;
@@ -1514,6 +2234,15 @@ void cleanup_failed_start() {
     for (auto& handle : handles) if (handle) { vTaskDelete(handle); handle = nullptr; }
     if (alarm_queue) { vQueueDelete(alarm_queue); alarm_queue = nullptr; }
     if (storage_queue) { vQueueDelete(storage_queue); storage_queue = nullptr; }
+    if (storage_queue_payload) { heap_caps_free(storage_queue_payload); storage_queue_payload = nullptr; }
+    if (storage_sync_journal) {
+        storage_sync_journal->~StorageSyncJournal();
+        heap_caps_free(storage_sync_journal);
+        storage_sync_journal = nullptr;
+    }
+#ifdef CONFIG_NODE01_TOE_BENCH_ADS
+    if (bench_ads_samples) { heap_caps_free(bench_ads_samples); bench_ads_samples=nullptr; }
+#endif
     sensor_bus.close();
     if (i2c_mutex) { vSemaphoreDelete(i2c_mutex); i2c_mutex = nullptr; }
     if (events) { vEventGroupDelete(events); events = nullptr; }
@@ -1524,19 +2253,51 @@ esp_err_t start() {
     if (started || events) return ESP_ERR_INVALID_STATE;
     events = xEventGroupCreate();
     i2c_mutex = xSemaphoreCreateMutex();
+#if defined(CONFIG_NODE01_DIAG_TOE_BENCH) && !defined(CONFIG_NODE01_TOE_BENCH_QUEUE_SD)
+    if (!events || !i2c_mutex) { cleanup_failed_start(); return ESP_ERR_NO_MEM; }
+#else
+#ifndef CONFIG_NODE01_TOE_BENCH_QUEUE_SD
     alarm_queue = xQueueCreate(config::alarm_queue_length, sizeof(risk_runtime::Snapshot));
+#endif
     const auto queue_internal_before = heap_caps_get_free_size(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
     const auto queue_largest_before = heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
-    storage_queue = xQueueCreate(config::storage_queue_length, sizeof(sampling::AcquisitionRecord));
-    ESP_LOGI(tag, "STORAGE_QUEUE_ALLOC rows=%u record_bytes=%u payload_bytes=%u internal_free_before=%u internal_largest_before=%u internal_free_after=%u internal_largest_after=%u allocated=%d; INTERNAL RAM, not PSRAM, payload excludes queue/allocator overhead",
+    if constexpr (config::storage_recovery_buffer) {
+        constexpr auto caps = MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT;
+        storage_queue_payload = static_cast<std::uint8_t*>(heap_caps_malloc(
+            config::storage_queue_length * sizeof(sampling::AcquisitionRecord), caps));
+        auto* memory = heap_caps_malloc(sizeof(StorageSyncJournal), caps);
+        if (memory) storage_sync_journal = new (memory) StorageSyncJournal{};
+        if (storage_queue_payload && storage_sync_journal) {
+            storage_queue = xQueueCreateStatic(config::storage_queue_length,
+                sizeof(sampling::AcquisitionRecord), storage_queue_payload, &storage_queue_control);
+        }
+    } else {
+        storage_queue = xQueueCreate(config::storage_queue_length, sizeof(sampling::AcquisitionRecord));
+    }
+    ESP_LOGI(tag, "STORAGE_QUEUE_ALLOC rows=%u record_bytes=%u payload_bytes=%u internal_free_before=%u internal_largest_before=%u internal_free_after=%u internal_largest_after=%u allocated=%d payload_memory=%s sync_journal_rows=%u",
         static_cast<unsigned>(config::storage_queue_length), static_cast<unsigned>(sizeof(sampling::AcquisitionRecord)),
         static_cast<unsigned>(config::storage_queue_length * sizeof(sampling::AcquisitionRecord)),
         static_cast<unsigned>(queue_internal_before), static_cast<unsigned>(queue_largest_before),
         static_cast<unsigned>(heap_caps_get_free_size(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT)),
-        static_cast<unsigned>(heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT)), storage_queue != nullptr);
-    if (!events || !i2c_mutex || !alarm_queue || !storage_queue) { cleanup_failed_start(); return ESP_ERR_NO_MEM; }
+        static_cast<unsigned>(heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT)), storage_queue != nullptr,
+        config::storage_recovery_buffer ? "PSRAM" : "INTERNAL",
+        storage_sync_journal ? config::storage_flush_rows : 0U);
+    if (!events || !i2c_mutex || (!config::toe_bench_enabled && !alarm_queue) || !storage_queue) {
+        cleanup_failed_start(); return ESP_ERR_NO_MEM;
+    }
+#endif
+#ifdef CONFIG_NODE01_TOE_BENCH_ADS
+    if (!prepare_bench_ads_trace()) { cleanup_failed_start(); return ESP_ERR_NO_MEM; }
+#endif
     ESP_LOGW(tag, "DIAGNOSTIC_MODE mode=%s source=%s sensors=%d storage=%d; not experiment/algorithm data",
-        diagnostic::name(config::diagnostic_mode), diagnostic::source(config::diagnostic_mode), config::sensors_enabled, config::storage_enabled);
+#if defined(CONFIG_NODE01_TOE_BENCH_QUEUE_SD)
+        config::bench_queue_mode,
+#elif defined(CONFIG_NODE01_TOE_BENCH_SD)
+        "TOE_ADS_SD_BENCH_TEST_ONLY",
+#else
+        config::toe_bench_ads_enabled ? "TOE_ADS_BENCH_TEST_ONLY" : diagnostic::name(config::diagnostic_mode),
+#endif
+        diagnostic::source(config::diagnostic_mode), config::sensors_enabled, config::storage_enabled);
     if constexpr (config::diagnostic_mode == diagnostic::Mode::SensorsOnly) {
         // The SDK's I2C_ENABLE_DEBUG_LOG compiles its NACK details and has its
         // own log-level constructor. Restrict this tag to DEBUG, not VERBOSE.
@@ -1566,7 +2327,7 @@ esp_err_t start() {
     }
     const std::array<TaskFunction_t, count> entries{
         config::sensors_enabled ? imu_task : storage_test_producer, risk_task, alarm_task, slow_task,
-#ifdef CONFIG_NODE01_NETWORK_ENABLE
+#if defined(CONFIG_NODE01_NETWORK_ENABLE) || defined(CONFIG_NODE01_WIFI_ONLY) || defined(CONFIG_NODE01_MQTT_ONLY)
         comm_task,
 #else
         nullptr,
@@ -1592,6 +2353,13 @@ esp_err_t start() {
         cleanup_failed_start(); return ESP_ERR_NO_MEM;
     }
     ESP_LOGW(tag,"SANDBOX_EXPERIMENT_CAPTURE mode_enabled=1 auto_start=0 range_s=30..300 one_per_boot=1 calibration=NOT_READY");
+#endif
+#if defined(CONFIG_NODE01_TOE_BENCH_SD) && !defined(CONFIG_NODE01_TOE_BENCH_QUEUE_SD)
+    static_assert(!config::storage_enabled && config::toe_bench_ads_enabled && !config::tasks[index(TaskId::CommSupervisor)].enabled);
+    if (xTaskCreatePinnedToCore(bench_sd_task,"SdBenchTask",6144,nullptr,3,nullptr,0)!=pdPASS) {
+        cleanup_failed_start();
+        return ESP_ERR_NO_MEM;
+    }
 #endif
     if constexpr (config::imu_drdy_enabled) {
         const auto irq_result = setup_imu_irqs();
@@ -1642,6 +2410,12 @@ static esp_err_t i2c_transaction_impl(I2cTransaction transaction, void* context
         }
 #endif
         const auto waited = bounded_us(esp_timer_get_time() - wait_started);
+#ifdef CONFIG_NODE01_DIAG_TOE_BENCH
+        if (xTaskGetCurrentTaskHandle()==handles[index(TaskId::Imu)]) bench_lock_wait_us=waited;
+#endif
+#ifdef CONFIG_NODE01_TOE_BENCH_ADS
+        if (xTaskGetCurrentTaskHandle()==handles[index(TaskId::SlowSensor)]) bench_ads_lock_wait_us=waited;
+#endif
         i2c_lock_wait_us.fetch_add(waited); update_max(i2c_lock_wait_max_us, waited);
         if (!acquired) {
             i2c_timeouts.fetch_add(1);
@@ -1721,6 +2495,16 @@ void imu_notify_from_isr(void* context) {
     const auto now = static_cast<std::uint64_t>(esp_timer_get_time());
     portENTER_CRITICAL_ISR(&irq_lock);
     ++imu_irqs[site].edges; imu_irqs[site].last_edge_us = now;
+#ifdef CONFIG_NODE01_TOE_STATUS_TRACE
+    if (site == 1 && toe_trace_armed && toe_status_trace.wants_edge()) {
+        toe_status_trace.note_edge({now, imu_irqs[site].edges,
+                             gpio_get_level(static_cast<gpio_num_t>(board::pin::imu_toe_int1)) != 0});
+    }
+#endif
+#ifdef CONFIG_NODE01_DIAG_TOE_BENCH
+    if (bench_armed && bench_trace[site].wants_edge())
+        bench_trace[site].note_edge({now,imu_irqs[site].edges,gpio_get_level(bench_pins[site])!=0});
+#endif
     const bool armed = imu_irq_gates[site].may_notify();
     const bool notify = imu_irq_gates[site].claim_notification();
     if (!armed) ++imu_irqs[site].suppressed_unarmed;
@@ -1735,3 +2519,48 @@ void imu_notify_from_isr(void* context) {
     portYIELD_FROM_ISR(wake);
 }
 } // namespace node::runtime
+
+#ifdef CONFIG_NODE01_TOE_STATUS_TRACE
+void node::drivers::toe_trace::observe_status_read(Request record) {
+    using namespace node::runtime;
+    if (xTaskGetCurrentTaskHandle() != handles[index(TaskId::Imu)] || !toe_trace_armed) return;
+    record.last_edge_us = toe_previous_edge_us;
+    record.last_valid_us = toe_previous_valid_us;
+    record.origin = toe_read_origin;
+    toe_status_trace.note_request(record);
+}
+#endif
+
+#ifdef CONFIG_NODE01_DIAG_TOE_BENCH
+void node::drivers::toe_trace::observe_status_read(Request record) {
+    using namespace node::runtime;
+    if (xTaskGetCurrentTaskHandle()!=handles[index(TaskId::Imu)]) {
+        if (record.reg==0x2d) ++bench_foreign_reads;
+        return;
+    }
+    if (!bench_armed) return;
+    if (record.reg==0x2d) {
+        bench_pending=record;
+        bench_pending.last_edge_us=bench_last_edge_us;
+        bench_pending.last_valid_us=bench_last_valid_us;
+        bench_pending.lock_wait_us=bench_lock_wait_us;
+        bench_pending.origin=bench_origin;
+        bench_status_pending=true;
+    } else if (bench_status_pending) {
+        bench_pending.raw_begin_us=record.sdk_begin_us;
+        bench_pending.raw_end_us=record.sdk_end_us;
+        bench_pending.raw_entered=record.sdk_entered;
+        bench_pending.raw_result=record.result;
+    }
+}
+#endif
+
+#ifdef CONFIG_NODE01_TOE_BENCH_ADS
+std::uint32_t node::drivers::bench_bus::lock_wait_us() {
+    using namespace node::runtime;
+    return xTaskGetCurrentTaskHandle()==handles[index(TaskId::SlowSensor)] ? bench_ads_lock_wait_us : bench_lock_wait_us;
+}
+void node::drivers::bench_bus::observe(const Transaction& transaction) {
+    node::runtime::bench_note_bus(transaction);
+}
+#endif
