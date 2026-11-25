@@ -278,9 +278,12 @@ class InferenceService:
                     timer.start()
                     if kind == "check":
                         result = self._check()
+                        timer.cancel()
                     else:
                         name, window, metadata = data
                         output, latency = self._infer(name, window)
+                        # The watchdog protects vendor inference, not SQLite setup/fsync.
+                        timer.cancel()
                         if self.status()["state"] == "degraded" or self._stop.is_set():
                             continue
                         result = {"id": str(uuid4()), **metadata, "model": name,

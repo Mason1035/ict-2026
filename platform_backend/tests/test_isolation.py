@@ -1,3 +1,4 @@
+from contextlib import closing
 """WP1 isolation regressions, also runnable with the standard unittest runner.
 
 No broker, platform service, ACL runtime or third-party test dependency is needed
@@ -251,7 +252,7 @@ class IsolationTests(unittest.TestCase):
     def test_old_schema_migration_keeps_alarm_history_unknown_and_is_idempotent(self):
         with TemporaryDirectory() as directory:
             path = Path(directory) / "old.sqlite3"
-            with sqlite3.connect(path) as connection:
+            with closing(sqlite3.connect(path)) as connection, connection:
                 connection.executescript("""
                     CREATE TABLE alarms (
                         id TEXT PRIMARY KEY, site_id TEXT NOT NULL, device_id TEXT,

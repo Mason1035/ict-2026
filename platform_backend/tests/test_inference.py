@@ -151,6 +151,22 @@ def test_three_execute_failures_latch_degraded(service, monkeypatch):
     assert service.self_check()['available'] is False
     assert len(calls) == 3 and service.results()['items'] == []
 
+def test_slow_persistence_does_not_consume_inference_watchdog_budget(service, monkeypatch):
+    from contextlib import contextmanager
+    calls=fake_runtime(service,monkeypatch)
+    monkeypatch.setattr(service,'_job_timeout',.1)
+    connection=service.db.connection
+    @contextmanager
+    def slow_connection():
+        time.sleep(.3)
+        with connection() as c:yield c
+    monkeypatch.setattr(service.db,'connection',slow_connection)
+    for _ in range(4):service.observe(observation())
+    wait_until(lambda:service._queue.unfinished_tasks==0)
+    assert len(calls)==1
+    assert service.status()['success_count']==1
+    assert service.status()['state']=='connected'
+
 
 def test_missing_acl_is_lazy_and_never_escapes_observe(service, monkeypatch):
     def absent(name):

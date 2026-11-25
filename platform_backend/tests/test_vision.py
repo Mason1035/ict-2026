@@ -48,6 +48,15 @@ def textured(size=160):
 def upload(service, array, **kwargs):
     return service.upload(encoded(array), "frame.png", site_id=kwargs.pop("site_id", "SLOPE-01"), **kwargs)
 
+def test_unicode_media_path_decodes_current_and_reference(tmp_path):
+    folder=tmp_path/'中文路径与空格 media'
+    folder.mkdir()
+    service=VisionService(LocalDatabase(folder/'数据库.sqlite3'),folder/'图像')
+    reference=upload(service,textured())
+    current=upload(service,textured())
+    result=service.analyze(current['id'],reference['id'])
+    assert result['metrics']['changed_area_ratio']==0
+
 
 def test_actual_content_validation_and_bounded_bytes(service, tmp_path):
     for bad in (b"not a PNG", b"<svg><script>not an image</script></svg>", b"\x89PNG\r\n\x1a\n"):
@@ -131,7 +140,7 @@ def test_identical_images_have_zero_change_and_quality_not_risk(service):
     assert result["baseline_valid"]
     assert result["vision_score"] is None and not result["fusion_eligible"]
     assert current["capture_time"] == "2026-10-16T02:00:01Z"
-    overlay = cv2.imread(str(service.result_overlay_path(result["id"])), cv2.IMREAD_GRAYSCALE)
+    overlay = cv2.imdecode(np.frombuffer(service.result_overlay_path(result["id"]).read_bytes(), dtype=np.uint8), cv2.IMREAD_GRAYSCALE)
     assert np.array_equal(overlay, array)
 
 

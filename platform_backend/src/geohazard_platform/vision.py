@@ -404,7 +404,7 @@ class VisionService:
     def analyze(self, evidence_id: str, reference_id: str | None = None,
                 roi: dict[str, Any] | None = None) -> dict[str, Any]:
         evidence = self.get_evidence(evidence_id)
-        current = cv2.imread(str(self.file_path(evidence_id)), cv2.IMREAD_COLOR)
+        current = cv2.imdecode(np.frombuffer(self.file_path(evidence_id).read_bytes(), dtype=np.uint8), cv2.IMREAD_COLOR)
         if current is None:
             raise VisionError(422, "Stored image could not be decoded")
         height, width = current.shape[:2]
@@ -428,7 +428,7 @@ class VisionService:
             for key in ("site_id", "device_id", "camera_id", "source", "scope", "width", "height"):
                 if reference.get(key) != evidence.get(key):
                     raise VisionError(422, f"Reference and current image must have matching {key}")
-            prior = cv2.imread(str(self.file_path(reference_id)), cv2.IMREAD_COLOR)
+            prior = cv2.imdecode(np.frombuffer(self.file_path(reference_id).read_bytes(), dtype=np.uint8), cv2.IMREAD_COLOR)
             if prior is None or prior.shape != current.shape:
                 raise VisionError(422, "Reference image could not be decoded with matching dimensions")
             reference_gray = cv2.cvtColor(prior[y:y + h, x:x + w], cv2.COLOR_BGR2GRAY)

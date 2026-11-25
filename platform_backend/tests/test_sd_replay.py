@@ -1,3 +1,4 @@
+from contextlib import closing
 """Synthetic SD captures only; real captures stay outside the repository."""
 
 import contextlib
@@ -273,7 +274,7 @@ class SDReplayTests(unittest.TestCase):
         second = register_session(self.capture, "rain_50", self.registry)
         self.assertEqual(first.metadata, second.metadata)
         self.assertEqual(before, {p.name: p.read_bytes() for p in self.capture.iterdir()})
-        with sqlite3.connect(self.registry) as db:
+        with closing(sqlite3.connect(self.registry)) as db, db:
             self.assertEqual(db.execute("SELECT count(*) FROM research_sd_sessions").fetchone()[0], 1)
             self.assertEqual(db.execute("SELECT status FROM research_sd_attempts").fetchall(),
                              [("REGISTERED",), ("DUPLICATE",)])
@@ -283,7 +284,7 @@ class SDReplayTests(unittest.TestCase):
         write_capture(other, experiment_id="NODE01-2e379f02688fd631-N0000005.CSV")
         with self.assertRaisesRegex(ValueError, "requires session type post_rain_static"):
             register_session(other, "rain_50", self.registry)
-        with sqlite3.connect(self.registry) as db:
+        with closing(sqlite3.connect(self.registry)) as db, db:
             self.assertEqual(db.execute("SELECT status FROM research_sd_attempts").fetchall(),
                              [("REJECTED_METADATA",)])
             self.assertEqual(db.execute("SELECT count(*) FROM research_sd_sessions").fetchone()[0], 0)
@@ -308,7 +309,7 @@ class SDReplayTests(unittest.TestCase):
         write_capture(self.capture, rows)
         with self.assertRaises(ReplayIdentityConflict):
             register_session(self.capture, "rain_50", self.registry)
-        with sqlite3.connect(self.registry) as db:
+        with closing(sqlite3.connect(self.registry)) as db, db:
             stored = json.loads(db.execute("SELECT metadata_json FROM research_sd_sessions").fetchone()[0])
             self.assertEqual(stored, json.loads(json.dumps(original.metadata)))
             self.assertEqual(db.execute("SELECT count(*) FROM research_sd_attempts WHERE status='REJECTED_IDENTITY'")
@@ -318,7 +319,7 @@ class SDReplayTests(unittest.TestCase):
         self.edit_sidecar(".END", csv_crc32="00000000")
         with self.assertRaises(ReplayValidationError):
             register_session(self.capture, "rain_50", self.registry)
-        with sqlite3.connect(self.registry) as db:
+        with closing(sqlite3.connect(self.registry)) as db, db:
             self.assertEqual(db.execute("SELECT count(*) FROM research_sd_sessions").fetchone()[0], 0)
             status, details = db.execute("SELECT status,details_json FROM research_sd_attempts").fetchone()
             self.assertEqual(status, "REJECTED_INTEGRITY")
@@ -331,7 +332,7 @@ class SDReplayTests(unittest.TestCase):
             register_session(self.capture, "rain_50", raw_registry)
         self.assertFalse(raw_registry.exists())
         operational = self.root / "operational.sqlite3"
-        with sqlite3.connect(operational) as db:
+        with closing(sqlite3.connect(operational)) as db, db:
             db.executescript("CREATE TABLE telemetry (current_value TEXT); INSERT INTO telemetry VALUES('keep');")
         before = operational.read_bytes()
         with self.assertRaisesRegex(ValueError, "dedicated research registry"):

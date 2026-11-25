@@ -52,10 +52,21 @@ def map_level(features):
 def compute(payload, state=None, *, context=None):
     """Only current/past samples; caller partitions by site/device/boot/source/scope."""
     state = json.loads(json.dumps(state)) if state else {"imus": {}}
+    firmware = (context or {}).get("firmware_elf_sha256")
+    if "firmware_binding" not in state:
+        state["firmware_binding"] = firmware
+    if state["firmware_binding"] != firmware:
+        state["firmware_binding_conflict"] = True
     now = payload["uptime_ms"]
     flags = ["SOIL_SEVERITY_NOT_CALIBRATED", "ONE_HZ_SAMPLED_NOT_HIGH_FREQUENCY_VIBRATION"]
     features = {"soil_index": {}, "imu": {}}
     percentages, quality, calibration = soil_calibration.evaluate(payload["soil"], context)
+    calibration["session_identity"] = {key: payload[key] for key in ("site_id", "device_id", "boot_id")}
+    calibration["session_binding_consistent"] = not state.get("firmware_binding_conflict", False)
+    if state.get("firmware_binding_conflict"):
+        percentages = dict.fromkeys(percentages)
+        quality.append("FIRMWARE_DECLARATION_CHANGED_WITHIN_BOOT")
+        calibration["applicable"] = False
     features["soil_w_rel_pct"] = percentages
     features["soil_index"] = {channel: value / 100 if value is not None else None for channel,value in percentages.items()}
     flags.extend(quality)
@@ -109,13 +120,17 @@ def record(db, telemetry_id, payload, *, source, scope, received_at, context=Non
     Late/reversed observations get an unavailable result and cannot advance state.
     """
     with db.connection() as c:
-        previous = c.execute("""SELECT p.state_json,t.seq,t.uptime_ms FROM provisional_risk p
+        previous = c.execute("""SELECT p.state_json,t.seq,t.uptime_ms,t.context_json FROM provisional_risk p
             JOIN telemetry t ON t.id=p.telemetry_id
             WHERE t.site_id=? AND t.device_id=? AND t.boot_id=? AND t.source=? AND t.scope=?
             AND p.state_json IS NOT NULL ORDER BY t.seq DESC LIMIT 1""",
             (payload["site_id"], payload["device_id"], payload["boot_id"], source, scope)).fetchone()
         late = previous and (payload["seq"] <= previous["seq"] or payload["uptime_ms"] <= previous["uptime_ms"])
-        result, state = compute(payload, json.loads(previous["state_json"]) if previous and not late else None, context=context)
+        previous_state = json.loads(previous["state_json"]) if previous and not late else None
+        if previous_state is not None and "firmware_binding" not in previous_state:
+            # Legacy sessions inherit their stored declaration, never today's connector value.
+            previous_state["firmware_binding"] = json.loads(previous["context_json"]).get("firmware_elf_sha256")
+        result, state = compute(payload, previous_state, context=context)
         if late:
             result.update(level=None, score=None, reasons=[], features={"soil_index": {}, "soil_w_rel_pct": {}, "imu": {}})
             result["quality_flags"].append("OUT_OF_ORDER_NOT_EVALUATED")

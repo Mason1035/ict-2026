@@ -28,7 +28,7 @@ function soilPoints(key: string): HistoryPoint[] {
           <div class="feature-item"><strong>Air–Water 相对湿度（0–100%，非体积含水率）</strong><p data-testid="air-water-values">AIN0 {{ reading(latest.features.soil_w_rel_pct?.top ?? null, 2) }}% · AIN1 {{ reading(latest.features.soil_w_rel_pct?.middle ?? null, 2) }}% · AIN2 {{ reading(latest.features.soil_w_rel_pct?.toe ?? null, 2) }}%</p></div>
           <div v-for="(metrics, sensor) in latest.features.imu" :key="sensor" class="feature-item"><strong>IMU {{ sensor }}</strong><p>倾角 {{ reading(metrics.tilt_deg, 2) }}° · 相对初始方向 {{ reading(metrics.direction_angle_deg, 2) }}°</p><p>振动 RMS {{ reading(metrics.vibration_rms_mps2, 4) }} m/s² · 陀螺 RMS {{ reading(metrics.gyro_rms_dps, 3) }} °/s</p></div>
         </div>
-        <p v-if="latest.soil_calibration">相对标定版本 {{ latest.soil_calibration.version }} · {{ latest.soil_calibration.applicable ? "操作员声明的固件哈希匹配（非设备认证）" : "缺少固件依据或版本不适用，保持空值" }}</p>
+        <p v-if="latest.soil_calibration">相对标定版本 {{ latest.soil_calibration.version }} · {{ latest.soil_calibration.applicable ? "参数匹配（操作者声明，非设备认证），实板及会话尚未验收" : "固件声明缺失、不适用或会话冲突，保持空值" }}</p>
         <p v-else>历史旧版本结果，未按新端点重算。</p>
         <details><summary>质量标记 / 预热状态</summary><p>{{ latest.quality_flags.join(' · ') }}</p></details>
       </template>
