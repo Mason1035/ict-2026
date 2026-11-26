@@ -47,6 +47,17 @@ constexpr Gate capture_gate(Plan plan, bool sensors, bool storage,
     return storage && !storage_ready ? Gate::Wait : Gate::Proceed;
 }
 
+constexpr Gate capture_gate(Plan plan, bool sensors, bool storage_enabled,
+        bool storage_required, InitState top, InitState toe, InitState ads, bool storage_ready) {
+    return capture_gate(plan, sensors, storage_enabled && storage_required,
+        top, toe, ads, storage_ready);
+}
+
+constexpr bool allow_degraded_sd_capture(
+        bool storage_enabled, bool storage_required, bool storage_ready, bool aborted) {
+    return storage_enabled && !storage_required && !storage_ready && !aborted;
+}
+
 inline constexpr unsigned sd_startup_mount_attempts = 3;
 constexpr bool retry_sd_startup_mount(bool timeout_cleaned_up, bool aborted, unsigned attempts) {
     return timeout_cleaned_up && !aborted && attempts > 0 && attempts < sd_startup_mount_attempts;

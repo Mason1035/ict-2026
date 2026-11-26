@@ -1,4 +1,4 @@
-# Reproducible live Wi-Fi/MQTT + SD diagnostic build matching verified 0.2.1-live-mqtt-r4-fix.
+# Reproducible live Wi-Fi/MQTT + SD-optional live decoupling build (based on verified 0.2.1-live-mqtt-r4-fix).
 # Combine with sdkconfig.defaults in an isolated build directory (fits existing 0x100000 factory partition).
 CONFIG_COMPILER_OPTIMIZATION_SIZE=y
 CONFIG_ESP_CONSOLE_SECONDARY_USB_SERIAL_JTAG=y
@@ -21,3 +21,4 @@ CONFIG_NODE01_DIAG_ACQUISITION=y
 CONFIG_NODE01_STARTUP_IMU_FIRST=y
 CONFIG_NODE01_IMU_DRDY=y
 CONFIG_NODE01_CAPTURE_SECONDS=0
+CONFIG_NODE01_SD_OPTIONAL_FOR_LIVE=y

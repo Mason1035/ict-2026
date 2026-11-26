@@ -293,9 +293,19 @@ template<class Prepare> bool begin_capture(Prepare prepare) {
         const auto ready = xEventGroupWaitBits(events, event::SD_OK | startup_aborted, pdFALSE, pdFALSE,
             drivers::timing::guarded_wait_ticks(config::startup_timeout_ms, configTICK_RATE_HZ));
         storage_ready = (ready & event::SD_OK) != 0;
-        if (!storage_ready) { abort_startup("SD_NOT_READY"); print_startup_timing(); return false; }
+        if (!storage_ready) {
+            if constexpr (config::storage_required_for_capture) {
+                abort_startup("SD_NOT_READY"); print_startup_timing(); return false;
+            } else if ((ready & startup_aborted) != 0) {
+                print_startup_timing(); return false;
+            } else {
+                ESP_LOGW(tag, "SD_STARTUP_DEGRADED timeout_ms=%u; continuing live sensor acquisition and MQTT telemetry with sd_ok=false while StorageTask retries in background",
+                    config::startup_timeout_ms);
+            }
+        }
     }
-    const auto gate = startup::capture_gate(config::startup_plan, config::sensors_enabled, config::storage_enabled,
+    const auto gate = startup::capture_gate(config::startup_plan, config::sensors_enabled,
+        config::storage_enabled, config::storage_required_for_capture,
         imu_startup[0].load(), imu_startup[1].load(), slow_startup.load(), storage_ready);
     if (!startup::may_begin_capture(gate, (xEventGroupGetBits(events) & startup_aborted) != 0)) {
         abort_startup("PREREQUISITE_NOT_READY"); print_startup_timing(); return false;

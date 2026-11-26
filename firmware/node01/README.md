@@ -1,6 +1,19 @@
 # NODE-01 V0.1 集成固件
 
-## 当前版本（2026-10-28 第四轮真实整合定向修复）
+## 当前状态（2026-11-26：`0.2.2-live-sd-decoupled`）
+
+- **已上板实测基线**：`0.2.1-live-mqtt-r4-fix`（含 `StorageTask` 10 KiB 栈修复、`RecoveryWriter` 退避保留与目录缓存重置、Wi-Fi 射频门控等待及实板冷启动 ~100 s + Atlas `real-test` 连通性验证）。
+- **当前代码版本**：`0.2.2-live-sd-decoupled`（Host 单元测试 + 独立 ESP-IDF 隔离编译验证；**尚未烧录新固件上板，实板状态为 `NEED_HARDWARE_RETEST`**）：
+  1. **`node_logic` Risk / Alarm 框架骨架（`components/node_logic/include/node/risk_framework.hpp`、`risk_framework.cpp`）**：对齐 `origin/张鹏飞` `2906800` 的 V0.1 接口会签草案，实现无动态堆分配的 IEEE-754 `double` 数学核、折线贡献曲线、`REQUIRE_BOTH_IMU_AND_ALL_THREE_SOIL_V1` 缺测阻塞、`reason_mask` 位构造（仅 `CALIBRATED` 模式生效、`TEST_ONLY` 保持 `null`）、`DRAFT` 硬拒载、5 态本地报警锁存状态机（`UNARMED/ARMED/ACTIVE_LATCHED/ACKED_LATCHED/RECOVERY_PENDING`）及 CRC32 持久化编解码；在参数会签与黄金向量冻结前，线上 `RiskTask / AlarmTask` 继续保持 `UNARMED` 与 `hardware_enabled=false`，Telemetry `risk` 字段维持 `null`。
+  2. **实时模式 SD 与 MQTT 启动解耦**：新增 `CONFIG_NODE01_SD_OPTIONAL_FOR_LIVE`（仅在 `DIAG_ACQUISITION && NETWORK_ENABLE && capture_seconds==0 && !SANDBOX_EXPERIMENT && !DIAG_TOE_BENCH && !DIAG_STORAGE_ONLY` 生效）。启动阶段仍先留出 `startup_timeout_ms` 让健康 SD 卡在 Wi-Fi RF 初始化前完成挂载开文件；若超时未就绪，连续联网模式不中断采集与 MQTT 上报（`system.sd_ok=false`），`StorageTask` 在后台继续退避重试；有限时长沙箱与隔离标定模式维持严格 SD 门控不变。
+- **可复现校验入口**：
+  - Host C++17 回归测试：`powershell -NoProfile -ExecutionPolicy Bypass -File tools/Test-Host.ps1`
+  - 独立 ESP-IDF 5.5.3 实时固件隔离编译（不覆盖 `build-v01*`）：
+    `idf.py -B build-live-decoupled-check -DSDKCONFIG="build-live-decoupled-check/sdkconfig" -DSDKCONFIG_DEFAULTS="sdkconfig.defaults;config/live-mqtt-r4-fix.defaults" build`
+
+---
+
+## 历史：2026-10-28 第四轮真实整合定向修复
 
 最新真实整合运行完成约120秒采集，24725条产生、24435条通过文件验证、290条队列丢失（1.1729%），结论为 **QUALITY_LIMITED / INTEGRATION_NOT_READY**。重启前TOE初始化失败/异常边沿与重启后的稳定采集已分别分析。本轮修正IRQ过早启用和未初始化设备被通知放大读取的问题，分开启动/采集边沿；存储保持相同CSV字节语义及每256行同步，减少格式化调用，采用4KiB写缓冲、细分墙时和排除队列等待的服务预算。Queue256仅辅助吸收长尾，不构成持续吞吐证明。SD时钟保持10MHz，不提高频率。
 

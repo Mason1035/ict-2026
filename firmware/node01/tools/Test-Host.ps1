@@ -15,6 +15,15 @@ if ($LASTEXITCODE -ne 0) { throw 'Host C++17 compilation failed' }
 & $executable
 if ($LASTEXITCODE -ne 0) { throw "Host logic tests failed: $LASTEXITCODE" }
 Write-Output 'HOST_LOGIC_TEST_PASS (TEST_ONLY; not ESP-IDF or hardware validation)'
+$riskFrameworkTest = Join-Path $testBuild 'risk_framework_test.exe'
+& $Compiler -std=c++17 -Wall -Wextra -Werror -pedantic `
+    -Icomponents/node_contracts/include -Icomponents/node_logic/include `
+    tests/risk_framework_test.cpp components/node_contracts/protocol.cpp components/node_logic/logic.cpp components/node_logic/risk_framework.cpp `
+    -o $riskFrameworkTest
+if ($LASTEXITCODE -ne 0) { throw 'Risk framework host compilation failed' }
+& $riskFrameworkTest
+if ($LASTEXITCODE -ne 0) { throw "Risk framework host tests failed: $LASTEXITCODE" }
+Write-Output 'HOST_RISK_FRAMEWORK_TEST_PASS (TEST_ONLY; DRAFT rejected, not device-calibrated)'
 $sdkInclude = 'C:\Users\LQY\Documents\Codex\esp55\esp-idf-v5.5.3\components\esp_common\include'
 $sensorTest = Join-Path $testBuild 'sensors_test.exe'
 & $Compiler -std=c++17 -Wall -Wextra -Werror -pedantic `

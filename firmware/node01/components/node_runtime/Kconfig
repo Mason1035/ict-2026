@@ -61,6 +61,15 @@ config NODE01_CAPTURE_SECONDS
         Nonzero: stop producers at the actual monotonic deadline, drain the
         queue, close the single capture file, then fully verify it.
         Periodic fsync remains. This does not guarantee zero loss/durability.
+config NODE01_SD_OPTIONAL_FOR_LIVE
+    bool "Allow live acquisition and MQTT telemetry when SD is unavailable at startup"
+    depends on NODE01_DIAG_ACQUISITION && NODE01_NETWORK_ENABLE && !NODE01_SANDBOX_EXPERIMENT && !NODE01_DIAG_TOE_BENCH && !NODE01_DIAG_STORAGE_ONLY
+    default n
+    help
+        Healthy cards still mount/open before Wi-Fi RF init during startup_timeout_ms.
+        If SD does not become ready before startup timeout, continuous capture
+        (capture_seconds == 0) still starts live sensor sampling and MQTT telemetry
+        with system.sd_ok=false while StorageTask continues backoff recovery.
 config NODE01_SANDBOX_EXPERIMENT
     bool "Operator-controlled sandbox capture (30-300 seconds, one run per boot)"
     depends on NODE01_DIAG_ACQUISITION && NODE01_STARTUP_IMU_FIRST && NODE01_IMU_DRDY && !NODE01_NETWORK_ENABLE && !NODE01_WIFI_ONLY && !NODE01_MQTT_ONLY

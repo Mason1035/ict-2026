@@ -55,6 +55,13 @@ inline constexpr unsigned capture_seconds = CONFIG_NODE01_CAPTURE_SECONDS;
 #else
 inline constexpr unsigned capture_seconds = 0;
 #endif
+#if defined(CONFIG_NODE01_SD_OPTIONAL_FOR_LIVE) && defined(CONFIG_NODE01_NETWORK_ENABLE) && \
+    !defined(CONFIG_NODE01_SANDBOX_EXPERIMENT) && !defined(CONFIG_NODE01_DIAG_TOE_BENCH) && \
+    !defined(CONFIG_NODE01_DIAG_STORAGE_ONLY)
+inline constexpr bool storage_required_for_capture = storage_enabled && (capture_seconds != 0);
+#else
+inline constexpr bool storage_required_for_capture = storage_enabled;
+#endif
 enum class TaskId : unsigned { Imu, Risk, Alarm, SlowSensor, CommSupervisor, LoRa, Storage, UiHealth, Count };
 struct TaskSpec {
     const char* name;

@@ -219,9 +219,38 @@ void aborted_empty_file() {
     assert(abort_action(false,true,unavailable.active(),unavailable.verification_active(),unavailable.finished()) == AbortAction::StopUnverified);
     assert(!unavailable.stats().verified_files && !unavailable.stats().append_accepted);
 }
+
+void optional_sd_decoupling_cases() {
+    // storage_required=false allows capture to proceed when SD is unavailable if sensors are Ready and not aborted.
+    const auto degraded_gate = capture_gate(
+        Plan::ImuFirst, true, true, false,
+        InitState::Ready, InitState::Ready, InitState::Ready, false);
+    assert(degraded_gate == Gate::Proceed);
+    assert(may_begin_capture(degraded_gate, false));
+    assert(allow_degraded_sd_capture(true, false, false, false));
+
+    // When SD IS ready even in optional mode, degraded flag stays false.
+    assert(!allow_degraded_sd_capture(true, false, true, false));
+
+    // Sticky abort (e.g. sensor init failure) still blocks capture and degraded SD permission.
+    assert(!may_begin_capture(degraded_gate, true));
+    assert(!allow_degraded_sd_capture(true, false, false, true));
+
+    // In Plan::ImuFirst, any failed sensor still strictly blocks even with storage_required=false.
+    assert(capture_gate(Plan::ImuFirst, true, true, false,
+                        InitState::Failed, InitState::Ready, InitState::Ready, false) == Gate::Blocked);
+    assert(capture_gate(Plan::ImuFirst, true, true, false,
+                        InitState::Ready, InitState::Ready, InitState::Failed, false) == Gate::Blocked);
+
+    // Strict storage_required=true still blocks until storage_ready=true.
+    assert(capture_gate(Plan::ImuFirst, true, true, true,
+                        InitState::Ready, InitState::Ready, InitState::Ready, false) == Gate::Wait);
+    assert(!allow_degraded_sd_capture(true, true, false, false));
+}
 }
 
 int main() {
     probe_cases(); schedules(); startup_mount_timeout_backoff(); aborted_empty_file();
+    optional_sd_decoupling_cases();
     std::puts("HOST_STARTUP_POLICY_TEST_PASS (TEST_ONLY task permutations/probe callbacks/timeout/empty-file cleanup; HARDWARE_NOT_RUN)");
 }
