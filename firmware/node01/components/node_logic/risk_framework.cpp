@@ -166,10 +166,11 @@ std::optional<double> sensor_score(
     if (!finite(consensus_bonus) || (consensus_bonus != 0.0 && consensus_bonus != 5.0)) {
         return std::nullopt;
     }
-    double total = consensus_bonus;
+    double total = 0.0;
     for (std::size_t i = 0; i < 4; ++i) {
         total += kFrozenWeights[i] * c[i];
     }
+    total += consensus_bonus;
     if (!finite(total)) return std::nullopt;
     return std::max(0.0, std::min(100.0, total));
 }
@@ -694,6 +695,443 @@ PersistedLatch AlarmStateMachine::export_persisted() const {
     out.alarm_policy_tag = policy_.alarm_policy_tag;
     out.ack_uptime_ms = state_.ack_uptime_ms;
     return out;
+}
+
+template<std::size_t Capacity>
+void CausalBuffer<Capacity>::add(std::int64_t uptime_ms,
+                                 std::optional<double> value,
+                                 bool valid,
+                                 std::uint32_t lookback_ms,
+                                 std::uint32_t max_gap_ms) {
+    if (uptime_ms < 0) return;
+    const bool keep_valid = valid && value.has_value() && finite(*value);
+    const double clean_val = keep_valid ? *value : 0.0;
+
+    if (has_last_) {
+        if (uptime_ms <= last_uptime_ms_) {
+            clear();
+        } else {
+            const std::uint64_t dt = static_cast<std::uint64_t>(uptime_ms - last_uptime_ms_);
+            if (dt > max_gap_ms) {
+                clear();
+            }
+        }
+    }
+
+    has_last_ = true;
+    last_uptime_ms_ = uptime_ms;
+
+    if (count_ == Capacity) {
+        head_ = (head_ + 1U) % Capacity;
+        --count_;
+    }
+    const std::size_t tail = (head_ + count_) % Capacity;
+    entries_[tail] = Entry{uptime_ms, clean_val, keep_valid};
+    ++count_;
+
+    const std::int64_t start = uptime_ms - static_cast<std::int64_t>(lookback_ms);
+    while (count_ > 0 && entries_[head_].uptime_ms < start) {
+        head_ = (head_ + 1U) % Capacity;
+        --count_;
+    }
+}
+
+template<std::size_t Capacity>
+bool CausalBuffer<Capacity>::slice(std::int64_t end_uptime_ms,
+                                   std::uint32_t lookback_ms,
+                                   std::uint32_t max_gap_ms,
+                                   std::uint32_t max_age_ms,
+                                   std::uint32_t min_samples,
+                                   std::uint32_t min_span_ms,
+                                   math::TimedSample* out,
+                                   std::size_t out_capacity,
+                                   std::size_t& out_count) const {
+    out_count = 0;
+    if (end_uptime_ms < 0 || !out || out_capacity == 0) return false;
+    if (has_last_ && end_uptime_ms < last_uptime_ms_) return false;
+
+    const std::int64_t start = end_uptime_ms - static_cast<std::int64_t>(lookback_ms);
+    for (std::size_t i = 0; i < count_; ++i) {
+        const Entry& e = entries_[(head_ + i) % Capacity];
+        if (e.valid && e.uptime_ms >= start && e.uptime_ms <= end_uptime_ms) {
+            if (out_count >= out_capacity) return false;
+            out[out_count++] = math::TimedSample{e.uptime_ms, e.value};
+        }
+    }
+
+    if (out_count == 0) return false;
+    const std::uint64_t age = static_cast<std::uint64_t>(end_uptime_ms - out[out_count - 1].timestamp_ms);
+    if (age > max_age_ms) return false;
+
+    for (std::size_t i = 1; i < out_count; ++i) {
+        const std::uint64_t gap = static_cast<std::uint64_t>(out[i].timestamp_ms - out[i - 1].timestamp_ms);
+        if (gap > max_gap_ms) return false;
+    }
+
+    if (out_count < min_samples) return false;
+    const std::uint64_t span = static_cast<std::uint64_t>(out[out_count - 1].timestamp_ms - out[0].timestamp_ms);
+    if (span < min_span_ms) return false;
+    return true;
+}
+
+template class CausalBuffer<512>;
+template class CausalBuffer<64>;
+
+ValidationError FeaturePipeline::reset(const RiskConfig& config) {
+    const auto err = risk_engine_.load_config(config);
+    if (err != ValidationError::Ok) return err;
+    config_ = config;
+    configured_ = true;
+    for (auto& ch : imu_) {
+        ch.has_last = false;
+        ch.last_uptime_ms = 0;
+        ch.last_valid = false;
+        ch.last_accel = {};
+        ch.has_gravity = false;
+        ch.gravity = {};
+        ch.has_start = false;
+        ch.start_ms = 0;
+        ch.tilt_buf.reset_all();
+        ch.energy_buf.reset_all();
+    }
+    soil_present_ = {};
+    soil_ = {};
+    has_last_soil_tuple_ = false;
+    last_soil_tuple_ = {};
+    soil_growth_buf_.reset_all();
+    return ValidationError::Ok;
+}
+
+bool FeaturePipeline::ingest_imu(unsigned site,
+                                 std::int64_t uptime_ms,
+                                 bool valid,
+                                 const std::array<double, 3>& accel_mps2) {
+    if (!configured_ || site >= 2U || uptime_ms < 0) return false;
+    if (valid && !finite_vec3(accel_mps2)) return false;
+
+    auto& ch = imu_[site];
+    if (ch.has_last) {
+        if (uptime_ms < ch.last_uptime_ms) return false;
+        if (uptime_ms == ch.last_uptime_ms) {
+            const bool same = (ch.last_valid == valid) && (!valid || ch.last_accel == accel_mps2);
+            return same;
+        }
+    }
+
+    const std::uint32_t gap_limit = std::min(config_.windows.tilt.max_gap_ms,
+                                             config_.windows.vibration.max_gap_ms);
+    const bool gap_reset = !ch.has_last ||
+        (static_cast<std::uint64_t>(uptime_ms - ch.last_uptime_ms) > gap_limit);
+    if (gap_reset || !valid || !ch.has_gravity) {
+        ch.has_gravity = false;
+        ch.has_start = false;
+        ch.tilt_buf.reset_all();
+        ch.energy_buf.reset_all();
+    }
+
+    std::optional<double> tilt{};
+    std::optional<double> energy{};
+    if (valid) {
+        if (!ch.has_gravity) {
+            ch.gravity = accel_mps2;
+            ch.has_gravity = true;
+            ch.start_ms = uptime_ms;
+            ch.has_start = true;
+        } else {
+            const double dt = static_cast<double>(uptime_ms - ch.last_uptime_ms);
+            const double alpha = -std::expm1(-dt / config_.imu.gravity_tau_ms);
+            for (unsigned a = 0; a < 3; ++a) {
+                ch.gravity[a] = ch.gravity[a] + alpha * (accel_mps2[a] - ch.gravity[a]);
+            }
+        }
+        if (ch.has_start &&
+            static_cast<std::uint64_t>(uptime_ms - ch.start_ms) >= config_.imu.warmup_ms) {
+            tilt = math::gravity_tilt_change_deg(ch.gravity, config_.imu.baseline_gravity_mps2[site]);
+            double sq_sum = 0.0;
+            for (unsigned a = 0; a < 3; ++a) {
+                const double dyn = accel_mps2[a] - ch.gravity[a];
+                sq_sum += dyn * dyn;
+            }
+            if (finite(sq_sum)) energy = sq_sum;
+        }
+    }
+
+    ch.tilt_buf.add(uptime_ms, tilt, tilt.has_value(),
+                    config_.windows.tilt.lookback_ms, config_.windows.tilt.max_gap_ms);
+    ch.energy_buf.add(uptime_ms, energy, energy.has_value(),
+                      config_.windows.vibration.lookback_ms, config_.windows.vibration.max_gap_ms);
+
+    ch.has_last = true;
+    ch.last_uptime_ms = uptime_ms;
+    ch.last_valid = valid;
+    ch.last_accel = valid ? accel_mps2 : std::array<double, 3>{};
+    return true;
+}
+
+void FeaturePipeline::eval_soil_at(std::int64_t end_uptime_ms,
+                                   std::array<std::optional<double>, 3>& out_values,
+                                   std::array<SoilProbeStatus, 3>& out_status,
+                                   std::optional<double>& out_avg) const {
+    out_values = {};
+    out_avg.reset();
+    const auto& w = config_.windows.soil_growth;
+
+    std::size_t time_count = 0;
+    std::int64_t min_t = 0;
+    std::int64_t max_t = 0;
+    for (unsigned p = 0; p < 3; ++p) {
+        if (!soil_present_[p]) {
+            out_status[p] = SoilProbeStatus::Missing;
+            continue;
+        }
+        const auto& row = soil_[p];
+        if (time_count == 0) {
+            min_t = row.uptime_ms;
+            max_t = row.uptime_ms;
+        } else {
+            min_t = std::min(min_t, row.uptime_ms);
+            max_t = std::max(max_t, row.uptime_ms);
+        }
+        ++time_count;
+
+        if (!row.valid) {
+            out_status[p] = SoilProbeStatus::InvalidObs;
+        } else if (end_uptime_ms < row.uptime_ms ||
+                   static_cast<std::uint64_t>(end_uptime_ms - row.uptime_ms) > w.max_age_ms) {
+            out_status[p] = SoilProbeStatus::StaleOrFuture;
+        } else {
+            const auto& cal = config_.soil.calibration[p];
+            const auto rel = math::relative_wetness_index(
+                static_cast<double>(row.raw), cal.dry_raw, cal.wet_raw);
+            if (!rel) {
+                out_status[p] = SoilProbeStatus::CalRangeExceeded;
+            } else {
+                const double pct = 100.0 * (*rel);
+                if (pct >= 0.0 && pct <= 100.0) {
+                    out_values[p] = pct;
+                    out_status[p] = SoilProbeStatus::Valid;
+                } else {
+                    out_status[p] = SoilProbeStatus::CalRangeExceeded;
+                }
+            }
+        }
+    }
+
+    const bool aligned = (time_count == 3U) &&
+                         (static_cast<std::uint64_t>(max_t - min_t) <= config_.soil.alignment_ms);
+    if (aligned && out_values[0] && out_values[1] && out_values[2]) {
+        out_avg = (*out_values[0] + *out_values[1] + *out_values[2]) / 3.0;
+    }
+}
+
+bool FeaturePipeline::ingest_soil_group(std::int64_t group_uptime_ms,
+                                        const std::array<std::optional<SoilRawObs>, 3>& updates) {
+    if (!configured_ || group_uptime_ms < 0) return false;
+    bool updated = false;
+    for (unsigned p = 0; p < 3; ++p) {
+        if (!updates[p]) continue;
+        const auto& row = *updates[p];
+        if (row.uptime_ms != group_uptime_ms) return false;
+        if (soil_present_[p]) {
+            if (row.uptime_ms < soil_[p].uptime_ms) return false;
+            if (row.uptime_ms == soil_[p].uptime_ms) {
+                const bool same = (row.valid == soil_[p].valid) && (!row.valid || row.raw == soil_[p].raw);
+                if (!same) return false;
+                continue;
+            }
+        }
+        soil_[p] = row;
+        soil_present_[p] = true;
+        updated = true;
+    }
+    if (!updated) return true;
+
+    std::array<std::optional<double>, 3> values{};
+    std::array<SoilProbeStatus, 3> status{};
+    std::optional<double> mean{};
+    eval_soil_at(group_uptime_ms, values, status, mean);
+
+    bool fault = false;
+    for (const auto s : status) {
+        if (s == SoilProbeStatus::InvalidObs || s == SoilProbeStatus::CalRangeExceeded) {
+            fault = true;
+            break;
+        }
+    }
+    if (fault) {
+        soil_growth_buf_.reset_all();
+        has_last_soil_tuple_ = false;
+        return true;
+    }
+
+    if (mean.has_value() && soil_present_[0] && soil_present_[1] && soil_present_[2]) {
+        const std::array<std::int64_t, 3> stamp{
+            soil_[0].uptime_ms, soil_[1].uptime_ms, soil_[2].uptime_ms};
+        const bool all_changed = !has_last_soil_tuple_ ||
+            (stamp[0] != last_soil_tuple_[0] &&
+             stamp[1] != last_soil_tuple_[1] &&
+             stamp[2] != last_soil_tuple_[2]);
+        if (all_changed) {
+            soil_growth_buf_.add(group_uptime_ms, mean, true,
+                                 config_.windows.soil_growth.lookback_ms,
+                                 config_.windows.soil_growth.max_gap_ms);
+            last_soil_tuple_ = stamp;
+            has_last_soil_tuple_ = true;
+        }
+    }
+    return true;
+}
+
+PipelineProjection FeaturePipeline::evaluate_at(std::int64_t end_uptime_ms) const {
+    PipelineProjection out{};
+    if (!configured_ || end_uptime_ms < 0) return out;
+    out.risk.calibration = risk_runtime::Calibration::Ready;
+    out.risk.fault = risk_runtime::Fault::InputUnavailable;
+
+    bool imu_complete = true;
+    for (unsigned p = 0; p < 2; ++p) {
+        const auto& ch = imu_[p];
+        std::size_t ts_count = 0;
+        const bool ts_ok = ch.tilt_buf.slice(
+            end_uptime_ms,
+            config_.windows.tilt.lookback_ms,
+            config_.windows.tilt.max_gap_ms,
+            config_.windows.tilt.max_age_ms,
+            config_.windows.tilt.min_samples,
+            config_.windows.tilt.min_span_ms,
+            scratch_.data(), scratch_.size(), ts_count);
+        if (ch.has_last && ch.last_valid && ts_ok && ts_count > 0) {
+            out.imu[p].tilt_deg = scratch_[ts_count - 1].value;
+            out.imu[p].tilt_rate_dps = math::causal_slope_per_second(scratch_.data(), ts_count);
+        }
+
+        std::size_t es_count = 0;
+        const bool es_ok = ch.energy_buf.slice(
+            end_uptime_ms,
+            config_.windows.vibration.lookback_ms,
+            config_.windows.vibration.max_gap_ms,
+            config_.windows.vibration.max_age_ms,
+            config_.windows.vibration.min_samples,
+            config_.windows.vibration.min_span_ms,
+            scratch_.data(), scratch_.size(), es_count);
+        if (ch.has_last && ch.last_valid && es_ok && es_count > 0) {
+            double e_sum = 0.0;
+            for (std::size_t i = 0; i < es_count; ++i) e_sum += scratch_[i].value;
+            out.imu[p].vibration_rms = std::sqrt(e_sum / static_cast<double>(es_count));
+        }
+
+        if (!ch.has_last || !out.imu[p].tilt_deg || !out.imu[p].tilt_rate_dps || !out.imu[p].vibration_rms) {
+            imu_complete = false;
+        }
+    }
+
+    const bool imu_aligned = imu_[0].has_last && imu_[1].has_last &&
+        (static_cast<std::uint64_t>(
+            std::max(imu_[0].last_uptime_ms, imu_[1].last_uptime_ms) -
+            std::min(imu_[0].last_uptime_ms, imu_[1].last_uptime_ms)) <= config_.imu.alignment_ms);
+
+    std::array<std::optional<double>, 3> soil_vals{};
+    std::array<SoilProbeStatus, 3> soil_status{};
+    std::optional<double> avg_pct{};
+    eval_soil_at(end_uptime_ms, soil_vals, soil_status, avg_pct);
+    out.soil.top_pct = soil_vals[0];
+    out.soil.middle_pct = soil_vals[1];
+    out.soil.toe_pct = soil_vals[2];
+    out.soil.avg_pct = avg_pct;
+
+    std::size_t gs_count = 0;
+    const bool gs_ok = soil_growth_buf_.slice(
+        end_uptime_ms,
+        config_.windows.soil_growth.lookback_ms,
+        config_.windows.soil_growth.max_gap_ms,
+        config_.windows.soil_growth.max_age_ms,
+        config_.windows.soil_growth.min_samples,
+        config_.windows.soil_growth.min_span_ms,
+        scratch_.data(), scratch_.size(), gs_count);
+    if (avg_pct.has_value() && gs_ok && gs_count >= 2) {
+        if (const auto slope_s = math::causal_slope_per_second(scratch_.data(), gs_count)) {
+            out.soil.growth_pct_min = (*slope_s) * 60.0;
+        }
+    }
+
+    if (out.imu[0].tilt_deg && out.imu[1].tilt_deg) {
+        out.dual_imu_tilt_difference_deg = std::abs(*out.imu[0].tilt_deg - *out.imu[1].tilt_deg);
+    }
+
+    if (imu_complete && imu_aligned && avg_pct.has_value() && out.soil.growth_pct_min.has_value()) {
+        FeatureInputs fin{};
+        fin.imu_tilt_deg = {out.imu[0].tilt_deg, out.imu[1].tilt_deg};
+        fin.imu_vibration_rms = {out.imu[0].vibration_rms, out.imu[1].vibration_rms};
+        fin.soil_moisture_pct = {out.soil.top_pct, out.soil.middle_pct, out.soil.toe_pct};
+        fin.soil_growth_pct_min = out.soil.growth_pct_min;
+        out.risk = risk_engine_.evaluate(fin);
+    }
+    return out;
+}
+
+ButtonEvent LocalButtonGesture::update(
+    std::uint64_t now_ms, bool raw_pressed, bool recovery_ready_and_acked) {
+    if (!initialized_) {
+        initialized_ = true;
+        last_now_ms_ = now_ms;
+        last_raw_ = raw_pressed;
+        raw_since_ms_ = now_ms;
+        debounced_pressed_ = raw_pressed;
+        boot_suppress_until_release_ = raw_pressed;
+        return ButtonEvent::None;
+    }
+
+    if (now_ms < last_now_ms_) return ButtonEvent::None;
+    last_now_ms_ = now_ms;
+
+    if (raw_pressed != last_raw_) {
+        last_raw_ = raw_pressed;
+        raw_since_ms_ = now_ms;
+    }
+
+    const bool debounce_elapsed = (now_ms - raw_since_ms_) >= config_.debounce_ms;
+    if (debounce_elapsed && (last_raw_ != debounced_pressed_)) {
+        const bool was_pressed = debounced_pressed_;
+        debounced_pressed_ = last_raw_;
+        if (!was_pressed && debounced_pressed_) {
+            // Debounced rising edge: begin fresh press gesture.
+            press_start_ms_ = now_ms;
+            press_consumed_by_clear_ = false;
+            clear_eligible_for_this_press_ = recovery_ready_and_acked;
+            if (!recovery_ready_and_acked) {
+                clear_eligible_for_this_press_ = false;
+            }
+            return ButtonEvent::None;
+        }
+        if (was_pressed && !debounced_pressed_) {
+            // Debounced falling edge.
+            if (boot_suppress_until_release_) {
+                boot_suppress_until_release_ = false;
+                press_consumed_by_clear_ = false;
+                clear_eligible_for_this_press_ = false;
+                return ButtonEvent::None;
+            }
+            const bool short_press = !press_consumed_by_clear_ &&
+                ((now_ms - press_start_ms_) < config_.clear_hold_ms);
+            press_consumed_by_clear_ = false;
+            clear_eligible_for_this_press_ = false;
+            return short_press ? ButtonEvent::Ack : ButtonEvent::None;
+        }
+    }
+
+    if (debounced_pressed_) {
+        if (boot_suppress_until_release_) return ButtonEvent::None;
+        if (!recovery_ready_and_acked) {
+            clear_eligible_for_this_press_ = false;
+        }
+        if (clear_eligible_for_this_press_ && !press_consumed_by_clear_ &&
+            (now_ms - press_start_ms_) >= config_.clear_hold_ms) {
+            press_consumed_by_clear_ = true;
+            clear_eligible_for_this_press_ = false;
+            return ButtonEvent::Clear;
+        }
+    }
+    return ButtonEvent::None;
 }
 
 } // namespace node::logic

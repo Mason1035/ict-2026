@@ -3,6 +3,7 @@
 #include <cassert>
 #include <cmath>
 #include <limits>
+#include <memory>
 
 namespace {
 using namespace node;
@@ -431,11 +432,105 @@ void test_alarm_state_machine_and_persistence() {
     assert(unacked_rec.state().mode == AlarmMode::Armed);
 }
 
+void test_feature_pipeline_and_button_gesture() {
+    auto pipe = std::make_unique<FeaturePipeline>();
+    RiskConfig bad{};
+    assert(pipe->reset(bad) == ValidationError::DraftRejected);
+
+    RiskConfig cfg = make_calibrated_config();
+    cfg.mode = ConfigMode::TestOnly;
+    cfg.validated_for_runtime = false;
+    cfg.has_reason_mask_version = false;
+    cfg.has_reason_bits = false;
+    cfg.imu.gravity_tau_ms = 80.0;
+    cfg.imu.warmup_ms = 200;
+    cfg.imu.alignment_ms = 5;
+    cfg.soil.alignment_ms = 30;
+    cfg.windows.tilt = {500, 20, 20, 20, 300};
+    cfg.windows.vibration = {500, 20, 20, 20, 300};
+    cfg.windows.soil_growth = {3000, 600, 550, 3, 1000};
+    for (auto& probe : cfg.soil.calibration) {
+        probe.dry_raw = 0.0;
+        probe.wet_raw = 10000.0;
+        probe.min_span_raw = 100.0;
+    }
+    assert(pipe->reset(cfg) == ValidationError::Ok);
+
+    // Steady IMU 100Hz and Soil 2Hz over 3000ms.
+    for (std::int64_t t = 0; t <= 3000; t += 10) {
+        assert(pipe->ingest_imu(0, t, true, {0.0, 0.0, 9.80665}));
+        assert(pipe->ingest_imu(1, t, true, {0.0, 0.0, 9.80665}));
+        if (t > 0 && t % 500 == 0) {
+            std::array<std::optional<SoilRawObs>, 3> s{
+                SoilRawObs{t, true, 2000}, SoilRawObs{t, true, 2000}, SoilRawObs{t, true, 2000}};
+            assert(pipe->ingest_soil_group(t, s));
+        }
+        if (t == 150) {
+            // Before warmup_ms (200ms) features must remain null.
+            const auto early = pipe->evaluate_at(t);
+            assert(!early.imu[0].tilt_deg && !early.risk.valid);
+        }
+    }
+    const auto steady = pipe->evaluate_at(3000);
+    assert(steady.imu[0].tilt_deg && near(*steady.imu[0].tilt_deg, 0.0));
+    assert(steady.imu[0].vibration_rms && near(*steady.imu[0].vibration_rms, 0.0));
+    assert(steady.soil.avg_pct && near(*steady.soil.avg_pct, 20.0));
+    assert(steady.soil.growth_pct_min && near(*steady.soil.growth_pct_min, 0.0));
+    assert(steady.risk.valid && !steady.risk.reason_mask.has_value());
+
+    // Invalid IMU sample resets window and blocks risk while soil single-channel survives.
+    assert(pipe->ingest_imu(0, 3010, false, {}));
+    const auto after_bad_imu = pipe->evaluate_at(3010);
+    assert(!after_bad_imu.imu[0].tilt_deg && after_bad_imu.imu[1].tilt_deg);
+    assert(!after_bad_imu.risk.valid);
+
+    // LocalButtonGesture single-press anti-misoperation tests.
+    LocalButtonGesture btn(ButtonGestureConfig{30, 3000});
+    // 1. Pressed at boot -> must stay suppressed across hold & release.
+    assert(btn.update(0, true, false) == ButtonEvent::None);
+    assert(btn.update(50, true, false) == ButtonEvent::None);
+    assert(btn.update(200, false, false) == ButtonEvent::None);
+    assert(btn.update(230, false, false) == ButtonEvent::None); // Boot release produces None, NOT Ack!
+
+    // 2. Short press fires Ack ONLY on debounced release.
+    assert(btn.update(1000, true, false) == ButtonEvent::None);
+    assert(btn.update(1030, true, false) == ButtonEvent::None);
+    assert(btn.update(1100, true, false) == ButtonEvent::None);
+    assert(btn.update(1200, false, false) == ButtonEvent::None);
+    assert(btn.update(1230, false, false) == ButtonEvent::Ack);
+
+    // 3. Hold started BEFORE recovery_ready_and_acked cannot turn into Clear even if held >= 3000ms after recovery.
+    assert(btn.update(2000, true, false) == ButtonEvent::None);
+    assert(btn.update(2030, true, false) == ButtonEvent::None);
+    assert(btn.update(2500, true, true) == ButtonEvent::None);
+    assert(btn.update(6000, true, true) == ButtonEvent::None);
+    assert(btn.update(6100, false, true) == ButtonEvent::None);
+    assert(btn.update(6130, false, true) == ButtonEvent::None); // >=3s release must NOT emit Ack
+
+    // 4. Recovery interruption mid-hold cancels Clear until fresh re-press.
+    assert(btn.update(7000, true, true) == ButtonEvent::None);
+    assert(btn.update(7030, true, true) == ButtonEvent::None);
+    assert(btn.update(8500, true, false) == ButtonEvent::None); // recovery drops!
+    assert(btn.update(8600, true, true) == ButtonEvent::None);  // comes back, still invalidated for this press
+    assert(btn.update(11000, true, true) == ButtonEvent::None);
+    assert(btn.update(11100, false, true) == ButtonEvent::None);
+    assert(btn.update(11130, false, true) == ButtonEvent::None);
+
+    // 5. Fresh press AFTER recovery_ready_and_acked=true held continuously >= 3000ms emits Clear once.
+    assert(btn.update(12000, true, true) == ButtonEvent::None);
+    assert(btn.update(12030, true, true) == ButtonEvent::None);
+    assert(btn.update(15029, true, true) == ButtonEvent::None);
+    assert(btn.update(15030, true, true) == ButtonEvent::Clear);
+    assert(btn.update(15500, false, true) == ButtonEvent::None);
+    assert(btn.update(15530, false, true) == ButtonEvent::None); // release after Clear never emits Ack
+}
+
 } // namespace
 
 int main() {
     test_math_vectors();
     test_config_and_risk_engine();
     test_alarm_state_machine_and_persistence();
+    test_feature_pipeline_and_button_gesture();
     return 0;
 }

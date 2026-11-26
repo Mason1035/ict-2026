@@ -4,7 +4,12 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 #include <optional>
+
+static_assert(sizeof(double) == 8, "IEEE-754 binary64 (8-byte double) required");
+static_assert(std::numeric_limits<double>::is_iec559, "IEC-559 / IEEE-754 double required");
+static_assert(std::numeric_limits<double>::digits == 53, "IEEE-754 binary64 significand required");
 
 namespace node::logic {
 
@@ -313,6 +318,166 @@ private:
     std::uint64_t entry_since_ms_ = 0;
     bool clear_timer_active_ = false;
     std::uint64_t clear_since_ms_ = 0;
+};
+
+// Fixed-capacity causal observation buffer mirroring candidate_features/causal_window.py.
+// Zero dynamic allocation; reset on non-monotonic time or gaps > max_gap_ms.
+template<std::size_t Capacity>
+class CausalBuffer {
+public:
+    static_assert(Capacity >= 2, "CausalBuffer capacity must be >= 2");
+
+    void clear() {
+        head_ = 0;
+        count_ = 0;
+    }
+
+    void reset_all() {
+        clear();
+        has_last_ = false;
+        last_uptime_ms_ = 0;
+    }
+
+    void add(std::int64_t uptime_ms,
+             std::optional<double> value,
+             bool valid,
+             std::uint32_t lookback_ms,
+             std::uint32_t max_gap_ms);
+
+    bool slice(std::int64_t end_uptime_ms,
+               std::uint32_t lookback_ms,
+               std::uint32_t max_gap_ms,
+               std::uint32_t max_age_ms,
+               std::uint32_t min_samples,
+               std::uint32_t min_span_ms,
+               math::TimedSample* out,
+               std::size_t out_capacity,
+               std::size_t& out_count) const;
+
+private:
+    struct Entry {
+        std::int64_t uptime_ms = 0;
+        double value = 0.0;
+        bool valid = false;
+    };
+    std::array<Entry, Capacity> entries_{};
+    std::size_t head_ = 0;
+    std::size_t count_ = 0;
+    bool has_last_ = false;
+    std::int64_t last_uptime_ms_ = 0;
+};
+
+struct ImuFeatureProjection {
+    std::optional<double> tilt_deg{};
+    std::optional<double> tilt_rate_dps{};
+    std::optional<double> vibration_rms{};
+};
+
+struct SoilFeatureProjection {
+    std::optional<double> top_pct{};
+    std::optional<double> middle_pct{};
+    std::optional<double> toe_pct{};
+    std::optional<double> avg_pct{};
+    std::optional<double> growth_pct_min{};
+};
+
+struct PipelineProjection {
+    std::array<ImuFeatureProjection, 2> imu{};
+    SoilFeatureProjection soil{};
+    std::optional<double> dual_imu_tilt_difference_deg{};
+    RiskEvalResult risk{};
+};
+
+struct SoilRawObs {
+    std::int64_t uptime_ms = 0;
+    bool valid = false;
+    std::int16_t raw = 0;
+};
+
+// Full causal feature + risk evaluation pipeline mirroring telemetry_v2_intake/runtime.py.
+// Note: contains fixed CausalBuffer<512> instances (~56 KiB total); allocate static/member rather
+// than on small FreeRTOS task stacks.
+class FeaturePipeline {
+public:
+    ValidationError reset(const RiskConfig& config);
+    bool configured() const { return configured_; }
+
+    bool ingest_imu(unsigned site,
+                    std::int64_t uptime_ms,
+                    bool valid,
+                    const std::array<double, 3>& accel_mps2);
+
+    bool ingest_soil_group(std::int64_t group_uptime_ms,
+                           const std::array<std::optional<SoilRawObs>, 3>& updates);
+
+    PipelineProjection evaluate_at(std::int64_t end_uptime_ms) const;
+
+private:
+    enum class SoilProbeStatus { Missing, InvalidObs, StaleOrFuture, Valid, CalRangeExceeded };
+
+    void eval_soil_at(std::int64_t end_uptime_ms,
+                      std::array<std::optional<double>, 3>& out_values,
+                      std::array<SoilProbeStatus, 3>& out_status,
+                      std::optional<double>& out_avg) const;
+
+    struct ImuChannelState {
+        bool has_last = false;
+        std::int64_t last_uptime_ms = 0;
+        bool last_valid = false;
+        std::array<double, 3> last_accel{};
+
+        bool has_gravity = false;
+        std::array<double, 3> gravity{};
+        bool has_start = false;
+        std::int64_t start_ms = 0;
+
+        CausalBuffer<512> tilt_buf{};
+        CausalBuffer<512> energy_buf{};
+    };
+
+    bool configured_ = false;
+    RiskConfig config_{};
+    RiskEngine risk_engine_{};
+
+    std::array<ImuChannelState, 2> imu_{};
+    std::array<bool, 3> soil_present_{};
+    std::array<SoilRawObs, 3> soil_{};
+    bool has_last_soil_tuple_ = false;
+    std::array<std::int64_t, 3> last_soil_tuple_{};
+    CausalBuffer<64> soil_growth_buf_{};
+    mutable std::array<math::TimedSample, 512> scratch_{};
+};
+
+// Single-press GPIO21 anti-misoperation gesture FSM matching REVIEW_ADDENDUM_20261126.md:
+// - Held at boot suppressed until released.
+// - Short press fires Ack ONLY on release if < clear_hold_ms.
+// - Long press >= clear_hold_ms fires Clear ONLY if press started while recovery_ready_and_acked
+//   and recovery stayed uninterrupted for the full hold duration; release never fires Ack after hold.
+enum class ButtonEvent { None, Ack, Clear };
+
+struct ButtonGestureConfig {
+    std::uint32_t debounce_ms = 30;
+    std::uint32_t clear_hold_ms = 3000;
+};
+
+class LocalButtonGesture {
+public:
+    explicit LocalButtonGesture(ButtonGestureConfig config = {}) : config_(config) {}
+
+    ButtonEvent update(std::uint64_t now_ms, bool raw_pressed, bool recovery_ready_and_acked);
+    bool pressed() const { return debounced_pressed_; }
+
+private:
+    ButtonGestureConfig config_{};
+    bool initialized_ = false;
+    std::uint64_t last_now_ms_ = 0;
+    bool last_raw_ = false;
+    std::uint64_t raw_since_ms_ = 0;
+    bool debounced_pressed_ = false;
+    bool boot_suppress_until_release_ = false;
+    std::uint64_t press_start_ms_ = 0;
+    bool clear_eligible_for_this_press_ = false;
+    bool press_consumed_by_clear_ = false;
 };
 
 } // namespace node::logic
