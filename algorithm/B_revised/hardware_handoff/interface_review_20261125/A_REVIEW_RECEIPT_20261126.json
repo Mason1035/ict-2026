@@ -1,0 +1,34 @@
+{
+  "status": "A_INTERFACE_REVIEW_RECEIVED_B_C_PENDING",
+  "recorded_date": "2026-11-26",
+  "provenance": "User forwarded A review in chat; no cryptographic signature verified",
+  "reviewer": {
+    "role": "A",
+    "name": "李青原",
+    "date": "2026-11-26"
+  },
+  "reviewed_commit": "290680037ff74a97a50cbe53e52b6da4a996f36c",
+  "git_blob_sha256": {
+    "README_接口会签草案.md": "13ccffc7428300dc76cec43dc96c294c97f0f1daa1ea54812b0586e42a47e4bb",
+    "INTERFACE_PROPOSAL.json": "c9dae670aba28e97429de6215d02d6ac7fe2875cee6ca45a7ff439d3ee537101",
+    "RUNTIME_CONFIG_DRAFT.json": "ea3e67d77c1ac965d9a05ee25444d5e42c5e5fd6d18e2da1e227a9a8207bcea7"
+  },
+  "hash_verification": "MATCHED_GIT_BLOB_BYTES",
+  "accepted_by_A": [
+    "reason bits 0-4 and uint32/null semantics",
+    "REQUIRE_BOTH_IMU_AND_ALL_THREE_SOIL_V1",
+    "five-state alarm and latch retention; no remote ACK/CLEAR",
+    "DRAFT rejection and atomic paired activation"
+  ],
+  "A_proposals_not_yet_jointly_approved": {
+    "numeric": "binary64 interpolation/weighted sum/strict level classification",
+    "persistence": "NVS atomic record with CRC32, magic and version",
+    "button": "GPIO21 short ACK; new long press >=3s CLEAR only after ACK and recovery",
+    "hardware_profile": "GPIO6/GPIO14 pending boxed hardware tests",
+    "pump_scope": "50/70/100 percent, 3 repeats of 30s each, measured area; C pending"
+  },
+  "scope": "Interface semantics/architecture only; no physical threshold approval",
+  "B_human_signoff": null,
+  "C_signoff": null,
+  "device_load_authorized": false
+}
