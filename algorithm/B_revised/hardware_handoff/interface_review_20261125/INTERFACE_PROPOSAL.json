@@ -1,0 +1,97 @@
+{
+  "schema": "B.risk_alarm.interface_proposal.v0.1",
+  "status": "PENDING_A_B_C_REVIEW",
+  "loadable_on_device": false,
+  "review_refs": {
+    "A": null,
+    "B": null,
+    "C": null
+  },
+  "risk_config_template_ref": "../../telemetry_v2_intake/RUNTIME_CONFIG_DRAFT.json",
+  "reason_mask_proposal": {
+    "version": "B.reason_mask.v1.PROPOSED",
+    "storage": "uint32_or_null",
+    "bits": {
+      "TILT_CONTRIBUTION": 0,
+      "VIBRATION_CONTRIBUTION": 1,
+      "MOISTURE_CONTRIBUTION": 2,
+      "GROWTH_CONTRIBUTION": 3,
+      "DUAL_IMU_CONSENSUS": 4
+    },
+    "reserved_bits": [
+      5,
+      31
+    ],
+    "contribution_predicate": "validated_contribution > 0",
+    "consensus_predicate": "validated_consensus_bonus == 5",
+    "invalid_score_mask": null
+  },
+  "missing_policy": "REQUIRE_BOTH_IMU_AND_ALL_THREE_SOIL_V1",
+  "alarm_policy_proposal": {
+    "schema": "B.alarm_policy.proposal.v0.1",
+    "mode": "DRAFT",
+    "config_hash": null,
+    "alarm_policy_version": null,
+    "risk_config_hash": null,
+    "reason_mask_version": null,
+    "device_identity": {
+      "site_id": null,
+      "device_id": null
+    },
+    "hardware_profile_ref": null,
+    "approved_firmware_hashes": null,
+    "review_refs": {
+      "A": null,
+      "B": null,
+      "C": null
+    },
+    "entry_levels": [
+      "WARNING",
+      "EMERGENCY"
+    ],
+    "entry_dwell_ms": null,
+    "clear_score_exclusive": null,
+    "clear_dwell_ms": null,
+    "max_valid_result_age_ms": null,
+    "ack_policy": "LOCAL_AUTHORIZED_ONLY",
+    "auto_clear": false,
+    "clear_requires_ack": true,
+    "persist_latch": true,
+    "unknown_keeps_latch": true,
+    "output_profile": null
+  },
+  "numeric_comparison_proposal": {
+    "formula": "abs(actual-reference) <= atol + rtol*abs(reference)",
+    "rtol": 1e-05,
+    "atol": {
+      "tilt_deg": 0.001,
+      "direction_deg": 0.001,
+      "vibration_mps2": 0.0001,
+      "soil_w_rel_pct": 0.001,
+      "growth_pct_per_min": 0.001,
+      "contribution": 0.001,
+      "sensor_score": 0.001
+    },
+    "discrete_fields": "EXACT",
+    "boundary_epsilon": 0,
+    "validated_on_board": false
+  },
+  "pending_physical_parameters": [
+    "filter/window/alignment/coverage",
+    "calibration_and_curves",
+    "consensus_thresholds",
+    "alarm_dwell_and_clear",
+    "hardware_output_profile"
+  ],
+  "pump_scope": {
+    "status": "B_PROPOSED_ACCEPTANCE_SCOPE_C_PENDING",
+    "pwm_pct": [
+      50,
+      70,
+      100
+    ],
+    "repeats_each": 3,
+    "duration_s": 30,
+    "equivalent_to_legacy_five_level_60s": false
+  }
+}
