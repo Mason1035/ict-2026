@@ -21,6 +21,7 @@
 #include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
+#include "freertos/task.h"
 #include "soc/soc_memory_layout.h"
 #include "esp_private/esp_cache_private.h"
 
@@ -32,6 +33,8 @@
 #define SDSPI_BLOCK_BUF_SIZE    (SDSPI_MAX_DATA_LEN + 4)
 /// Maximum number of dummy bytes between the request and response (minimum is 1)
 #define SDSPI_RESPONSE_MAX_DELAY  8
+/// Fast-spin window before yielding 1 RTOS tick during extended busy/token waits
+#define SDSPI_POLL_FAST_SPIN_US   2000
 
 /**
  * @brief Structure containing run time configuration for a single SD slot
@@ -830,6 +833,13 @@ static esp_err_t poll_busy_detail(slot_info_t *slot, int timeout_ms, bool pollin
             if (rx == 0x00) {
                 ++info.zero_bytes;
             }
+            const int64_t now_us = esp_timer_get_time();
+            if (now_us >= t_end) {
+                break;
+            }
+            if ((now_us - t_start) >= SDSPI_POLL_FAST_SPIN_US) {
+                vTaskDelay(1);
+            }
         }
     } while (esp_timer_get_time() < t_end);
     const int64_t now_us = esp_timer_get_time();
@@ -871,7 +881,8 @@ static esp_err_t poll_data_token_ex(slot_info_t *slot, uint8_t *extra_ptr, size_
         .length = sizeof(t_rx) * 8,
     };
     esp_err_t ret;
-    int64_t t_end = esp_timer_get_time() + timeout_ms * 1000;
+    const int64_t t_start = esp_timer_get_time();
+    const int64_t t_end = t_start + (int64_t)timeout_ms * 1000;
     do {
         memset(t_rx, SDSPI_MOSI_IDLE_VAL, sizeof(t_rx));
         ret = spi_device_polling_transmit(slot->spi_handle, &t);
@@ -898,6 +909,13 @@ static esp_err_t poll_data_token_ex(slot_info_t *slot, uint8_t *extra_ptr, size_
         }
         if (found) {
             return ESP_OK;
+        }
+        const int64_t now_us = esp_timer_get_time();
+        if (now_us >= t_end) {
+            break;
+        }
+        if ((now_us - t_start) >= SDSPI_POLL_FAST_SPIN_US) {
+            vTaskDelay(1);
         }
     } while (esp_timer_get_time() < t_end);
     ESP_LOGD(TAG, "%s: timeout", __func__);

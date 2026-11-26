@@ -3,10 +3,11 @@
 ## 当前状态（2026-11-26：`0.2.2-live-sd-decoupled`）
 
 - **已上板实测基线**：`0.2.1-live-mqtt-r4-fix`（含 `StorageTask` 10 KiB 栈修复、`RecoveryWriter` 退避保留与目录缓存重置、Wi-Fi 射频门控等待及实板冷启动 ~100 s + Atlas `real-test` 连通性验证）。
-- **当前代码版本**：`0.2.2-live-sd-decoupled`（Host 单元测试 + 跨语言 C++↔Python `TEST_ONLY` 对拍 + 独立 ESP-IDF 隔离编译 + **`COM7` App-only 实板有卡 45 s 与拔卡降级 35 s 双场景启动验证**；注意：无卡持续重挂载期间 Core 0 仍录得 1 次非致命 `IDLE0 task_wdt` 告警、Atlas HTTP 入库回执待隧道开启复查、`node_logic` 待物理装盒与会签启用 [`NEED_HARDWARE_RETEST`]）：
+- **当前代码版本**：`0.2.2-live-sd-decoupled`（Host 单元测试 + 跨语言 C++↔Python `TEST_ONLY` 对拍 + 独立 ESP-IDF 隔离编译 + **`COM7` App-only 实板有卡 45 s（修复前镜像）与拔卡降级零 WDT 45 s（WDT 修复版 `7f410f44`）双场景启动验证**；注意：当前无卡状态下尚未对 WDT 修复版复跑有卡场景回归、Atlas HTTP 入库回执待隧道开启复查、`node_logic` 待物理装盒与会签启用 [`NEED_HARDWARE_RETEST`]）：
   1. **`node_logic` Risk / Alarm 框架骨架（`components/node_logic/include/node/risk_framework.hpp`、`risk_framework.cpp`）**：对齐 `origin/张鹏飞` `2906800`、`f169d37`、`bd962b2`（V0.1 会签草案、补充规范及对拍工具）。采用编译期 IEEE-754 `binary64` 断言与 `-ffp-contract=off`，实现零堆分配因果低通重力滤波及 `CausalBuffer` 滑窗特征管道（`FeaturePipeline`）、折线贡献曲线、`REQUIRE_BOTH_IMU_AND_ALL_THREE_SOIL_V1` 缺测阻塞、`reason_mask` 位构造（仅 `CALIBRATED` 生效、`TEST_ONLY` 保持 `null`）、`DRAFT` 硬拒载、5 态本地报警锁存状态机、CRC32 持久化编解码及 `GPIO21` 单次防误触按键状态机（`LocalButtonGesture`）；线上 `RiskTask / AlarmTask` 在会签冻结前继续维持 `UNARMED`、`hardware_enabled=false` 与 `risk.* = null`。
   2. **独立 C++↔Python `TEST_ONLY` 对拍（`tests/bench_compare_runner.cpp`）**：不复制 `expected.json`，独立计算并导出 3 组合成原始批次与 15 个 `binary64` 边界，通过 B 的 `bench_compare/tool.py compare` 校验零误差 `PASS`。
   3. **实时模式 SD 与 MQTT 启动解耦**：新增 `CONFIG_NODE01_SD_OPTIONAL_FOR_LIVE`（仅在 `DIAG_ACQUISITION && NETWORK_ENABLE && capture_seconds==0 && !SANDBOX_EXPERIMENT && !DIAG_TOE_BENCH && !DIAG_STORAGE_ONLY` 生效）。启动阶段仍先留出 `startup_timeout_ms` 让健康 SD 卡在 Wi-Fi RF 初始化前完成挂载开文件；若超时未就绪，连续联网模式不中断采集与 MQTT 上报（`system.sd_ok=false`），`StorageTask` 在后台继续退避重试；有限时长沙箱与隔离标定模式维持严格 SD 门控不变。
+  4. **无卡退避防 `IDLE0 task_wdt` 修复（`components/esp_driver_sdspi/src/sdspi_host.c`）**：在 `poll_busy_detail()` 与 `poll_data_token_ex()` 中保留 `2000 us` 快速自旋窗口（健康 SD 正常写响应无额外延迟），超时等待超过 `2 ms` 后调用 `vTaskDelay(1)` 让出 CPU 0，避免无 SD 卡触发连续 `1000 ms POST_CS_BUSY` 超时时饿死 `IDLE0`。修复后实板无卡冷启 45 s 全程 **`0` 次 `task_wdt` / `Backtrace` / `Panic`**，同时 `IMU_TOP / IMU_TOE max_gap_us` 从 `68025 / 67925 us` 恢复至 `14988 / 15760 us`。
 - **可复现校验入口**：
   - Host C++17 回归测试：`powershell -NoProfile -ExecutionPolicy Bypass -File tools/Test-Host.ps1`
   - 独立 ESP-IDF 5.5.3 实时固件隔离编译（不覆盖 `build-v01*`）：
