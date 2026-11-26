@@ -1,0 +1,43 @@
+{
+  "schema": "B.feature_risk.config.v1",
+  "mode": "DRAFT",
+  "config_version": null,
+  "feature_version": null,
+  "calibration_version": null,
+  "frame_id": null,
+  "device_identity": {"site_id": null, "device_id": null},
+  "sensor_ids": {
+    "imu": {"top": null, "toe": null},
+    "soil": {"top": null, "middle": null, "toe": null}
+  },
+  "validated_for_runtime": false,
+  "review_refs": {"A": null, "B": null, "C": null},
+  "reason_mask_version": null,
+  "reason_bits": null,
+  "weights": {"tilt": 0.30, "vibration": 0.25, "moisture": 0.25, "growth": 0.20},
+  "odr_hz": {"imu": null, "soil": null},
+  "missing_policy": null,
+  "imu": {
+    "filter": null,
+    "gravity_tau_ms": null,
+    "warmup_ms": null,
+    "alignment_ms": null,
+    "baseline_gravity_mps2": {"top": null, "toe": null}
+  },
+  "soil": {
+    "alignment_ms": null,
+    "calibration": {
+      "top": {"dry_raw": null, "wet_raw": null, "min_span_raw": null},
+      "middle": {"dry_raw": null, "wet_raw": null, "min_span_raw": null},
+      "toe": {"dry_raw": null, "wet_raw": null, "min_span_raw": null}
+    }
+  },
+  "windows": {
+    "tilt": {"lookback_ms": null, "max_gap_ms": null, "max_age_ms": null, "min_samples": null, "min_span_ms": null},
+    "vibration": {"lookback_ms": null, "max_gap_ms": null, "max_age_ms": null, "min_samples": null, "min_span_ms": null},
+    "soil_growth": {"lookback_ms": null, "max_gap_ms": null, "max_age_ms": null, "min_samples": null, "min_span_ms": null}
+  },
+  "curves": {"tilt": null, "vibration": null, "moisture": null, "growth": null},
+  "consensus": {"tilt_threshold_deg": null, "max_tilt_difference_deg": null, "bonus": 5},
+  "config_hash": null
+}
