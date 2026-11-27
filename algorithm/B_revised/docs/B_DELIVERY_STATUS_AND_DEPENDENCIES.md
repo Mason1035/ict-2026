@@ -51,3 +51,19 @@ python -m unittest discover -s algorithm/B_revised -t algorithm/B_revised -p 'te
 4. 有足够独立重复 run 后先按 parent_run 分组并审核 split，再版本化发布正式 Training Contract；C 才能开发正式 adapter、训练和同一 Real Test 上的比较。
 
 所有演示阈值和规则仍只用于演示，不得宣称为经过验证的地灾预测能力。
+
+## 2026-11-27 当前推进位置（软件准备，不取代历史验收记录）
+
+已补齐：A原包/sidecar与补充日志完整性核验、三场景独立C++/Python主机对拍、15个binary64边界；参见hardware_handoff/bench_compare/B_SUPPLEMENT_REVIEW_20261127.md。32条Host PASS日志不等同32个独立测试；两套ESP-IDF构建仅完成日志核验，无BIN/ELF重算。
+
+本次将候选数学13项、运行内核/入口25项、交接与比较器8项及DRAFT拒载检查纳入Software acceptance的独立B reference Windows/Linux任务。本地46项通过；远端状态以对应提交的Actions结果为准，不能由本地结果推断。
+
+现有data_intake/check_handoff.py与A_RUN_HANDOFF_DRAFT.json可用于收数预检，不新增重复入口。它们针对既有20列实验CSV；若A交工程原始SD格式，保留原件并按实际schema使用engineering_archive等既有reader，不能为了过检改头/补填或伪装成20列正式训练数据。
+
+接下来有输入后推进：
+
+- A：最终装盒固件/ELF身份、hardware_profile、标定独立验证点、整机基线及7场完整三路run；成功/失败原件与事件证据均保留。
+- C及B本人：原V0.1及20261126新增double/NVS/按钮条款、送达回执、水泵三档范围会签；助手文档不替代人工签署。
+- B：先逐run质量与适用性验收；再冻结Feature/Window/Missing/贡献曲线/Alarm参数，版本化配置与黄金向量，最后板端实测对拍。不得用验证run反调参数后再称独立验证。
+
+当前仍无准许加载未标定配置、无完整实板Alarm/NVS掉电/GPIO/链路验收。下一步优先处理真实交付与会签，不为等待而生成平行实现。
