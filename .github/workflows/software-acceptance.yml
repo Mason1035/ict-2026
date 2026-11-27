@@ -45,6 +45,32 @@ jobs:
         with:
           name: backend-${{ matrix.os }}-${{ github.sha }}
           path: work/ci/
+  b-reference:
+    name: B reference tests (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      PYTHONUTF8: '1'
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Candidate math and causal windows
+        run: python -B -m unittest discover -s algorithm/B_revised/candidate_features -t algorithm/B_revised -p 'test_*.py'
+      - name: Feature risk runtime and intake boundaries
+        if: always()
+        run: python -B -m unittest discover -s algorithm/B_revised/telemetry_v2_intake -t algorithm/B_revised -p 'test_*.py'
+      - name: Handoff and TEST_ONLY comparison regression
+        if: always()
+        run: python -B -m unittest discover -s algorithm/B_revised/hardware_handoff -t algorithm/B_revised -p 'test_*.py'
+      - name: Interface draft remains non-loadable
+        if: always()
+        run: python -B algorithm/B_revised/hardware_handoff/interface_review_20261125/verify_proposal.py
   frontend:
     runs-on: ubuntu-latest
     steps:

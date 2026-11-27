@@ -1,0 +1,57 @@
+{
+  "status": "C_PRINCIPLE_REVIEW_RECEIVED_WITH_CONDITIONS_NOT_FINAL_SIGNOFF",
+  "recorded_date": "2026-11-27",
+  "reviewer": {
+    "role": "C",
+    "name": "何宇轩"
+  },
+  "provenance": "User forwarded C receipt in chat; no cryptographic signature or independently dated reviewer signature verified",
+  "reviewed_materials": [
+    "RiskTask AlarmTask V0.1",
+    "2026-11-26 technical addendum"
+  ],
+  "exact_review_commit_provided": null,
+  "exact_review_file_hashes_provided": null,
+  "main_evidence": {
+    "pr31_merge": "e1d49119247676626635b61fc13a9bd671b96f31",
+    "merge_and_506ff2d_ancestry_verified": true,
+    "meaning": "Software and stage evidence only"
+  },
+  "conditional_agreements": {
+    "telemetry_reason_mask": "Frozen Telemetry unchanged; versioned mask; invalid score null; no formal mask in TEST_ONLY; any v2 extension optional without changing existing risk",
+    "configuration": "Immutable hashed configs, three-party review, reject DRAFT, paired Risk/Alarm activation; no unauthenticated remote delivery; config receipt separate from alarm receipt",
+    "binary64": "All scoring in double; disable FMA contraction; fixed accumulation order; no automatic bitwise claim or tighter tolerance; no platform rewriting level/mask"
+  },
+  "principle_agreements": {
+    "alarm_boundaries": "Fault/local latch/remote delivery separate; PUBACK and database insertion do not prove delivery; no remote ACK/CLEAR in V1",
+    "gpio21": "Short ACK only silences; new long press >=3s CLEAR only after ACK and continuous recovery; one gesture one event; no remote mapping; serial TEST_ONLY/HIL only; physical electrical/debounce settings pending",
+    "nvs": "CRC only detects corruption; invalid record/version fault requires review; recovery timers reset on restart; failed CLEAR commit cannot report success; power-loss tests still needed; no concrete NVS layout approved",
+    "pump_scope": "50/70/100 percent each 3 repeats of 30 seconds plus measured area; current review scope only; not legacy five-level 60s or rainfall-mm calibration"
+  },
+  "pending_C_definitions": [
+    "reason_mask version carrier compatible with frozen Telemetry",
+    "alarm delivery receipt fields/channel",
+    "device config accept/reject receipt distinct from alarm delivery",
+    "authenticated config distribution before any remote enablement"
+  ],
+  "pending_joint_acceptance": [
+    "B human review",
+    "joint immutable interface revision and A/B/C exact-reference signoff",
+    "hardware profile and boxed acquisition metadata",
+    "calibration quality review",
+    "numeric config freeze and board golden vectors",
+    "NVS power-loss GPIO Alarm physical acceptance"
+  ],
+  "device_gate": {
+    "state": "UNARMED",
+    "hardware_enabled": false,
+    "risk": {
+      "sensor_score": null,
+      "level": null,
+      "reason_mask": null
+    },
+    "device_load_authorized": false
+  },
+  "fault_caveat": "Keep earlier latch-retention rule: a genuine existing valid latch must not be erased merely by config rejection; UNARMED applies to unapproved new enablement, not an implicit CLEAR",
+  "assistant_changes": "Receipt and status documentation only; no device settings, frozen schema or numerical thresholds changed"
+}
