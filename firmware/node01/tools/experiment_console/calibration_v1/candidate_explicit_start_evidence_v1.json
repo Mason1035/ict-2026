@@ -1,0 +1,31 @@
+{
+  "schema": "NODE01_EXPLICIT_START_REVIEW_V1",
+  "manifest_sha256": "8b44f3b20899bcfc4322c94ae16df9c8646cd93de1dce97145bf2b4b5bc6e355",
+  "bin_sha256": "ae4026cd8d1296aa2df563036961ae4638c6615034bd0f4001f19f9b279b6cee",
+  "elf_sha256": "c920e629a61e61c7f845c619dbe1df635005dd455f970212389902830d681b42",
+  "build_configuration_sha256": "cd3e17c6578f1ba5f2899022da386c61a27f97b592ade9eb0025e6e1fa22c8f7",
+  "source_root": "C:\\Users\\LQY\\Documents\\Codex\\ICT2026_INTEGRATION\\STAGE_1_3_CALIBRATION_PC\\candidate-reviewed-source",
+  "source_provenance": "REVIEWED_WORKTREE_AT_HISTORICAL_REBUILD_REVIEW_NOT_COMPLETE_BUILD_INPUT_SNAPSHOT",
+  "files": {
+    "main/app_main.cpp": {
+      "bytes": 1631,
+      "sha256": "13de898ca320e742affe7dc74eec8bb76db8d7115cd4c82f8e3a6cf54e26f412"
+    },
+    "components/node_runtime/runtime.cpp": {
+      "bytes": 117268,
+      "sha256": "b21c1f6a84d03a4389eb8537a26f7304ee188e3c41418915d66e3052c24fce81"
+    },
+    "components/node_runtime/include/node/runtime_config.hpp": {
+      "bytes": 5678,
+      "sha256": "7be4ef450b907e948304ed5ad7ce1955a000e29c8615da03369190a37204a199"
+    },
+    "components/node_runtime/include/node/experiment_control.hpp": {
+      "bytes": 5321,
+      "sha256": "cdd2637b417fa6176dfa606a853883ca62beba9c0cec16115d86fa80f2c9ad66"
+    },
+    "components/node_runtime/experiment_runtime.inc": {
+      "bytes": 5459,
+      "sha256": "7a54898d69843a02db9af55527ff3eb78369cfed51d4c796d87c53b5b4600bfb"
+    }
+  }
+}

@@ -1,0 +1,37 @@
+# Read-only NVS `node01_id/last_boot` Counter Excerpt (Secret-Free)
+# Generated from host-side read-only snapshots of flash region `0x9000..0xf000` (24576 bytes).
+# Only namespace `node01_id`, key `last_boot` was extracted via ESP-IDF v5.5.3 `nvs_parser.py`.
+# Credentials (`node01_net`, `nvs.net80211`), Wi-Fi passwords, MQTT usernames/passwords, and raw NVS `.bin` files are strictly omitted and never committed.
+
+## 1. Snapshot Records (`node01_id/last_boot`)
+1. `prefix_before.bin[0x9000:0xF000]`
+   - Point in time: Before 2026-11-26 initial `0.2.2-live-sd-decoupled` app-only flash (`0x10000`)
+   - NVS partition slice size: 24576 bytes
+   - NVS partition slice SHA-256: `dd5cf95b699eb29d50e172f3711c3b1084342405c278db3adfd96a1ef541f3a6`
+   - Extracted `node01_id/last_boot`: `[(2, 13)]` -> `last_boot = 13`
+
+2. `prefix_before_wdtfix.bin[0x9000:0xF000]`
+   - Point in time: Before 2026-11-26 WDT-fix `0.2.2-live-sd-decoupled` app-only flash (`0x10000`)
+   - NVS partition slice size: 24576 bytes
+   - NVS partition slice SHA-256: `e50ffc0eabc3e584b841dda1b1e8547bc741281bb7477d162602208d23899ae7`
+   - Extracted `node01_id/last_boot`: `[(2, 16)]` -> `last_boot = 16`
+   - Note: Subsequent `uart_022_wdtfix_no_sd_45s.log` run booted cleanly once from `last_boot = 16`, allocating `boot_id = 17`.
+
+3. `nvs_after_with_sd_wdtfix.bin[0x0:0x6000]`
+   - Point in time: Read immediately after 2026-11-27 RTS-reset with-SD capture (`uart_022_wdtfix_with_sd_rts_reset_45s.log`)
+   - NVS partition slice size: 24576 bytes
+   - NVS partition slice SHA-256: `9697358b87ac1e42aff184b68a49e6e92ff0aacade33ef992472747c44ba8874`
+   - Extracted `node01_id/last_boot`: `[(2, 19)]` -> `last_boot = 19`
+   - Note: Cold USB plug-in before scripted RTS reset consumed `18`; the captured RTS-reset run allocated `boot_id = 19`.
+
+4. `nvs_after_cold_with_sd.bin[0x0:0x6000]`
+   - Point in time: Read immediately after 2026-11-27 true cold-boot with-SD capture (`uart_022_wdtfix_with_sd_cold_boot_45s.log`)
+   - NVS partition slice size: 24576 bytes
+   - NVS partition slice SHA-256: `2bad5273468383e0d6558d3a2d9bcf509f012f9a3a5a67d4df286d49019bdaa1`
+   - Extracted `node01_id/last_boot`: `[(2, 21)]` -> `last_boot = 21`
+   - Note: Post-readback `--after hard_reset` from the preceding read consumed `20`; this captured cold-boot run allocated `boot_id = 21`.
+
+## 2. Boundary & Non-Reuse Conclusion
+- UART diagnostic logs themselves do not print `boot_id`; therefore this host-side read-only NVS excerpt serves as the traceable evidence for monotonic `boot_id` progression (`13 -> 16 -> 17 -> 19 -> 21`).
+- Confirmed zero reuse of historically consumed `boot_id` values `1 / 3 / 4`.
+- Provisioned telemetry identity verified directly in UART (`MQTT_PROVISIONED`): `site_id=NODE01-STAGE23-TEST`, `device_id=NODE-01-REAL-TEST`, `topic=zhifang/v2/NODE01-STAGE23-TEST/NODE-01-REAL-TEST/telemetry`.

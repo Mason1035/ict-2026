@@ -1,0 +1,37 @@
+menu "NODE-01 communication"
+config NODE01_NETWORK_ENABLE
+    bool "Enable provisioned Wi-Fi/MQTT (hardware/Broker NOT_RUN)"
+    default n
+    help
+        Reads credentials from device NVS, never from committed sdkconfig.
+        Requires node01_net strings: ssid, psk, uri, user, pass, site.
+        Requires a reviewed, provisioned node01_id/last_boot u64 counter.
+        Missing/corrupt state blocks publishing. No automatic NVS erase or ID seeding.
+
+config NODE01_WIFI_ONLY
+    bool "Include a disarmed Wi-Fi-only diagnostic"
+    depends on !NODE01_NETWORK_ENABLE && !NODE01_MQTT_ONLY
+    default n
+    help
+        STA only. Also requires read-only NVS node01_net/wifi_only (u8)
+        set explicitly to 1 and valid ssid/psk. Without that flag the
+        firmware does not initialize the radio. No MQTT or telemetry ID.
+
+config NODE01_MQTT_ONLY
+    bool "Include disarmed MQTT transport-only diagnostic"
+    depends on !NODE01_NETWORK_ENABLE
+    depends on MQTT_PROTOCOL_311
+    default n
+    help
+        Reads only node01_mqdiag NVS. enable=1 is required before radio init.
+        Wi-Fi STA then MQTT CONNECT only. No telemetry identity, subscriptions,
+        publishes, or last will. Uses a separate diagnostic MQTT client ID.
+config NODE01_REAL_TEST_ONLY
+    bool "Include disarmed REAL Telemetry v2 TEST_ONLY publisher"
+    depends on NODE01_MQTT_ONLY && NODE01_TOE_BENCH_QUEUE_SD && !MQTT_TRANSPORT_SSL
+    default n
+    help
+        An armed NVS profile starts isolated lab TCP in CONNECT-only mode.
+        Publishing also requires explicit UART authorization, receiver approval,
+        and one external identity reservation. No automatic identity allocation.
+endmenu

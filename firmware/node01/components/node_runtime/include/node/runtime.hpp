@@ -18,10 +18,12 @@ EventBits_t system_events();
 using I2cTransaction = esp_err_t (*)(void*);
 esp_err_t with_i2c_transaction(I2cTransaction transaction, void* context);
 // Task-context copies; no I/O inside snapshot critical sections.
-void publish_imu(sampling::ImuSite, const sampling::ImuSample&);
-void publish_soil(unsigned channel, const sampling::SoilSample&);
+// Commit a completed logical group. Per-channel timestamps remain independent.
+void publish_imus(const std::array<sampling::ImuSample, 2>&);
+void publish_soils(const std::array<sampling::SoilSample, 3>&);
 sampling::SensorSnapshot sensor_snapshot();
 risk_runtime::Snapshot risk_snapshot();
-// Integration point only: not attached to real GPIO, no ISR driver installed.
+// Optional frozen GPIO4/5 DRDY callback. Context 0/1 identifies the site;
+// counts/notifies only, never accesses I2C or invents an observation.
 void imu_notify_from_isr(void*);
 } // namespace node::runtime

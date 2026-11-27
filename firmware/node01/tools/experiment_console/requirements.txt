@@ -1,0 +1,4 @@
+pyserial==3.5
+prompt_toolkit==3.0.52
+wcwidth==0.2.13
+tzdata==2026.6

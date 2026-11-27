@@ -1,0 +1,39 @@
+{
+  "schema": "NODE01_CALIBRATION_REGISTRY_V1",
+  "profiles": {
+    "OLD_STABLE": {
+      "firmware_id": "OLD_STABLE",
+      "release_channel": "STABLE",
+      "manifest_schema": "LEGACY_STABLE_CAPTURE_V1",
+      "mode": "SANDBOX_EXPERIMENT_CAPTURE",
+      "source": "REAL_SENSOR_EXPERIMENT_UNCALIBRATED",
+      "manifest_sha256": "bf529da2f31d02977bcf69e1a0e83cf773c9e4dff657d09701662f70a454d54f",
+      "bin_sha256": "2be566f0195877656610ae2ebf17437ae41fdae280457f7b914e4dd64fadd422",
+      "elf_sha256": "288e76253c36efcc1939959443c2ae58c245eb2ea0f7ba667e950d9d2372119d",
+      "bootloader_sha256": "cc6817f71b2687ad4c6d9af3863d44a0361eb27103aa249af316479494727655",
+      "partition_table_sha256": "7f00b6c042a89b15b0cac534f82ed988caf29278ff5700b0c511eb1b5bb7c820",
+      "sdkconfig_sha256": "5ba23b607b29c0f462567afafbd39a0bcdee6bf07063c11f56013afeff2d1c08",
+      "build_configuration_sha256": "5ba23b607b29c0f462567afafbd39a0bcdee6bf07063c11f56013afeff2d1c08",
+      "approved_source_evidence_sha256": "34693f97eda9928d8fc5031993bd2d55a2f095ef8b78f8c70a156301487cafbc",
+      "approval_status": "LEGACY_STABLE_VERIFIED",
+      "approval_record": null
+    },
+    "N0000043_CANDIDATE": {
+      "firmware_id": "N0000043_CANDIDATE",
+      "release_channel": "CANDIDATE",
+      "manifest_schema": "NODE01_EXPERIMENT_CONSOLE_MANIFEST_V1",
+      "mode": "SANDBOX_EXPERIMENT_CAPTURE",
+      "source": "REAL_SENSOR_EXPERIMENT_UNCALIBRATED",
+      "manifest_sha256": "8b44f3b20899bcfc4322c94ae16df9c8646cd93de1dce97145bf2b4b5bc6e355",
+      "bin_sha256": "ae4026cd8d1296aa2df563036961ae4638c6615034bd0f4001f19f9b279b6cee",
+      "elf_sha256": "c920e629a61e61c7f845c619dbe1df635005dd455f970212389902830d681b42",
+      "bootloader_sha256": "2c7520e0be6adef966bb56d4bac8c806a0fb0a3d01334804bfb7cdb754f4233e",
+      "partition_table_sha256": "7f00b6c042a89b15b0cac534f82ed988caf29278ff5700b0c511eb1b5bb7c820",
+      "sdkconfig_sha256": "df5194314ad3e9926d79b92d72a4c82cf829226e52d11231e27411f85b3f415a",
+      "build_configuration_sha256": "cd3e17c6578f1ba5f2899022da386c61a27f97b592ade9eb0025e6e1fa22c8f7",
+      "approved_source_evidence_sha256": "628a767ffa6e65f75c73107fca9c0b3b6cde5b901f754f189d2f6c42e510c709",
+      "approval_status": "CANDIDATE_REVIEW_ONLY",
+      "approval_record": null
+    }
+  }
+}

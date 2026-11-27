@@ -1,0 +1,401 @@
+OM-1 N8R8 target=esp32s3 reset_reason=1
+I (876) NODE-01: DIAG_V6 app_elf_sha256=ad03a533db89b30980d737056bd3e438bc25c286ed3200ad6b72ba3bd79bc751; gated DRDY startup + 4KiB writer/phase timing/256-row tail buffer; hardware NEED_HARDWARE_RETEST
+W (886) NODE-01: Formal publication requires enabled network + provisioned persistent identity; no auto-seeding
+W (896) NODE-01: Outputs high impedance, polarity/external bias: TBD_HARDWARE_TEST
+I (906) node_runtime: STORAGE_QUEUE_ALLOC rows=16384 record_bytes=120 payload_bytes=1966080 internal_free_before=293731 internal_largest_before=196608 internal_free_after=293731 internal_largest_after=196608 allocated=1 payload_memory=PSRAM sync_journal_rows=256
+W (926) node_runtime: DIAGNOSTIC_MODE mode=ACQUISITION_DIAGNOSTIC source=REAL_SENSOR_DIAGNOSTIC sensors=1 storage=1; not experiment/algorithm data
+W (946) node_runtime: STARTUP_EXPERIMENT plan=B_IMU_FIRST probes=0 duration_s=0; TEST_ONLY, no root-cause claim
+W (956) node_runtime: IMU_SERVICE_POLICY revision=R9 read_limit_per_site_per_frame=1 notification_claims_per_site_per_frame=1; raw GPIO ISR counts retained, pending latched edges carried to next frame; physical storm cause NOT_CONFIRMED
+W (976) i2c.master: Please check pull-up resistances whether be connected properly. Otherwise unexpected behavior would happen. For more detailed information, please read docs
+I (986) node_i2c: I2C_INIT configured=100000 Hz target=400000 Hz api_timeout_ms=20 min_wait_ms=10 tick_hz=100; reliability NEED_HARDWARE_RETEST
+I (1006) node_runtime: ImuTask CREATED core=1 priority=7 stack_bytes=4096 PROVISIONAL/TBD-15
+I (1006) node_runtime: RiskTask CREATED core=1 priority=6 stack_bytes=4096 PROVISIONAL/TBD-15
+I (1016) node_runtime: AlarmTask CREATED core=1 priority=6 stack_bytes=3072 PROVISIONAL/TBD-15
+I (1026) node_runtime: SlowSensorTask CREATED core=1 priority=5 stack_bytes=4096 PROVISIONAL/TBD-15
+I (1036) node_runtime: CommSupervisorTask CREATED core=0 priority=5 stack_bytes=6144 PROVISIONAL/TBD-15
+I (1046) node_runtime: LoRaTask DISABLED by capability/configuration/diagnostic mode (LoRa NOT_IMPLEMENTED)
+I (1056) node_runtime: StorageTask CREATED core=0 priority=3 stack_bytes=10240 PROVISIONAL/TBD-15
+I (1066) node_runtime: UiHealthTask CREATED core=0 priority=2 stack_bytes=5120 PROVISIONAL/TBD-15
+W (1076) node_runtime: IMU_DRDY_SETUP ESP_OK GPIO_TOP=4 GPIO_TOE=5; ODR100; registered pins remain disabled until per-site init/readback/status clear; IRQ rate != sample rate; fallback=timeout_counted
+I (1086) node_runtime: DIAG_V6 mode=ACQUISITION_DIAGNOSTIC source=REAL_SENSOR_DIAGNOSTIC observed_us=289575 window_us=0 risk=null calibration=NOT_READY event_bits=0x0 heap_free=6609832
+I (1106) node_runtime: CAPTURE started=0 stop_requested=0 producers_done=0x0 start_us=0 requested_stop_us=0 duration_s=0 storage_finished=0; do not disconnect before finalized/explicit blocked
+I (1126) node_runtime: IMU_TOP valid=0 error=0 no_new_data=0 observed_hz=0.00 max_gap_us=0 read_max_us=0 rate_basis=HEALTH_INTERVAL
+I (1136) node_runtime: IMU_TOE valid=0 error=0 no_new_data=0 observed_hz=0.00 max_gap_us=0 read_max_us=0 rate_basis=HEALTH_INTERVAL
+I (1146) node_runtime: IMU_READ_STAGE site=TOP latest=not_ready status_seen=0 status=0x00 attempts=0 status_fail=0 ready_raw_fail=0 invalid_raw=0 empty=0
+I (1156) node_runtime: IMU_IRQ site=TOP enabled=0 observed_edges=0 startup_edges=0 capture_edges=0 suppressed_unarmed=0 edge_hz=0.00 serviced=0 irq_empty=0 fallback=0 coalesced_edges=0 last_edge_us=0; disabled GPIO edges unobservable; latched edges cannot count hidden overruns
+I (1186) node_runtime: IMU_IRQ_BUDGET site=TOP notify_claims=0 notify_coalesced=0 stale_notifications=0 deferred_notifications=0 consumed_edges=0 pending_edges=0; raw ISR edges retained, one read/site/frame including fallback
+I (1186) node_runtime: IMU_TOP_INIT ESP_OK addr=0x68 WHO_AM_I_expected=0x47 odr=100Hz FS=16g/2000dps i2c_profile=TDK_12.3 init_cause=ESP_OK bank_restore=ESP_OK
+I (1206) node_runtime: IMU_CAPTURE_RATE site=TOP active_overlap_us=0 health_interval_us=0 valid_count_hz=0.00 irq_count_hz=0.00; count/window estimate, zero active denominator means unavailable
+I (1216) node_runtime: IMU_READBACK site=TOP complete=1 drdy=1 gyro=0x08 accel=0x08 pwr=0x0f clk=0x91 int=0x07 clear=0x00 async=0x00 source=0x08
+I (1236) node_runtime: IMU_READ_STAGE site=TOE latest=not_ready status_seen=0 status=0x00 attempts=0 status_fail=0 ready_raw_fail=0 invalid_raw=0 empty=0
+I (1256) node_runtime: IMU_IRQ site=TOE enabled=0 observed_edges=0 startup_edges=0 capture_edges=0 suppressed_unarmed=0 edge_hz=0.00 serviced=0 irq_empty=0 fallback=0 coalesced_edges=0 last_edge_us=0; disabled GPIO edges unobservable; latched edges cannot count hidden overruns
+I (1286) node_runtime: IMU_IRQ_BUDGET site=TOE notify_claims=0 notify_coalesced=0 stale_notifications=0 deferred_notifications=0 consumed_edges=0 pending_edges=0; raw ISR edges retained, one read/site/frame including fallback
+I (1306) node_runtime: IMU_CAPTURE_RATE site=TOE active_overlap_us=0 health_interval_us=0 valid_count_hz=0.00 irq_count_hz=0.00; count/window estimate, zero active denominator means unavailable
+I (1316) node_runtime: IMU_SERVICE event_wakes=0 wake_hz=0.00 rate_basis=HEALTH_INTERVAL; loops below are 100Hz supervisory frames, not task wake count; cycle work excludes notification wait
+I (1336) node_runtime: IMU_TIMING loops=0 loop_hz=0.00 tick_no_delay=0 boundary=0 imu_deadline_misses=0 work_over_10ms=0 cycle_max_us=0 start_period_max_us=0
+I (1346) node_runtime: IMU_TOE_INIT ESP_OK addr=0x69 WHO_AM_I_expected=0x47 odr=100Hz FS=16g/2000dps i2c_profile=TDK_12.3 init_cause=ESP_OK bank_restore=ESP_OK
+I (1346) node_runtime: IMU_FRAME_CAPTURE_RATE active_overlap_us=0 loop_count_hz=0.00; not an ODR or deadline guarantee
+I (1366) node_runtime: IMU_READBACK site=TOE complete=1 drdy=1 gyro=0x08 accel=0x08 pwr=0x0f clk=0x91 int=0x07 clear=0x00 async=0x00 source=0x08
+I (1376) node_runtime: SOIL valid=0/0/0 error=0/0/0
+I (1386) node_runtime: IMU_INIT_TRACE site=TOP phase=complete transfers=50 who_observed=1 actual_who=0x47 first_failure=0 bank_restore_attempted=1; actual_who meaningful only if observed
+I (1406) node_runtime: IMU_INIT_ACCESS site=TOP phase=initial_bank0 op=W reg=0x76 len=1 value=0x00 value_observed=0 validation_error=0 error=0 start_us=289552 end_us=290134; W value=requested, failed R has no observed value; RegisterBus boundary
+I (1396) node_runtime: I2C errors=0 lock_timeout=0 wait_interval_us=8 wait_max_us=4 held_interval_us=853 held_max_us=496
+I (1426) node_runtime: IMU_INIT_ACCESS site=TOP phase=reset op=W reg=0x11 len=1 value=0x01 value_observed=0 validation_error=0 error=0 start_us=290142 end_us=290528; W value=requested, failed R has no observed value; RegisterBus boundary
+I (1466) node_runtime: IMU_INIT_ACCESS site=TOP phase=who_am_i op=R reg=0x75 len=1 value=0x47 value_observed=1 validation_error=0 error=0 start_us=306485 end_us=307094; W value=requested, failed R has no observed value; RegisterBus boundary
+I (1436) node_runtime: I2C_DEVICE addr=0x68 req=0 sdk=0 err=0 timeout=0 state=0 max_call_us=0 last_fail=W/0x00/0 err=0 sdk_entered=0 fail_us=0
+I (1486) node_runtime: IMU_INIT_ACCESS site=TOP phase=select_bank1 op=W reg=0x76 len=1 value=0x01 value_observed=0 validation_error=0 error=0 start_us=307110 end_us=307526; W value=requested, failed R has no observed value; RegisterBus boundary
+I (1516) node_runtime: IMU_INIT_ACCESS site=TOP phase=select_bank1 op=R reg=0x76 len=1 value=0x01 value_observed=1 validation_error=0 error=0 start_us=307529 end_us=308056; W value=requested, failed R has no observed value; RegisterBus boundary
+I (1496) node_runtime: I2C_DEVICE addr=0x69 req=0 sdk=0 err=0 timeout=0 state=0 max_call_us=0 last_fail=W/0x00/0 err=0 sdk_entered=0 fail_us=0
+I (1536) node_runtime: IMU_INIT_ACCESS site=TOP phase=restore_bank0 op=W reg=0x76 len=1 value=0x00 value_observed=0 validation_error=0 error=0 start_us=311019 end_us=311409; W value=requested, failed R has no observed value; RegisterBus boundary
+I (1576) node_runtime: IMU_INIT_ACCESS site=TOP phase=restore_bank0 op=R reg=0x76 len=1 value=0x00 value_observed=1 validation_error=0 error=0 start_us=311412 end_us=311938; W value=requested, failed R has no observed value; RegisterBus boundary
+I (1546) node_runtime: I2C_DEVICE addr=0x48 req=0 sdk=0 err=0 timeout=0 state=0 max_call_us=0 last_fail=W/0x00/0 err=0 sdk_entered=0 fail_us=0
+I (1596) node_runtime: IMU_INIT_TRACE site=TOE phase=complete transfers=50 who_observed=1 actual_who=0x47 first_failure=0 bank_restore_attempted=1; actual_who meaningful only if observed
+I (1626) node_runtime: IMU_INIT_ACCESS site=TOE phase=initial_bank0 op=W reg=0x76 len=1 value=0x00 value_observed=0 validation_error=0 error=0 start_us=446531 end_us=447023; W value=requested, failed R has no observed value; RegisterBus boundary
+I (1606) node_runtime: I2C_CAUSE addr=0x68 sdk_err=0 local_err=0 sdk_state=0 local_state=0 pads_before=-1/-1 pads_after=-1/-1 probe=0 probe_error=0; pads are not a waveform
+I (1646) node_runtime: IMU_INIT_ACCESS site=TOE phase=reset op=W reg=0x11 len=1 value=0x01 value_observed=0 validation_error=0 error=0 start_us=447029 end_us=447427; W value=requested, failed R has no observed value; RegisterBus boundary
+I (1676) node_runtime: IMU_INIT_ACCESS site=TOE phase=who_am_i op=R reg=0x75 len=1 value=0x47 value_observed=1 validation_error=0 error=0 start_us=466485 end_us=467082; W value=requested, failed R has no observed value; RegisterBus boundary
+I (1656) node_runtime: I2C_CAUSE addr=0x69 sdk_err=0 local_err=0 sdk_state=0 local_state=0 pads_before=-1/-1 pads_after=-1/-1 probe=0 probe_error=0; pads are not a waveform
+I (1696) node_runtime: IMU_INIT_ACCESS site=TOE phase=select_bank1 op=W reg=0x76 len=1 value=0x01 value_observed=0 validation_error=0 error=0 start_us=467094 end_us=467498; W value=requested, failed R has no observed value; RegisterBus boundary
+I (1736) node_runtime: IMU_INIT_ACCESS site=TOE phase=select_bank1 op=R reg=0x76 len=1 value=0x01 value_observed=1 validation_error=0 error=0 start_us=467503 end_us=468030; W value=requested, failed R has no observed value; RegisterBus boundary
+I (1716) node_runtime: I2C_CAUSE addr=0x48 sdk_err=0 local_err=0 sdk_state=0 local_state=0 pads_before=-1/-1 pads_after=-1/-1 probe=0 probe_error=0; pads are not a waveform
+I (1756) node_runtime: IMU_INIT_ACCESS site=TOE phase=restore_bank0 op=W reg=0x76 len=1 value=0x00 value_observed=0 validation_error=0 error=0 start_us=470989 end_us=471384; W value=requested, failed R has no observed value; RegisterBus boundary
+I (1796) node_runtime: IMU_INIT_ACCESS site=TOE phase=restore_bank0 op=R reg=0x76 len=1 value=0x00 value_observed=1 validation_error=0 error=0 start_us=471388 end_us=471938; W value=requested, failed R has no observed value; RegisterBus boundary
+I (1776) node_runtime: I2C_RETRY addr=0x68 first_errors=0 first_259=0 attempts=0 recovered=0 failed=0 retry_sdk=0 last=R/0x00/0 original=0 result=0 policy=SAFE_READ_ONCE; recovered is SDK read, not sample PASS
+I (1836) node_runtime: I2C_RETRY addr=0x69 first_errors=0 first_259=0 attempts=0 recovered=0 failed=0 retry_sdk=0 last=R/0x00/0 original=0 result=0 policy=SAFE_READ_ONCE; recovered is SDK read, not sample PASS
+I (1386) node_runtime: ADS1115_INIT ESP_OK PGA=+/-4096mV SPS=128 calibration=TODO_CALIBRATION
+I (1856) node_runtime: I2C_RETRY addr=0x48 first_errors=0 first_259=0 attempts=0 recovered=0 failed=0 retry_sdk=0 last=R/0x00/0 original=0 result=0 policy=SAFE_READ_ONCE; recovered is SDK read, not sample PASS
+I (1876) node_runtime: FLOW produced=0 enqueued=0 dequeued=0 queue_drop=0 index_exhausted=0 internal_drop=0 storage_disabled=0 q=0 peak=0 rate_produced=0.00 rate_enqueued=0.00 rate_dequeued=0.00 rate_appended=0.00
+I (1896) node_runtime: SD active=0 pending=0 verifying=0 append_accepted=0 flush_accepted=0 files_verified=0 errors=0 uncertain=0 replay=0 verify_backpressure=0 (verified != power-loss proof)
+I (1916) node_runtime: SD_FAILURE write=0 flush=0 verify=0 open=0 recovery=0 unavailable_drop=0
+I (1926) node_runtime: STORAGE_SCHED explicit_yields=0 sleep_us=0 append_budget=32 wall_budget_us=50000 flush_rows=256 segment_rows=4000 queue_capacity=16384 readback_stride_rows=16; budget excludes queue wait, checked AFTER each I/O
+I (1946) node_runtime: STORAGE_PRESSURE sampled_high=0 threshold=384 resume=192 entries=0 recoveries=0 high_total_us=0 high_max_us=0 drops=0 late_samples=0 catchup_grants=0 catchup_at=128; at most one extra 32-row/50ms quota before blocked tick yield
+I (1966) node_runtime: SD_IO op=recover_inclusive calls=0 fail=0 total_us=0 max_us=0
+I (1976) node_runtime: SD_IO op=open calls=0 fail=0 total_us=0 max_us=0
+I (1976) node_runtime: SD_IO op=append calls=0 fail=0 total_us=0 max_us=0
+I (1986) node_runtime: SD_IO op=flush calls=0 fail=0 total_us=0 max_us=0
+I (1996) node_runtime: SD_IO op=close_begin calls=0 fail=0 total_us=0 max_us=0
+I (1996) node_runtime: SD_IO op=verify_4KiB calls=0 fail=0 total_us=0 max_us=0
+I (2006) node_runtime: SD_IO op=queue_wait calls=0 fail=0 total_us=0 max_us=0
+I (2016) node_runtime: SD_PHASE op=format calls=0 fail=0 total_us=0 max_us=0 bytes=0; wall includes preemption/wait, not pure card or CPU time
+I (2026) node_runtime: SD_PHASE op=fwrite calls=0 fail=0 total_us=0 max_us=0 bytes=0; wall includes preemption/wait, not pure card or CPU time
+I (2036) node_runtime: SD_PHASE op=crc calls=0 fail=0 total_us=0 max_us=0 bytes=0; wall includes preemption/wait, not pure card or CPU time
+I (2046) node_runtime: SD_PHASE op=fflush calls=0 fail=0 total_us=0 max_us=0 bytes=0; wall includes preemption/wait, not pure card or CPU time
+I (2066) node_runtime: SD_PHASE op=fsync calls=0 fail=0 total_us=0 max_us=0 bytes=0; wall includes preemption/wait, not pure card or CPU time
+I (2076) node_runtime: TASK_PROGRESS imu=0 risk=0 alarm=1 slow=0 comm=0 storage=0 health=1 risk_miss=0 alarm_qdrop=0
+I (2086) node_runtime: STACK_HWM_BYTES imu=2024 risk=2992 alarm=2264 slow=3088 comm=5228 storage=7992 health=3316 (TBD-15)
+I (1206) NODE-01: NODE-01 V0.1 tasks started; sensor/SD initialization results follow asynchronously
+W (2106) NODE-01: Patched firmware integration acceptance: NEED_HARDWARE_RETEST; prior first-board result was PARTIAL only
+W (2116) NODE-01: Risk calibration: NOT_READY; sensor_score=null level=null reason_mask=null
+W (2126) NODE-01: LoRa: NOT_IMPLEMENTED; Alarm GPIO disabled; diagnostic CSV is not an experimental dataset
+I (2136) main_task: Returned from app_main()
+W (2916) sdspi_host: SD_READ_FAIL cmd=52 arg=0x80000c08 blocks=0 blk=0 stage=POST_CS_BUSY r1=0xff rx=00ffffffffffffff rx_len=1 elapsed_us=1000067 rc=0x107
+W (2916) sdspi_host: SD_CMD_FAIL cmd=52 arg=0x80000c08 len=0 preselect_rc=0x107 rc=0x107
+I (3096) sdspi_transaction: cmd=5, R1 response: command not supported
+W (4156) sdspi_host: SD_READ_FAIL cmd=55 arg=0x00000000 blocks=0 blk=0 stage=POST_CS_BUSY r1=0xff rx=00ffffffffffffff rx_len=1 elapsed_us=1009936 rc=0x107
+W (4156) sdspi_host: SD_CMD_FAIL cmd=55 arg=0x00000000 len=0 preselect_rc=0x107 rc=0x107
+W (5216) sdspi_host: SD_READ_FAIL cmd=55 arg=0x00000000 blocks=0 blk=0 stage=POST_CS_BUSY r1=0xff rx=00ffffffffffffff rx_len=1 elapsed_us=1000067 rc=0x107
+W (5216) sdspi_host: SD_CMD_FAIL cmd=55 arg=0x00000000 len=0 preselect_rc=0x107 rc=0x107
+W (6276) sdspi_host: SD_READ_FAIL cmd=55 arg=0x00000000 blocks=0 blk=0 stage=POST_CS_BUSY r1=0xff rx=00ffffffffffffff rx_len=1 elapsed_us=1000065 rc=0x107
+W (6276) sdspi_host: SD_CMD_FAIL cmd=55 arg=0x00000000 len=0 preselect_rc=0x107 rc=0x107
+E (6286) sdmmc_common: sdmmc_init_ocr: send_op_cond (1) returned 0x107
+E (6286) vfs_fat_sdmmc: sdmmc_card_init failed (0x107).
+E (6296) node_sd: SD_MOUNT ESP_ERR_TIMEOUT (no format attempted)
+E (6296) node_runtime: SD_RECOVERY operation=1 error=263 domain=esp_err_t error_path=/sdcard current_writer= pending=0 last_dequeued_index=0 retry_ms=5748; partial file retained; potential replay != proven loss
+W (6866) node_runtime: SD_STARTUP_DEGRADED timeout_ms=5000; continuing live sensor acquisition and MQTT telemetry with sd_ok=false while StorageTask retries in background
+I (6866) node_runtime: STARTUP_PHASE name=IMU_TOP first_begin_us=289522 first_end_us=387268 result=0; zero time=NOT_ATTEMPTED, wall includes preemption
+I (6886) node_runtime: STARTUP_PHASE name=IMU_TOE first_begin_us=446503 first_end_us=547234 result=0; zero time=NOT_ATTEMPTED, wall includes preemption
+I (6896) node_runtime: STARTUP_PHASE name=ADS first_begin_us=588417 first_end_us=589642 result=0; zero time=NOT_ATTEMPTED, wall includes preemption
+I (6906) node_runtime: STARTUP_PHASE name=SD_MOUNT first_begin_us=1062133 first_end_us=5498897 result=263; zero time=NOT_ATTEMPTED, wall includes preemption
+I (6926) node_runtime: STARTUP_PHASE name=SD_OPEN first_begin_us=0 first_end_us=0 result=259; zero time=NOT_ATTEMPTED, wall includes preemption
+W (6936) node_runtime: IMU_IRQ_ARM site=TOP init_ok=1 result=ESP_OK startup_status_seen=1 status=0x39; failed sites stay IRQ-disabled with explicit 100Hz Error/polling diagnostics
+W (6956) node_runtime: IMU_IRQ_ARM site=TOE init_ok=1 result=ESP_OK startup_status_seen=1 status=0x39; failed sites stay IRQ-disabled with explicit 100Hz Error/polling diagnostics
+W (6966) node_runtime: CAPTURE_BEGIN monotonic_us=6167721 duration_s=0 source=REAL_SENSOR_DIAGNOSTIC; pre-start warmup is outside capture; no durability claim
+I (7006) node_comm: MQTT_PROVISIONED uri=mqtt://10.75.156.148:1883 topic=zhifang/v2/NODE01-STAGE23-TEST/NODE-01-REAL-TEST/telemetry device=NODE-01-REAL-TEST
+I (7006) pp: pp rom version: e7ae62f
+I (7006) net80211: net80211 rom version: e7ae62f
+I (7026) wifi:wifi driver task: 3fcc0b04, prio:23, stack:3584, core=0
+I (7026) wifi:wifi firmware version: 4df78f2
+I (7026) wifi:wifi certification version: v7.0
+I (7026) wifi:config NVS flash: enabled
+I (7026) wifi:config nano formatting: disabled
+I (7036) wifi:Init data frame dynamic rx buffer num: 32
+I (7036) wifi:Init static rx mgmt buffer num: 5
+I (7046) wifi:Init management short buffer num: 32
+I (7046) wifi:Init dynamic tx buffer num: 32
+I (7056) wifi:Init static tx FG buffer num: 2
+I (7056) wifi:Init static rx buffer size: 1600
+I (7056) wifi:Init static rx buffer num: 10
+I (7066) wifi:Init dynamic rx buffer num: 32
+I (7066) wifi_init: rx ba win: 6
+I (7076) wifi_init: accept mbox: 6
+I (7076) wifi_init: tcpip mbox: 32
+I (7076) wifi_init: udp mbox: 6
+I (7076) wifi_init: tcp mbox: 6
+I (7086) wifi_init: tcp tx win: 5760
+I (7086) wifi_init: tcp rx win: 5760
+I (7086) wifi_init: tcp mss: 1440
+I (7096) wifi_init: WiFi IRAM OP enabled
+I (7096) wifi_init: WiFi RX IRAM OP enabled
+I (7106) phy_init: phy_version 711,97bcf0a2,Aug 25 2025,19:04:10
+I (7146) wifi:mode : sta (58:e6:c5:74:7d:cc)
+I (7146) wifi:enable tsf
+I (7146) node_comm: STA/MQTT configured; telemetry QoS=0 retained=false
+I (7146) wifi:new:<1,0>, old:<1,0>, ap:<255,255>, sta:<1,0>, prof:1, snd_ch_cfg:0x0
+I (7156) wifi:state: init -> auth (0xb0)
+I (7156) wifi:state: auth -> assoc (0x0)
+I (7166) wifi:state: assoc -> run (0x10)
+I (7166) wifi:connected with sicnu-portal, aid = 1, channel 1, BW20, bssid = 12:cd:55:af:d4:f0
+I (7176) wifi:security: Open Auth, phy: bgn, rssi: -44
+I (7176) wifi:pm start, type: 1
+
+I (7176) wifi:dp: 1, bi: 102400, li: 3, scale listen interval from 307200 us to 307200 us
+I (7186) wifi:set rx beacon pti, rx_bcn_pti: 0, bcn_timeout: 25000, mt_pti: 0, mt_time: 10000
+I (7196) wifi:AP's beacon interval = 102400 us, DTIM period = 1
+W (7616) sdspi_host: SD_READ_FAIL cmd=52 arg=0x80000c08 blocks=0 blk=0 stage=POST_CS_BUSY r1=0xff rx=00ffffffffffffff rx_len=1 elapsed_us=1000077 rc=0x107
+W (7616) sdspi_host: SD_CMD_FAIL cmd=52 arg=0x80000c08 len=0 preselect_rc=0x107 rc=0x107
+I (7756) wifi:<ba-add>idx:0 (ifx:0, 12:cd:55:af:d4:f0), tid:7, ssn:0, winSize:64
+I (7796) wifi:<ba-add>idx:1 (ifx:0, 12:cd:55:af:d4:f0), tid:6, ssn:0, winSize:64
+I (7806) sdspi_transaction: cmd=5, R1 response: command not supported
+I (8376) node_sd: SD_MOUNT ready clock_khz=1000; target_hz=20000000; power-loss reliability TBD_HARDWARE_TEST
+Name: SD32G
+Type: SDHC
+Speed: 1.00 MHz (limit: 1.00 MHz)
+Size: 30604MB
+CSD: ver=2, sector_size=512, capacity=62676992 read_bl_len=9
+SSR: bus_width=1
+I (8796) esp_netif_handlers: sta ip: 10.75.180.61, mask: 255.255.128.0, gw: 10.75.128.1
+I (8796) node_comm: WIFI_GOT_IP 10.75.180.61
+I (8906) wifi:<ba-del>idx:1, tid:6
+I (8916) wifi:<ba-add>idx:1 (ifx:0, 12:cd:55:af:d4:f0), tid:0, ssn:0, winSize:64
+I (9006) node_runtime: SD_FILE /sdcard/N0009518.CSV engineering diagnostic; replay may retain acquisition_index
+I (9146) node_comm: MQTT_CONNECTED; Atlas receipt unverified
+I (12096) node_runtime: DIAG_V6 mode=ACQUISITION_DIAGNOSTIC source=REAL_SENSOR_DIAGNOSTIC observed_us=11292688 window_us=11003113 risk=null calibration=NOT_READY event_bits=0x1cb heap_free=6522600
+I (12096) node_runtime: CAPTURE started=1 stop_requested=0 producers_done=0x0 start_us=6167721 requested_stop_us=0 duration_s=0 storage_finished=0; do not disconnect before finalized/explicit blocked
+I (12116) node_runtime: IMU_TOP valid=511 error=0 no_new_data=0 observed_hz=46.44 max_gap_us=15058 read_max_us=3138 rate_basis=HEALTH_INTERVAL
+I (12126) node_runtime: IMU_TOE valid=508 error=0 no_new_data=0 observed_hz=46.17 max_gap_us=14990 read_max_us=2807 rate_basis=HEALTH_INTERVAL
+I (12146) node_runtime: IMU_READ_STAGE site=TOP latest=complete status_seen=1 status=0x08 attempts=511 status_fail=0 ready_raw_fail=0 invalid_raw=0 empty=0
+I (12156) node_runtime: IMU_IRQ site=TOP enabled=1 observed_edges=512 startup_edges=1 capture_edges=511 suppressed_unarmed=0 edge_hz=46.44 serviced=510 irq_empty=0 fallback=1 coalesced_edges=0 last_edge_us=11292208; disabled GPIO edges unobservable; latched edges cannot count hidden overruns
+I (12186) node_runtime: IMU_IRQ_BUDGET site=TOP notify_claims=485 notify_coalesced=27 stale_notifications=12 deferred_notifications=136 consumed_edges=510 pending_edges=1; raw ISR edges retained, one read/site/frame including fallback
+I (12206) node_runtime: IMU_CAPTURE_RATE site=TOP active_overlap_us=5124967 health_interval_us=11003113 valid_count_hz=99.71 irq_count_hz=99.71; count/window estimate, zero active denominator means unavailable
+I (12226) node_runtime: IMU_READ_STAGE site=TOE latest=complete status_seen=1 status=0x08 attempts=508 status_fail=0 ready_raw_fail=0 invalid_raw=0 empty=0
+I (12236) node_runtime: IMU_IRQ site=TOE enabled=1 observed_edges=508 startup_edges=1 capture_edges=507 suppressed_unarmed=0 edge_hz=46.08 serviced=507 irq_empty=0 fallback=1 coalesced_edges=0 last_edge_us=11288624; disabled GPIO edges unobservable; latched edges cannot count hidden overruns
+I (12266) node_runtime: IMU_IRQ_BUDGET site=TOE notify_claims=469 notify_coalesced=39 stale_notifications=34 deferred_notifications=10 consumed_edges=507 pending_edges=0; raw ISR edges retained, one read/site/frame including fallback
+I (12286) node_runtime: IMU_CAPTURE_RATE site=TOE active_overlap_us=5124967 health_interval_us=11003113 valid_count_hz=99.12 irq_count_hz=98.93; count/window estimate, zero active denominator means unavailable
+W (12306) node_runtime: IMU_IRQ_FALLBACK site=TOP init_ok=1 observed_us=6191626 deferred=UiHealthTask; inspect init/status/IRQ evidence; polling is not event acceptance
+W (12316) node_runtime: IMU_IRQ_FALLBACK site=TOE init_ok=1 observed_us=6194832 deferred=UiHealthTask; inspect init/status/IRQ evidence; polling is not event acceptance
+I (12336) node_runtime: IMU_SERVICE event_wakes=456 wake_hz=41.44 rate_basis=HEALTH_INTERVAL; loops below are 100Hz supervisory frames, not task wake count; cycle work excludes notification wait
+I (12356) node_runtime: IMU_TIMING loops=511 loop_hz=46.44 tick_no_delay=138 boundary=138 imu_deadline_misses=0 work_over_10ms=0 cycle_max_us=5473 start_period_max_us=15390
+I (12366) node_runtime: IMU_FRAME_CAPTURE_RATE active_overlap_us=5124967 loop_count_hz=99.71; not an ODR or deadline guarantee
+I (12376) node_runtime: SOIL valid=11/11/11 error=0/0/0
+I (12406) node_runtime: I2C errors=0 lock_timeout=0 wait_interval_us=195356 wait_max_us=6900 held_interval_us=2181516 held_max_us=1855
+I (12406) node_runtime: I2C_DEVICE addr=0x68 req=1073 sdk=1073 err=0 timeout=0 state=0 max_call_us=1951 last_fail=W/0x00/0 err=0 sdk_entered=0 fail_us=0
+I (12416) node_runtime: I2C_DEVICE addr=0x69 req=1067 sdk=1067 err=0 timeout=0 state=0 max_call_us=1861 last_fail=W/0x00/0 err=0 sdk_entered=0 fail_us=0
+I (12436) node_runtime: I2C_DEVICE addr=0x48 req=134 sdk=134 err=0 timeout=0 state=0 max_call_us=7570 last_fail=W/0x00/0 err=0 sdk_entered=0 fail_us=0
+I (12446) node_runtime: I2C_CAUSE addr=0x68 sdk_err=0 local_err=0 sdk_state=0 local_state=0 pads_before=-1/-1 pads_after=-1/-1 probe=0 probe_error=0; pads are not a waveform
+I (12456) node_runtime: I2C_CAUSE addr=0x69 sdk_err=0 local_err=0 sdk_state=0 local_state=0 pads_before=-1/-1 pads_after=-1/-1 probe=0 probe_error=0; pads are not a waveform
+I (12476) node_runtime: I2C_CAUSE addr=0x48 sdk_err=0 local_err=0 sdk_state=0 local_state=0 pads_before=-1/-1 pads_after=-1/-1 probe=0 probe_error=0; pads are not a waveform
+I (12486) node_runtime: I2C_RETRY addr=0x68 first_errors=0 first_259=0 attempts=0 recovered=0 failed=0 retry_sdk=0 last=R/0x00/0 original=0 result=0 policy=SAFE_READ_ONCE; recovered is SDK read, not sample PASS
+I (12506) node_runtime: I2C_RETRY addr=0x69 first_errors=0 first_259=0 attempts=0 recovered=0 failed=0 retry_sdk=0 last=R/0x00/0 original=0 result=0 policy=SAFE_READ_ONCE; recovered is SDK read, not sample PASS
+I (12526) node_runtime: I2C_RETRY addr=0x48 first_errors=0 first_259=0 attempts=0 recovered=0 failed=0 retry_sdk=0 last=R/0x00/0 original=0 result=0 policy=SAFE_READ_ONCE; recovered is SDK read, not sample PASS
+I (12546) node_runtime: FLOW produced=1052 enqueued=1052 dequeued=186 queue_drop=0 index_exhausted=0 internal_drop=0 storage_disabled=0 q=866 peak=866 rate_produced=95.61 rate_enqueued=95.61 rate_dequeued=16.90 rate_appended=16.81
+I (12566) node_runtime: SD active=1 pending=0 verifying=0 append_accepted=185 flush_accepted=0 files_verified=0 errors=1 uncertain=0 replay=0 verify_backpressure=0 (verified != power-loss proof)
+I (12586) node_runtime: SD_FAILURE write=0 flush=0 verify=0 open=0 recovery=1 unavailable_drop=0
+I (12586) node_runtime: STORAGE_SCHED explicit_yields=3 sleep_us=23310 append_budget=32 wall_budget_us=50000 flush_rows=256 segment_rows=4000 queue_capacity=16384 readback_stride_rows=16; budget excludes queue wait, checked AFTER each I/O
+I (12616) node_runtime: SD_LATENCY op=append n=185 p50_us=251..500 p95_us=501..1000 p99_us=300001..500000 unbounded50_95_99=0/0/0 max_us=990909 over100ms=5 over300ms=2 over500ms=1; histogram intervals; CPU time unavailable
+W (12636) node_runtime: SD_LONG_EVENT seq=1 op=recover_inclusive start_us=1062108 end_us=5498910 wall_us=4436802 q_before=0 q_after=0 rows=0 bytes=0 phase_seen=0 format_us=0 fwrite_us=0 fflush_us=0 fsync_us=0 catchups_before=0 next_action=0 core=0 priority=3 ok=0 cpu_time_available=0; queue endpoints sampled, nested recover overlaps open
+W (12656) node_runtime: SD_LONG_EVENT seq=2 op=open start_us=7590747 end_us=8210802 wall_us=620055 q_before=289 q_after=415 rows=0 bytes=0 phase_seen=0 format_us=0 fwrite_us=0 fflush_us=0 fsync_us=0 catchups_before=0 next_action=0 core=0 priority=3 ok=1 cpu_time_available=0; queue endpoints sampled, nested recover overlaps open
+W (12686) node_runtime: SD_LONG_EVENT seq=3 op=recover_inclusive start_us=5761490 end_us=8982243 wall_us=3220753 q_before=0 q_after=576 rows=0 bytes=0 phase_seen=0 format_us=0 fwrite_us=0 fflush_us=0 fsync_us=0 catchups_before=0 next_action=2 core=0 priority=3 ok=1 cpu_time_available=0; queue endpoints sampled, nested recover overlaps open
+W (12716) node_runtime: SD_LONG_EVENT seq=4 op=append start_us=9001537 end_us=9992446 wall_us=990909 q_before=547 q_after=750 rows=1 bytes=130 phase_seen=1 format_us=434 fwrite_us=990395 fflush_us=0 fsync_us=0 catchups_before=1 next_action=2 core=0 priority=3 ok=1 cpu_time_available=0; queue endpoints sampled, nested recover overlaps open
+I (12746) node_runtime: SD_EVENT_RING total=8 historical_evictions=0 context_errors=0 capacity=16; eviction != unseen gap
+I (12756) node_runtime: I2C_LOCK_OWNERSHIP takes=2274 gives=2274 local_timeouts=0 observed_acquire_to_before_give_max_us=1864 give_failures=0 metadata_errors=0; legacy held_max is SDK callback wall, not whole ownership; FreeRTOS priority inheritance enabled, runtime effect requires trace
+I (12786) node_runtime: STORAGE_PRESSURE sampled_high=1 threshold=384 resume=192 entries=1 recoveries=0 high_total_us=3248518 high_max_us=3248518 drops=0 late_samples=0 catchup_grants=5 catchup_at=128; at most one extra 32-row/50ms quota before blocked tick yield
+W (12806) node_runtime: STORAGE_Q_EVENT which=last_high observed_us=8045457 depth_after_op=384 has_index=1 acquisition_index=383 dropped=0 io=open io_start_us=7590747 io_age_us=454710; sampled after queue op, not atomic queue history
+W (12836) node_runtime: SD_LAST_LONG_IO calls=8 op=append started_us=10916050 finished_us=11122273 wall_us=206223; last completed >=100ms, includes scheduling/wait; not full I/O history
+I (12856) node_runtime: SD_IO op=recover_inclusive calls=2 fail=1 total_us=7657555 max_us=4436802
+I (12866) node_runtime: SD_IO op=open calls=1 fail=0 total_us=620055 max_us=620055
+I (12866) node_runtime: SD_IO op=append calls=185 fail=0 total_us=2115805 max_us=990909
+I (12876) node_runtime: SD_IO op=flush calls=0 fail=0 total_us=0 max_us=0
+I (12886) node_runtime: SD_IO op=close_begin calls=0 fail=0 total_us=0 max_us=0
+I (12886) node_runtime: SD_IO op=verify_4KiB calls=0 fail=0 total_us=0 max_us=0
+I (12896) node_runtime: SD_IO op=queue_wait calls=0 fail=0 total_us=0 max_us=0
+W (12906) node_runtime: SD_IO_IN_FLIGHT op=append age_us=155595
+I (12906) node_runtime: SD_PHASE op=format calls=185 fail=0 total_us=63384 max_us=672 bytes=0; wall includes preemption/wait, not pure card or CPU time
+I (12926) node_runtime: SD_PHASE op=fwrite calls=188 fail=0 total_us=2044484 max_us=990395 bytes=25832; wall includes preemption/wait, not pure card or CPU time
+I (12936) node_runtime: SD_PHASE op=crc calls=188 fail=0 total_us=4339 max_us=126 bytes=25832; wall includes preemption/wait, not pure card or CPU time
+I (12946) node_runtime: SD_PHASE op=fflush calls=1 fail=0 total_us=390997 max_us=390997 bytes=0; wall includes preemption/wait, not pure card or CPU time
+I (12976) node_runtime: SD_PHASE op=fsync calls=1 fail=0 total_us=379983 max_us=379983 bytes=0; wall includes preemption/wait, not pure card or CPU time
+I (12986) node_runtime: TASK_PROGRESS imu=511 risk=221 alarm=1 slow=11 comm=20 storage=191 health=2 risk_miss=0 alarm_qdrop=0
+I (12996) node_runtime: STACK_HWM_BYTES imu=1656 risk=2992 alarm=2264 slow=1856 comm=3244 storage=5256 health=2068 (TBD-15)
+I (16896) node_runtime: COMM wifi=1 mqtt=1 enqueued=7 rejected=0 edge_online=false; no durable receipt
+I (23006) node_runtime: DIAG_V6 mode=ACQUISITION_DIAGNOSTIC source=REAL_SENSOR_DIAGNOSTIC observed_us=22202767 window_us=10910079 risk=null calibration=NOT_READY event_bits=0x1cb heap_free=6524000
+I (23006) node_runtime: CAPTURE started=1 stop_requested=0 producers_done=0x0 start_us=6167721 requested_stop_us=0 duration_s=0 storage_finished=0; do not disconnect before finalized/explicit blocked
+I (23026) node_runtime: IMU_TOP valid=1602 error=0 no_new_data=0 observed_hz=100.00 max_gap_us=15168 read_max_us=3189 rate_basis=HEALTH_INTERVAL
+I (23036) node_runtime: IMU_TOE valid=1593 error=0 no_new_data=0 observed_hz=99.45 max_gap_us=16291 read_max_us=2807 rate_basis=HEALTH_INTERVAL
+I (23056) node_runtime: IMU_READ_STAGE site=TOP latest=complete status_seen=1 status=0x08 attempts=1602 status_fail=0 ready_raw_fail=0 invalid_raw=0 empty=0
+I (23066) node_runtime: IMU_IRQ site=TOP enabled=1 observed_edges=1602 startup_edges=1 capture_edges=1601 suppressed_unarmed=0 edge_hz=99.91 serviced=1601 irq_empty=0 fallback=1 coalesced_edges=0 last_edge_us=22194587; disabled GPIO edges unobservable; latched edges cannot count hidden overruns
+I (23096) node_runtime: IMU_IRQ_BUDGET site=TOP notify_claims=1519 notify_coalesced=83 stale_notifications=38 deferred_notifications=482 consumed_edges=1601 pending_edges=0; raw ISR edges retained, one read/site/frame including fallback
+I (23116) node_runtime: IMU_CAPTURE_RATE site=TOP active_overlap_us=10910079 health_interval_us=10910079 valid_count_hz=100.00 irq_count_hz=99.91; count/window estimate, zero active denominator means unavailable
+I (23136) node_runtime: IMU_READ_STAGE site=TOE latest=complete status_seen=1 status=0x08 attempts=1593 status_fail=0 ready_raw_fail=0 invalid_raw=0 empty=0
+I (23146) node_runtime: IMU_IRQ site=TOE enabled=1 observed_edges=1593 startup_edges=1 capture_edges=1592 suppressed_unarmed=0 edge_hz=99.45 serviced=1592 irq_empty=0 fallback=1 coalesced_edges=0 last_edge_us=22197479; disabled GPIO edges unobservable; latched edges cannot count hidden overruns
+I (23166) node_runtime: IMU_IRQ_BUDGET site=TOE notify_claims=1474 notify_coalesced=119 stale_notifications=105 deferred_notifications=21 consumed_edges=1592 pending_edges=0; raw ISR edges retained, one read/site/frame including fallback
+I (23196) node_runtime: IMU_CAPTURE_RATE site=TOE active_overlap_us=10910079 health_interval_us=10910079 valid_count_hz=99.45 irq_count_hz=99.45; count/window estimate, zero active denominator means unavailable
+I (23206) node_runtime: IMU_SERVICE event_wakes=1537 wake_hz=99.08 rate_basis=HEALTH_INTERVAL; loops below are 100Hz supervisory frames, not task wake count; cycle work excludes notification wait
+I (23226) node_runtime: IMU_TIMING loops=1602 loop_hz=100.00 tick_no_delay=507 boundary=507 imu_deadline_misses=0 work_over_10ms=0 cycle_max_us=5896 start_period_max_us=15390
+I (23246) node_runtime: IMU_FRAME_CAPTURE_RATE active_overlap_us=10910079 loop_count_hz=100.00; not an ODR or deadline guarantee
+I (23256) node_runtime: SOIL valid=32/32/32 error=0/0/0
+I (23266) node_runtime: I2C errors=0 lock_timeout=0 wait_interval_us=406642 wait_max_us=7405 held_interval_us=4575061 held_max_us=1855
+I (23276) node_runtime: I2C_DEVICE addr=0x68 req=3255 sdk=3255 err=0 timeout=0 state=0 max_call_us=1951 last_fail=W/0x00/0 err=0 sdk_entered=0 fail_us=0
+I (23286) node_runtime: I2C_DEVICE addr=0x69 req=3237 sdk=3237 err=0 timeout=0 state=0 max_call_us=1861 last_fail=W/0x00/0 err=0 sdk_entered=0 fail_us=0
+I (23306) node_runtime: I2C_DEVICE addr=0x48 req=388 sdk=388 err=0 timeout=0 state=0 max_call_us=8392 last_fail=W/0x00/0 err=0 sdk_entered=0 fail_us=0
+I (23316) node_runtime: I2C_CAUSE addr=0x68 sdk_err=0 local_err=0 sdk_state=0 local_state=0 pads_before=-1/-1 pads_after=-1/-1 probe=0 probe_error=0; pads are not a waveform
+I (23336) node_runtime: I2C_CAUSE addr=0x69 sdk_err=0 local_err=0 sdk_state=0 local_state=0 pads_before=-1/-1 pads_after=-1/-1 probe=0 probe_error=0; pads are not a waveform
+I (23346) node_runtime: I2C_CAUSE addr=0x48 sdk_err=0 local_err=0 sdk_state=0 local_state=0 pads_before=-1/-1 pads_after=-1/-1 probe=0 probe_error=0; pads are not a waveform
+I (23366) node_runtime: I2C_RETRY addr=0x68 first_errors=0 first_259=0 attempts=0 recovered=0 failed=0 retry_sdk=0 last=R/0x00/0 original=0 result=0 policy=SAFE_READ_ONCE; recovered is SDK read, not sample PASS
+I (23376) node_runtime: I2C_RETRY addr=0x69 first_errors=0 first_259=0 attempts=0 recovered=0 failed=0 retry_sdk=0 last=R/0x00/0 original=0 result=0 policy=SAFE_READ_ONCE; recovered is SDK read, not sample PASS
+I (23396) node_runtime: I2C_RETRY addr=0x48 first_errors=0 first_259=0 attempts=0 recovered=0 failed=0 retry_sdk=0 last=R/0x00/0 original=0 result=0 policy=SAFE_READ_ONCE; recovered is SDK read, not sample PASS
+I (23416) node_runtime: FLOW produced=3291 enqueued=3291 dequeued=1781 queue_drop=0 index_exhausted=0 internal_drop=0 storage_disabled=0 q=1510 peak=1514 rate_produced=205.22 rate_enqueued=205.22 rate_dequeued=146.20 rate_appended=146.20
+I (23446) node_runtime: SD active=1 pending=0 verifying=0 append_accepted=1780 flush_accepted=1536 files_verified=0 errors=1 uncertain=0 replay=0 verify_backpressure=0 (verified != power-loss proof)
+I (23456) node_runtime: SD_FAILURE write=0 flush=0 verify=0 open=0 recovery=1 unavailable_drop=0
+I (23466) node_runtime: STORAGE_SCHED explicit_yields=32 sleep_us=278196 append_budget=32 wall_budget_us=50000 flush_rows=256 segment_rows=4000 queue_capacity=16384 readback_stride_rows=16; budget excludes queue wait, checked AFTER each I/O
+I (23486) node_runtime: SD_LATENCY op=append n=1780 p50_us=251..500 p95_us=501..1000 p99_us=200001..300000 unbounded50_95_99=0/0/0 max_us=990909 over100ms=55 over300ms=2 over500ms=1; histogram intervals; CPU time unavailable
+I (23506) node_runtime: SD_LATENCY op=flush_periodic n=6 p50_us=100001..200000 p95_us=200001..300000 p99_us=200001..300000 unbounded50_95_99=0/0/0 max_us=223694 over100ms=6 over300ms=0 over500ms=0; histogram intervals; CPU time unavailable
+W (23526) node_runtime: SD_LONG_EVENT_GAP unseen=44 oldest_retained=49; bounded ring, retain max/histograms
+W (23536) node_runtime: SD_LONG_EVENT seq=49 op=append start_us=19067147 end_us=19232299 wall_us=165152 q_before=1338 q_after=1372 rows=1 bytes=142 phase_seen=1 format_us=308 fwrite_us=164783 fflush_us=0 fsync_us=0 catchups_before=25 next_action=3 core=0 priority=3 ok=1 cpu_time_available=0; queue endpoints sampled, nested recover overlaps open
+W (23566) node_runtime: SD_LONG_EVENT seq=50 op=append start_us=19257708 end_us=19432296 wall_us=174588 q_before=1349 q_after=1383 rows=1 bytes=142 phase_seen=1 format_us=286 fwrite_us=174244 fflush_us=0 fsync_us=0 catchups_before=25 next_action=2 core=0 priority=3 ok=1 cpu_time_available=0; queue endpoints sampled, nested recover overlaps open
+W (23596) node_runtime: SD_LONG_EVENT seq=51 op=append start_us=19447415 end_us=19612311 wall_us=164896 q_before=1356 q_after=1388 rows=1 bytes=132 phase_seen=1 format_us=307 fwrite_us=164530 fflush_us=0 fsync_us=0 catchups_before=26 next_action=3 core=0 priority=3 ok=1 cpu_time_available=0; queue endpoints sampled, nested recover overlaps open
+W (23636) node_runtime: SD_LONG_EVENT seq=52 op=append start_us=19636507 end_us=19802322 wall_us=165815 q_before=1363 q_after=1399 rows=1 bytes=142 phase_seen=1 format_us=380 fwrite_us=165374 fflush_us=0 fsync_us=0 catchups_before=26 next_action=2 core=0 priority=3 ok=1 cpu_time_available=0; queue endpoints sampled, nested recover overlaps open
+I (23666) node_runtime: SD_EVENT_RING total=64 historical_evictions=48 context_errors=0 capacity=16; eviction != unseen gap
+I (23676) node_runtime: I2C_LOCK_OWNERSHIP takes=6880 gives=6880 local_timeouts=0 observed_acquire_to_before_give_max_us=1864 give_failures=0 metadata_errors=0; legacy held_max is SDK callback wall, not whole ownership; FreeRTOS priority inheritance enabled, runtime effect requires trace
+I (23706) node_runtime: STORAGE_PRESSURE sampled_high=1 threshold=384 resume=192 entries=1 recoveries=0 high_total_us=14158581 high_max_us=14158581 drops=0 late_samples=0 catchup_grants=35 catchup_at=128; at most one extra 32-row/50ms quota before blocked tick yield
+W (23726) node_runtime: SD_LAST_LONG_IO calls=64 op=append started_us=21895237 finished_us=22062323 wall_us=167086; last completed >=100ms, includes scheduling/wait; not full I/O history
+I (23746) node_runtime: SD_IO op=recover_inclusive calls=2 fail=1 total_us=7657555 max_us=4436802
+I (23746) node_runtime: SD_IO op=open calls=1 fail=0 total_us=620055 max_us=620055
+I (23756) node_runtime: SD_IO op=append calls=1780 fail=0 total_us=11573350 max_us=990909
+I (23766) node_runtime: SD_IO op=flush calls=6 fail=0 total_us=1092170 max_us=223694
+I (23776) node_runtime: SD_IO op=close_begin calls=0 fail=0 total_us=0 max_us=0
+I (23776) node_runtime: SD_IO op=verify_4KiB calls=0 fail=0 total_us=0 max_us=0
+I (23786) node_runtime: SD_IO op=queue_wait calls=0 fail=0 total_us=0 max_us=0
+W (23796) node_runtime: SD_IO_IN_FLIGHT op=append age_us=125551
+I (23796) node_runtime: SD_PHASE op=format calls=1780 fail=0 total_us=618550 max_us=1031 bytes=0; wall includes preemption/wait, not pure card or CPU time
+I (23816) node_runtime: SD_PHASE op=fwrite calls=1783 fail=0 total_us=10871063 max_us=990395 bytes=239233; wall includes preemption/wait, not pure card or CPU time
+I (23826) node_runtime: SD_PHASE op=crc calls=1783 fail=0 total_us=41191 max_us=355 bytes=239233; wall includes preemption/wait, not pure card or CPU time
+I (23846) node_runtime: SD_PHASE op=fflush calls=7 fail=0 total_us=792349 max_us=390997 bytes=0; wall includes preemption/wait, not pure card or CPU time
+I (23856) node_runtime: SD_PHASE op=fsync calls=7 fail=0 total_us=1070580 max_us=379983 bytes=0; wall includes preemption/wait, not pure card or CPU time
+I (23876) node_runtime: TASK_PROGRESS imu=1602 risk=439 alarm=1 slow=32 comm=64 storage=1792 health=3 risk_miss=0 alarm_qdrop=0
+I (23886) node_runtime: STACK_HWM_BYTES imu=1656 risk=2992 alarm=2264 slow=1856 comm=3244 storage=5256 health=1796 (TBD-15)
+I (26896) node_runtime: COMM wifi=1 mqtt=1 enqueued=16 rejected=0 edge_online=false; no durable receipt
+I (33896) node_runtime: DIAG_V6 mode=ACQUISITION_DIAGNOSTIC source=REAL_SENSOR_DIAGNOSTIC observed_us=33097335 window_us=10894568 risk=null calibration=NOT_READY event_bits=0x1cb heap_free=6522952
+I (33906) node_runtime: CAPTURE started=1 stop_requested=0 producers_done=0x0 start_us=6167721 requested_stop_us=0 duration_s=0 storage_finished=0; do not disconnect before finalized/explicit blocked
+I (33926) node_runtime: IMU_TOP valid=2691 error=0 no_new_data=0 observed_hz=99.96 max_gap_us=15168 read_max_us=3189 rate_basis=HEALTH_INTERVAL
+I (33936) node_runtime: IMU_TOE valid=2676 error=0 no_new_data=0 observed_hz=99.41 max_gap_us=16291 read_max_us=2972 rate_basis=HEALTH_INTERVAL
+I (33946) node_runtime: IMU_READ_STAGE site=TOP latest=complete status_seen=1 status=0x08 attempts=2691 status_fail=0 ready_raw_fail=0 invalid_raw=0 empty=0
+I (33966) node_runtime: IMU_IRQ site=TOP enabled=1 observed_edges=2692 startup_edges=1 capture_edges=2691 suppressed_unarmed=0 edge_hz=100.05 serviced=2690 irq_empty=0 fallback=1 coalesced_edges=0 last_edge_us=33096986; disabled GPIO edges unobservable; latched edges cannot count hidden overruns
+I (33986) node_runtime: IMU_IRQ_BUDGET site=TOP notify_claims=2549 notify_coalesced=143 stale_notifications=68 deferred_notifications=846 consumed_edges=2690 pending_edges=1; raw ISR edges retained, one read/site/frame including fallback
+I (34006) node_runtime: IMU_CAPTURE_RATE site=TOP active_overlap_us=10894568 health_interval_us=10894568 valid_count_hz=99.96 irq_count_hz=100.05; count/window estimate, zero active denominator means unavailable
+I (34026) node_runtime: IMU_READ_STAGE site=TOE latest=complete status_seen=1 status=0x08 attempts=2676 status_fail=0 ready_raw_fail=0 invalid_raw=0 empty=0
+I (34036) node_runtime: IMU_IRQ site=TOE enabled=1 observed_edges=2677 startup_edges=1 capture_edges=2676 suppressed_unarmed=0 edge_hz=99.50 serviced=2676 irq_empty=0 fallback=1 coalesced_edges=0 last_edge_us=33096279; disabled GPIO edges unobservable; latched edges cannot count hidden overruns
+I (34066) node_runtime: IMU_IRQ_BUDGET site=TOE notify_claims=2487 notify_coalesced=190 stale_notifications=176 deferred_notifications=37 consumed_edges=2676 pending_edges=0; raw ISR edges retained, one read/site/frame including fallback
+I (34096) node_runtime: IMU_CAPTURE_RATE site=TOE active_overlap_us=10894568 health_interval_us=10894568 valid_count_hz=99.41 irq_count_hz=99.50; count/window estimate, zero active denominator means unavailable
+I (34106) node_runtime: IMU_SERVICE event_wakes=2616 wake_hz=99.04 rate_basis=HEALTH_INTERVAL; loops below are 100Hz supervisory frames, not task wake count; cycle work excludes notification wait
+I (34126) node_runtime: IMU_TIMING loops=2691 loop_hz=99.96 tick_no_delay=896 boundary=896 imu_deadline_misses=0 work_over_10ms=0 cycle_max_us=5896 start_period_max_us=15390
+I (34136) node_runtime: IMU_FRAME_CAPTURE_RATE active_overlap_us=10894568 loop_count_hz=99.96; not an ODR or deadline guarantee
+I (34156) node_runtime: SOIL valid=54/54/54 error=0/0/0
+I (34156) node_runtime: I2C errors=0 lock_timeout=0 wait_interval_us=393580 wait_max_us=7405 held_interval_us=4576490 held_max_us=1855
+I (34166) node_runtime: I2C_DEVICE addr=0x68 req=5433 sdk=5433 err=0 timeout=0 state=0 max_call_us=1951 last_fail=W/0x00/0 err=0 sdk_entered=0 fail_us=0
+I (34186) node_runtime: I2C_DEVICE addr=0x69 req=5404 sdk=5404 err=0 timeout=0 state=0 max_call_us=1897 last_fail=W/0x00/0 err=0 sdk_entered=0 fail_us=0
+I (34196) node_runtime: I2C_DEVICE addr=0x48 req=650 sdk=650 err=0 timeout=0 state=0 max_call_us=8392 last_fail=W/0x00/0 err=0 sdk_entered=0 fail_us=0
+I (34206) node_runtime: I2C_CAUSE addr=0x68 sdk_err=0 local_err=0 sdk_state=0 local_state=0 pads_before=-1/-1 pads_after=-1/-1 probe=0 probe_error=0; pads are not a waveform
+I (34226) node_runtime: I2C_CAUSE addr=0x69 sdk_err=0 local_err=0 sdk_state=0 local_state=0 pads_before=-1/-1 pads_after=-1/-1 probe=0 probe_error=0; pads are not a waveform
+I (34236) node_runtime: I2C_CAUSE addr=0x48 sdk_err=0 local_err=0 sdk_state=0 local_state=0 pads_before=-1/-1 pads_after=-1/-1 probe=0 probe_error=0; pads are not a waveform
+I (34256) node_runtime: I2C_RETRY addr=0x68 first_errors=0 first_259=0 attempts=0 recovered=0 failed=0 retry_sdk=0 last=R/0x00/0 original=0 result=0 policy=SAFE_READ_ONCE; recovered is SDK read, not sample PASS
+I (34276) node_runtime: I2C_RETRY addr=0x69 first_errors=0 first_259=0 attempts=0 recovered=0 failed=0 retry_sdk=0 last=R/0x00/0 original=0 result=0 policy=SAFE_READ_ONCE; recovered is SDK read, not sample PASS
+I (34296) node_runtime: I2C_RETRY addr=0x48 first_errors=0 first_259=0 attempts=0 recovered=0 failed=0 retry_sdk=0 last=R/0x00/0 original=0 result=0 policy=SAFE_READ_ONCE; recovered is SDK read, not sample PASS
+I (34306) node_runtime: FLOW produced=5529 enqueued=5529 dequeued=3540 queue_drop=0 index_exhausted=0 internal_drop=0 storage_disabled=0 q=1989 peak=2017 rate_produced=205.42 rate_enqueued=205.42 rate_dequeued=161.46 rate_appended=161.46
+I (34326) node_runtime: SD active=1 pending=0 verifying=0 append_accepted=3539 flush_accepted=3328 files_verified=0 errors=1 uncertain=0 replay=0 verify_backpressure=0 (verified != power-loss proof)
+I (34346) node_runtime: SD_FAILURE write=0 flush=0 verify=0 open=0 recovery=1 unavailable_drop=0
+I (34356) node_runtime: STORAGE_SCHED explicit_yields=63 sleep_us=553497 append_budget=32 wall_budget_us=50000 flush_rows=256 segment_rows=4000 queue_capacity=16384 readback_stride_rows=16; budget excludes queue wait, checked AFTER each I/O
+I (34376) node_runtime: SD_LATENCY op=append n=3539 p50_us=251..500 p95_us=501..1000 p99_us=100001..200000 unbounded50_95_99=0/0/0 max_us=990909 over100ms=95 over300ms=4 over500ms=2; histogram intervals; CPU time unavailable
+I (34396) node_runtime: SD_LATENCY op=flush_periodic n=13 p50_us=100001..200000 p95_us=200001..300000 p99_us=200001..300000 unbounded50_95_99=0/0/0 max_us=225125 over100ms=13 over300ms=0 over500ms=0; histogram intervals; CPU time unavailable
+W (34416) node_runtime: SD_LONG_EVENT_GAP unseen=43 oldest_retained=96; bounded ring, retain max/histograms
+W (34426) node_runtime: SD_LONG_EVENT seq=96 op=flush start_us=29350706 end_us=29572220 wall_us=221514 q_before=1690 q_after=1734 rows=0 bytes=0 phase_seen=1 format_us=0 fwrite_us=0 fflush_us=81540 fsync_us=139938 catchups_before=56 next_action=3 core=0 priority=3 ok=1 cpu_time_available=0; queue endpoints sampled, nested recover overlaps open
+W (34456) node_runtime: SD_LONG_EVENT seq=97 op=append start_us=29596337 end_us=29772254 wall_us=175917 q_before=1707 q_after=1745 rows=1 bytes=147 phase_seen=1 format_us=301 fwrite_us=175558 fflush_us=0 fsync_us=0 catchups_before=56 next_action=2 core=0 priority=3 ok=1 cpu_time_available=0; queue endpoints sampled, nested recover overlaps open
+W (34496) node_runtime: SD_LONG_EVENT seq=98 op=append start_us=29786765 end_us=29952320 wall_us=165555 q_before=1718 q_after=1751 rows=1 bytes=134 phase_seen=1 format_us=287 fwrite_us=165209 fflush_us=0 fsync_us=0 catchups_before=57 next_action=3 core=0 priority=3 ok=1 cpu_time_available=0; queue endpoints sampled, nested recover overlaps open
+W (34526) node_runtime: SD_LONG_EVENT seq=99 op=append start_us=29975160 end_us=30142325 wall_us=167165 q_before=1725 q_after=1758 rows=1 bytes=120 phase_seen=1 format_us=241 fwrite_us=166865 fflush_us=0 fsync_us=0 catchups_before=57 next_action=2 core=0 priority=3 ok=1 cpu_time_available=0; queue endpoints sampled, nested recover overlaps open
+I (34556) node_runtime: SD_EVENT_RING total=111 historical_evictions=95 context_errors=0 capacity=16; eviction != unseen gap
+I (34566) node_runtime: I2C_LOCK_OWNERSHIP takes=11488 gives=11488 local_timeouts=0 observed_acquire_to_before_give_max_us=1864 give_failures=0 metadata_errors=0; legacy held_max is SDK callback wall, not whole ownership; FreeRTOS priority inheritance enabled, runtime effect requires trace
+I (34586) node_runtime: STORAGE_PRESSURE sampled_high=1 threshold=384 resume=192 entries=1 recoveries=0 high_total_us=25053178 high_max_us=25053178 drops=0 late_samples=0 catchup_grants=65 catchup_at=128; at most one extra 32-row/50ms quota before blocked tick yield
+W (34616) node_runtime: SD_LAST_LONG_IO calls=111 op=append started_us=32916987 finished_us=33082262 wall_us=165275; last completed >=100ms, includes scheduling/wait; not full I/O history
+I (34626) node_runtime: SD_IO op=recover_inclusive calls=2 fail=1 total_us=7657555 max_us=4436802
+I (34636) node_runtime: SD_IO op=open calls=1 fail=0 total_us=620055 max_us=620055
+I (34646) node_runtime: SD_IO op=append calls=3539 fail=0 total_us=20844562 max_us=990909
+I (34656) node_runtime: SD_IO op=flush calls=13 fail=0 total_us=2411318 max_us=225125
+I (34656) node_runtime: SD_IO op=close_begin calls=0 fail=0 total_us=0 max_us=0
+I (34676) node_runtime: SD_IO op=verify_4KiB calls=0 fail=0 total_us=0 max_us=0
+I (34676) node_runtime: SD_IO op=queue_wait calls=0 fail=0 total_us=0 max_us=0
+W (34686) node_runtime: SD_IO_IN_FLIGHT op=append age_us=1146
+I (34696) node_runtime: SD_PHASE op=format calls=3539 fail=0 total_us=1250319 max_us=1784 bytes=0; wall includes preemption/wait, not pure card or CPU time
+I (34706) node_runtime: SD_PHASE op=fwrite calls=3542 fail=0 total_us=19429220 max_us=990395 bytes=476367; wall includes preemption/wait, not pure card or CPU time
+I (34716) node_runtime: SD_PHASE op=crc calls=3542 fail=0 total_us=82791 max_us=791 bytes=476367; wall includes preemption/wait, not pure card or CPU time
+I (34736) node_runtime: SD_PHASE op=fflush calls=14 fail=0 total_us=1311463 max_us=390997 bytes=0; wall includes preemption/wait, not pure card or CPU time
+I (34746) node_runtime: SD_PHASE op=fsync calls=14 fail=0 total_us=1870331 max_us=379983 bytes=0; wall includes preemption/wait, not pure card or CPU time
+I (34766) node_runtime: TASK_PROGRESS imu=2691 risk=657 alarm=1 slow=54 comm=108 storage=3558 health=4 risk_miss=0 alarm_qdrop=0
+I (34776) node_runtime: STACK_HWM_BYTES imu=1656 risk=2992 alarm=2264 slow=1856 comm=3244 storage=5256 health=1796 (TBD-15)
+I (36896) node_runtime: COMM wifi=1 mqtt=1 enqueued=24 rejected=0 edge_online=false; no durable receipt
+I (37016) node_runtime: SD_VERIFY_BEGIN path=/sdcard/N0009518.CSV rows=4000 bytes=538671 crc32=d4b7a294 quantum=4096 subread=4096; not VERIFIED yet
+I (37366) node_runtime: SD_FILE /sdcard/N0009519.CSV engineering diagnostic; replay may retain acquisition_index
+I (44786) node_runtime: DIAG_V6 mode=ACQUISITION_DIAGNOSTIC source=REAL_SENSOR_DIAGNOSTIC observed_us=43981492 window_us=10884157 risk=null calibration=NOT_READY event_bits=0x1cb heap_free=6524516
+I (44786) node_runtime: CAPTURE started=1 stop_requested=0 producers_done=0x0 start_us=6167721 requested_stop_us=0 duration_s=0 storage_finished=0; do not disconnect before finalized/explicit blocked
+I (44806) node_runtime: IMU_TOP valid=3780 error=0 no_new_data=0 observed_hz=100.05 max_gap_us=15168 read_max_us=3189 rate_basis=HEALTH_INTERVAL
+I (44816) node_runtime: IMU_TOE valid=3759 error=0 no_new_data=0 observed_hz=99.50 max_gap_us=16291 read_max_us=2972 rate_basis=HEALTH_INTERVAL
+I (44836) node_runtime: IMU_READ_STAGE site=TOP latest=complete status_seen=1 status=0x08 attempts=3780 status_fail=0 ready_raw_fail=0 invalid_raw=0 empty=0
+I (44846) node_runtime: IMU_IRQ site=TOP enabled=1 observed_edges=3781 startup_edges=1 capture_edges=3780 suppressed_unarmed=0 edge_hz=100.05 serviced=3779 irq_empty=0 fallback=1 coalesced_edges=0 last_edge_us=43979450; disabled GPIO edges unobservable; latched edges cannot count hidden overruns
+I (44866) node_runtime: IMU_IRQ_BUDGET site=TOP notify_claims=3579 notify_coalesced=202 stale_notifications=97 deferred_notifications=1257 consumed_edges=3779 pending_edges=1; raw ISR edges retained, one read/site/frame including fallback
+I (44896) node_runtime: IMU_CAPTURE_RATE site=TOP active_overlap_us=10884157 health_interval_us=10884157 valid_count_hz=100.05 irq_count_hz=100.05; count/window estimate, zero active denominator means unavailable
+I (44906) node_runtime: IMU_READ_STAGE site=TOE latest=complete status_seen=1 status=0x08 attempts=3759 status_fail=0 ready_raw_fail=0 invalid_raw=0 empty=0
+I (44926) node_runtime: IMU_IRQ site=TOE enabled=1 observed_edges=3759 startup_edges=1 capture_edges=3758 suppressed_unarmed=0 edge_hz=99.41 serviced=3758 irq_empty=0 fallback=1 coalesced_edges=0 last_edge_us=43974964; disabled GPIO edges unobservable; latched edges cannot count hidden overruns
+I (44946) node_runtime: IMU_IRQ_BUDGET site=TOE notify_claims=3504 notify_coalesced=255 stale_notifications=247 deferred_notifications=47 consumed_edges=3758 pending_edges=0; raw ISR edges retained, one read/site/frame including fallback
+I (44966) node_runtime: IMU_CAPTURE_RATE site=TOE active_overlap_us=10884157 health_interval_us=10884157 valid_count_hz=99.50 irq_count_hz=99.41; count/window estimate, zero active denominator means unavailable
+I (44986) node_runtime: IMU_SERVICE event_wakes=3751 wake_hz=104.28 rate_basis=HEALTH_INTERVAL; loops below are 100Hz supervisory frames, not task wake count; cycle work excludes notification wait
+I (45006) node_runtime: IMU_TIMING loops=3780 loop_hz=100.05 tick_no_delay=1300 boundary=1300 imu_deadline_misses=0 work_over_10ms=0 cycle_max_us=5896 start_period_max_us=15390
+I (45026) node_runtime: IMU_FRAME_CAPTURE_RATE active_overlap_us=10884157 loop_count_hz=100.05; not an ODR or deadline guarantee
+I (45036) node_runtime: SOIL valid=76/76/76 error=0/0/0
+I (45036) node_runtime: I2C errors=0 lock_timeout=0 wait_interval_us=405769 wait_max_us=10087 held_interval_us=4566687 held_max_us=1855
+I (45046) node_runtime: I2C_DEVICE addr=0x68 req=7611 sdk=7611 err=0 timeout=0 state=0 max_call_us=1951 last_fail=W/0x00/0 err=0 sdk_entered=0 fail_us=0
+I (45066) node_runtime: I2C_DEVICE addr=0x69 req=7569 sdk=7569 err=0 timeout=0 state=0 max_call_us=1897 last_fail=W/0x00/0 err=0 sdk_entered=0 fail_us=0
+I (45076) node_runtime: I2C_DEVICE addr=0x48 req=914 sdk=914 err=0 timeout=0 state=0 max_call_us=10898 last_fail=W/0x00/0 err=0 sdk_entered=0 fail_us=0
+I (45086) node_runtime: I2C_CAUSE addr=0x68 sdk_err=0 local_err=0 sdk_state=0 local_state=0 pads_before=-1/-1 pads_after=-1/-1 probe=0 probe_error=0; pads are not a waveform
+I (45106) node_runtime: I2C_CAUSE addr=0x69 sdk_err=0 local_err=0 sdk_state=0 local_state=0 pads_before=-1/-1 pads_after=-1/-1 probe=0 probe_error=0; pads are not a waveform
+I (45116) node_runtime: I2C_CAUSE addr=0x48 sdk_err=0 local_err=0 sdk_state=0 local_state=0 pads_before=-1/-1 pads_after=-1/-1 probe=0 probe_error=0; pads are not a waveform
+I (45136) node_runtime: I2C_RETRY addr=0x68 first_errors=0 first_259=0 attempts=0 recovered=0 failed=0 retry_sdk=0 last=R/0x00/0 original=0 result=0 policy=SAFE_READ_ONCE; recovered is SDK read, not sample PASS
+I (45156) node_runtime: I2C_RETRY addr=0x69 first_errors=0 first_259=0 attempts=0 recovered=0 failed=0 retry_sdk=0 last=R/0x00/0 original=0 result=0 policy=SAFE_READ_ONCE; recovered is SDK read, not sample PASS
+I (45176) node_runtime: I2C_RETRY addr=0x48 first_errors=0 first_259=0 attempts=0 recovered=0 failed=0 retry_sdk=0 last=R/0x00/0 original=0 result=0 policy=SAFE_READ_ONCE; recovered is SDK read, not sample PASS
+I (45186) node_runtime: FLOW produced=7767 enqueued=7767 dequeued=5009 queue_drop=0 index_exhausted=0 internal_drop=0 storage_disabled=0 q=2758 peak=2772 rate_produced=205.62 rate_enqueued=205.62 rate_dequeued=134.97 rate_appended=134.97
+I (45226) node_runtime: SD active=1 pending=0 verifying=1 append_accepted=5008 flush_accepted=4768 files_verified=0 errors=1 uncertain=0 replay=0 verify_backpressure=0 (verified != power-loss proof)
+I (45226) node_runtime: SD_FAILURE write=0 flush=0 verify=0 open=0 recovery=1 unavailable_drop=0
+I (45236) node_runtime: STORAGE_SCHED explicit_yields=106 sleep_us=917387 append_budget=32 wall_budget_us=50000 flush_rows=256 segment_rows=4000 queue_capacity=16384 readback_stride_rows=16; budget excludes queue wait, checked AFTER each I/O
+I (45266) node_runtime: SD_LATENCY op=append n=5008 p50_us=251..500 p95_us=501..1000 p99_us=100001..200000 unbounded50_95_99=0/0/0 max_us=990909 over100ms=122 over300ms=4 over500ms=2; histogram intervals; CPU time unavailable
+I (45276) node_runtime: SD_LATENCY op=flush_periodic n=18 p50_us=100001..200000 p95_us=200001..300000 p99_us=200001..300000 unbounded50_95_99=0/0/0 max_us=257881 over100ms=18 over300ms=0 over500ms=0; histogram intervals; CPU time unavailable
+W (45296) node_runtime: SD_LONG_EVENT_GAP unseen=30 oldest_retained=130; bounded ring, retain max/histograms
+W (45306) node_runtime: SD_LONG_EVENT seq=130 op=append start_us=38680658 end_us=38842504 wall_us=161846 q_before=2328 q_after=2364 rows=1 bytes=143 phase_seen=1 format_us=292 fwrite_us=161497 fflush_us=0 fsync_us=0 catchups_before=85 next_action=3 core=0 priority=3 ok=1 cpu_time_available=0; queue endpoints sampled, nested recover overlaps open
+W (45336) node_runtime: SD_LONG_EVENT seq=131 op=append start_us=38938833 end_us=39102280 wall_us=163447 q_before=2352 q_after=2386 rows=1 bytes=132 phase_seen=1 format_us=403 fwrite_us=162979 fflush_us=0 fsync_us=0 catchups_before=86 next_action=3 core=0 priority=3 ok=1 cpu_time_available=0; queue endpoints sampled, nested recover overlaps open
+W (45366) node_runtime: SD_LONG_EVENT seq=132 op=append start_us=39205095 end_us=39372318 wall_us=167223 q_before=2376 q_after=2413 rows=1 bytes=143 phase_seen=1 format_us=292 fwrite_us=166854 fflush_us=0 fsync_us=0 catchups_before=87 next_action=3 core=0 priority=3 ok=1 cpu_time_available=0; queue endpoints sampled, nested recover overlaps open
+W (45396) node_runtime: SD_LONG_EVENT seq=133 op=append start_us=39469340 end_us=39632390 wall_us=163050 q_before=2400 q_after=2432 rows=1 bytes=132 phase_seen=1 format_us=269 fwrite_us=162715 fflush_us=0 fsync_us=0 catchups_before=88 next_action=3 core=0 priority=3 ok=1 cpu_time_available=0; queue endpoints sampled, nested recover overlaps open
+I (45426) node_runtime: SD_EVENT_RING total=145 historical_evictions=129 context_errors=0 capacity=16; eviction != unseen gap
+I (45446) node_runtime: I2C_LOCK_OWNERSHIP takes=16094 gives=16094 local_timeouts=0 observed_acquire_to_before_give_max_us=1864 give_failures=0 metadata_errors=0; legacy held_max is SDK callback wall, not whole ownership; FreeRTOS priority inheritance enabled, runtime effect requires trace
+I (45466) node_runtime: STORAGE_PRESSURE sampled_high=1 threshold=384 resume=192 entries=1 recoveries=0 high_total_us=35937302 high_max_us=35937302 drops=0 late_samples=0 catchup_grants=109 catchup_at=128; at most one extra 32-row/50ms quota before blocked tick yield
+W (45486) node_runtime: SD_LAST_LONG_IO calls=145 op=append started_us=43733553 finished_us=43902275 wall_us=168722; last completed >=100ms, includes scheduling/wait; not full I/O history
+I (45506) node_runtime: SD_IO op=recover_inclusive calls=2 fail=1 total_us=7657555 max_us=4436802
+I (45516) node_runtime: SD_IO op=open calls=2 fail=0 total_us=965024 max_us=620055
+I (45526) node_runtime: SD_IO op=append calls=5008 fail=0 total_us=27190501 max_us=990909
+I (45526) node_runtime: SD_IO op=flush calls=18 fail=0 total_us=3409815 max_us=257881
+I (45536) node_runtime: SD_IO op=close_begin calls=1 fail=0 total_us=339718 max_us=339718
+I (45546) node_runtime: SD_IO op=verify_4KiB calls=63 fail=0 total_us=2336529 max_us=42286
+I (45556) node_runtime: SD_IO op=queue_wait calls=0 fail=0 total_us=0 max_us=0
+W (45556) node_runtime: SD_IO_IN_FLIGHT op=verify_4KiB age_us=20040
+I (45566) node_runtime: SD_PHASE op=format calls=5008 fail=0 total_us=1773740 max_us=1784 bytes=0; wall includes preemption/wait, not pure card or CPU time
+I (45576) node_runtime: SD_PHASE op=fwrite calls=5014 fail=0 total_us=25182541 max_us=990395 bytes=675556; wall includes preemption/wait, not pure card or CPU time
+I (45596) node_runtime: SD_PHASE op=crc calls=5014 fail=0 total_us=119667 max_us=3467 bytes=675556; wall includes preemption/wait, not pure card or CPU time
+I (45606) node_runtime: SD_PHASE op=fflush calls=20 fail=0 total_us=1695427 max_us=390997 bytes=0; wall includes preemption/wait, not pure card or CPU time
+I (45626) node_runtime: SD_PHASE op=fsync calls=20 fail=0 total_us=2650292 max_us=379983 bytes=0; wall includes preemption/wait, not pure card or CPU time
+I (45636) node_runtime: TASK_PROGRESS imu=3780 risk=874 alarm=1 slow=76 comm=151 storage=5097 health=5 risk_miss=0 alarm_qdrop=0
+I (45646) node_runtime: STACK_HWM_BYTES imu=1656 risk=2992 alarm=2264 slow=1856 comm=3244 storage=5256 health=1796 (TBD-15)
